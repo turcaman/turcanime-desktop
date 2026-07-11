@@ -1,10 +1,16 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import { hiddenSession } from './main/sessionHidden';
+import { registerIpcHandlers } from './main/ipcHandlers';
+import { logger } from './main/logger';
 
 if (started) {
   app.quit();
 }
+
+logger.info('App', 'Starting application');
+registerIpcHandlers();
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -33,18 +39,33 @@ const createWindow = () => {
 };
 
 app.on('ready', () => {
+  logger.info('App', 'App ready, creating window');
   Menu.setApplicationMenu(null);
+  hiddenSession.create();
   createWindow();
+
+  hiddenSession.refreshSession().then((session) => {
+    if (session.cookies.length > 0) {
+      logger.info('App', `Initial session acquired (${session.cookies.length} chars)`);
+    } else {
+      logger.warn('App', 'Initial session returned empty cookies');
+    }
+  }).catch((err) => {
+    logger.error('App', 'Initial session refresh failed', err);
+  });
 });
 
 app.on('window-all-closed', () => {
+  logger.info('App', 'Window closed, quitting');
   if (process.platform !== 'darwin') {
+    hiddenSession.destroy();
     app.quit();
   }
 });
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
+    logger.debug('App', 'Activate event, recreating window');
     createWindow();
   }
 });
