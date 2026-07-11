@@ -6,6 +6,14 @@ import { logger } from '../utils/logger';
 import type { Anime, AnimeDetail, AutocompleteAnime, Episode, HomeData, VideoServer } from '../../types';
 
 const RETRY_DELAY = 1_000;
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300';
+
+function posterToUrl(poster: string): string {
+  if (!poster) return '';
+  if (poster.startsWith('http://') || poster.startsWith('https://')) return poster;
+  if (poster.startsWith('/')) return `${TMDB_IMAGE_BASE}${poster}`;
+  return `${SOURCE_CONFIG.baseUrl}/${poster}`;
+}
 
 async function fetchWithSession(
   url: string,
@@ -54,28 +62,28 @@ export const source = {
     const res = await fetchWithSession(
       `/api/anime/search?q=${encodeURIComponent(query)}`,
     );
-    const data: Record<string, unknown> = JSON.parse(res.data);
-    const items = (data.results ?? data) as Record<string, string>[];
+    const json: Record<string, unknown> = JSON.parse(res.data);
+    const items = (json.data as Record<string, unknown>[]) ?? [];
     return items.map((item) => ({
-      title: item.title ?? '',
-      image: item.image ?? item.poster ?? '',
-      url: item.url ?? item.slug ?? '',
+      title: (item.name as string) ?? '',
+      image: posterToUrl(item.poster as string),
+      url: (item.slug as string) ?? '',
       status: '',
     }));
   },
 
   async getSuggestions(query: string): Promise<AutocompleteAnime[]> {
     const res = await fetchWithSession(
-      `${SOURCE_CONFIG.endpoints.suggestions}?q=${encodeURIComponent(query)}`,
+      `/api/anime/search?q=${encodeURIComponent(query)}`,
     );
-    const data: Record<string, unknown> = JSON.parse(res.data);
-    const items = (data.results ?? data) as Record<string, string>[];
+    const json: Record<string, unknown> = JSON.parse(res.data);
+    const items = (json.data as Record<string, unknown>[]) ?? [];
     return items.map((item) => ({
-      id: item.id ?? '',
-      name: item.title ?? item.name ?? '',
-      poster: item.image ?? item.poster ?? '',
-      slug: item.url ?? item.slug ?? '',
-      type: item.type ?? 'anime',
+      id: String(item.id ?? ''),
+      name: (item.name as string) ?? '',
+      poster: posterToUrl(item.poster as string),
+      slug: (item.slug as string) ?? '',
+      type: (item.type as string) ?? 'anime',
     }));
   },
 
