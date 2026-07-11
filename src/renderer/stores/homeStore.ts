@@ -43,18 +43,40 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
     if (result.error) {
       if (result.error.type === 'AUTH_ERROR') {
-        logger.info('homeStore', 'Auth error, refreshing session and retrying');
-        await sessionManager.refreshSession();
-        const retry = await withCache(
-          CACHE_PREFIXES.HOME,
-          async () => source.getHomeData(),
-          { force: true },
-        );
-        if (retry.error) {
-          set({ error: retry.error, isHomeLoading: false, isRefreshing: false });
+        logger.info('homeStore', 'Auth error, refreshing session...');
+        const session = await sessionManager.refreshSession();
+        // Only retry if we actually got cookies
+        if (session.cookies.length > 0) {
+          await new Promise((r) => setTimeout(r, 500));
+          const retry = await withCache(
+            CACHE_PREFIXES.HOME,
+            async () => source.getHomeData(),
+            { force: true },
+          );
+          if (retry.error) {
+            set({ error: retry.error, isHomeLoading: false, isRefreshing: false });
+            return;
+          }
+          set({ homeData: retry.data ?? { recent: [] }, isHomeLoading: false, isRefreshing: false });
           return;
         }
-        set({ homeData: retry.data ?? { recent: [] }, isHomeLoading: false, isRefreshing: false });
+        logger.warn('homeStore', 'Session refresh returned no cookies, will wait');
+        // If still no cookies, wait for cookies properly (blocks until available or timeout)
+        const hasCookies = await sessionManager.waitForCookies();
+        if (hasCookies) {
+          const retry = await withCache(
+            CACHE_PREFIXES.HOME,
+            async () => source.getHomeData(),
+            { force: true },
+          );
+          if (retry.error) {
+            set({ error: retry.error, isHomeLoading: false, isRefreshing: false });
+            return;
+          }
+          set({ homeData: retry.data ?? { recent: [] }, isHomeLoading: false, isRefreshing: false });
+          return;
+        }
+        set({ error: { type: 'AUTH_ERROR', message: 'No se pudo obtener sesión después de esperar' }, isHomeLoading: false, isRefreshing: false });
         return;
       }
       set({ error: result.error, isHomeLoading: false, isRefreshing: false });

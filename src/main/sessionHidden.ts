@@ -3,53 +3,53 @@ import path from 'node:path';
 import { logger } from './logger';
 
 const SESSION_WASH_URL = 'https://www.animelatinohd.com/';
-const POLL_TIMEOUT = 30_000;
+const POLL_TIMEOUT = 90_000;
 
-const GLOBAL_BOOTSTRAP = `
-(function() {
-  console.log('[Bootstrap] Starting Cloudflare validation polling');
-
-  var post = function(type, data) {
-    if (!window.__electronBridge) return;
-    window.__electronBridge.postMessage(JSON.stringify({ type: type, data: data }));
-  };
-
-  var reportSession = function() {
-    var cookies = document.cookie;
-    console.log('[Bootstrap] Session acquired (cookies: ' + cookies.length + ' chars, UA: ' + navigator.userAgent.slice(0, 50) + '...)');
-    post('SESSION_UPDATE', {
-      cookies: cookies,
-      userAgent: navigator.userAgent
-    });
-  };
-
-  var pollForCloudflareValidation = function() {
-    var maxAttempts = 50;
-    var attempts = 0;
-    var check = function() {
-      attempts++;
-      var title = document.title || '';
-      var cookies = document.cookie || '';
-      if (attempts % 10 === 0) {
-        console.log('[Bootstrap] Poll attempt ' + attempts + '/' + maxAttempts + ' (title: "' + title + '", cookies: ' + cookies.length + ' chars)');
-      }
-      if (title.indexOf('Just a moment') === -1 && cookies.length > 0) {
-        reportSession();
-        return;
-      }
-      if (attempts >= maxAttempts) {
-        console.log('[Bootstrap] Max attempts reached, reporting anyway');
-        reportSession();
-        return;
-      }
-      setTimeout(check, 100);
-    };
-    check();
-  };
-
-  pollForCloudflareValidation();
-})();
-`;
+const GLOBAL_BOOTSTRAP = [
+  '(function() {',
+  "  console.log('[Bootstrap] Starting Cloudflare validation polling');",
+  '',
+  '  var post = function(type, data) {',
+  "    if (!window.__electronBridge) return;",
+  "    window.__electronBridge.postMessage(JSON.stringify({ type: type, data: data }));",
+  '  };',
+  '',
+  '  var reportSession = function() {',
+  '    var cookies = document.cookie;',
+  "    console.log('[Bootstrap] Session acquired (cookies: ' + cookies.length + ' chars, UA: ' + navigator.userAgent.slice(0, 50) + '...)');",
+  "    post('SESSION_UPDATE', {",
+  '      cookies: cookies,',
+  '      userAgent: navigator.userAgent',
+  '    });',
+  '  };',
+  '',
+  '  var pollForCloudflareValidation = function() {',
+  '    var maxAttempts = 300;',
+  '    var attempts = 0;',
+  '    var check = function() {',
+  '      attempts++;',
+  "      var title = document.title || '';",
+  "      var cookies = document.cookie || '';",
+  '      if (attempts % 20 === 0) {',
+  "        console.log('[Bootstrap] Poll attempt ' + attempts + '/' + maxAttempts + ' (title: \\\"' + title + '\\\", cookies: ' + cookies.length + ' chars)');",
+  '      }',
+  "      if (title.indexOf('Just a moment') === -1 && cookies.length > 0) {",
+  '        reportSession();',
+  '        return;',
+  '      }',
+  '      if (attempts >= maxAttempts) {',
+  "        console.log('[Bootstrap] Max attempts reached, reporting anyway');",
+  '        reportSession();',
+  '        return;',
+  '      }',
+  '      setTimeout(check, 200);',
+  '    };',
+  '    check();',
+  '  };',
+  '',
+  '  pollForCloudflareValidation();',
+  '})();',
+].join('\n');
 
 interface SessionData {
   cookies: string;
@@ -61,6 +61,13 @@ export class HiddenSessionWindow {
   private currentSession: SessionData | null = null;
   private pendingResolve: ((session: SessionData) => void) | null = null;
   private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  private getWindow(): BrowserWindow {
+    if (!this.window) {
+      this.create();
+    }
+    return this.window!;
+  }
 
   create(): void {
     if (this.window) {
@@ -79,6 +86,7 @@ export class HiddenSessionWindow {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
+        partition: 'persist:anime-session',
       },
     });
 
@@ -151,21 +159,94 @@ export class HiddenSessionWindow {
       return existing;
     }
 
+    // If there's already a pending refresh, wait for it instead of navigating again
+    if (this.pendingResolve) {
+      logger.debug('SessionHidden', 'Refresh already pending, waiting...');
+      return new Promise<SessionData>((resolve) => {
+        const original = this.pendingResolve;
+        this.pendingResolve = (session) => {
+          original(session);
+          resolve(session);
+        };
+      });
+    }
+
     logger.info('SessionHidden', 'Navigating to session wash URL');
 
     return new Promise<SessionData>((resolve) => {
       this.pendingResolve = resolve;
 
       this.pendingTimeout = setTimeout(() => {
-        logger.warn('SessionHidden', 'Session refresh timed out after 30s');
+        logger.warn('SessionHidden', 'Session refresh timed out');
         if (this.pendingResolve) {
-          this.pendingResolve({ cookies: '', userAgent: '' });
+          const session = this.currentSession ?? { cookies: '', userAgent: '' };
+          this.pendingResolve(session);
           this.pendingResolve = null;
         }
       }, POLL_TIMEOUT);
 
       this.window!.loadURL(SESSION_WASH_URL);
     });
+  }
+
+  async fetchInPage(
+    url: string,
+    options?: Record<string, unknown>,
+  ): Promise<{ ok: boolean; status: number; data: string | null; error?: string }> {
+    const win = this.getWindow();
+
+    const method = (options?.method as string) ?? 'GET';
+    const headers = (options?.headers as Record<string, string>) ?? {};
+    const body = options?.body as string | undefined;
+
+    const safeUrl = url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const safeHeaders = JSON.stringify(headers);
+
+    let script: string;
+    if (method === 'GET') {
+      script = [
+        "fetch('" + safeUrl + "', {",
+        "  method: 'GET',",
+        "  headers: " + safeHeaders + ",",
+        '})',
+        ".then(function(r) {",
+        "  return r.text().then(function(text) {",
+        "    return JSON.stringify({ ok: r.ok, status: r.status, data: text });",
+        "  });",
+        "})",
+        ".catch(function(err) {",
+        "  return JSON.stringify({ ok: false, status: 0, data: null, error: err.message });",
+        '})',
+      ].join('\n');
+    } else {
+      const safeBody = body ? body.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : '';
+      script = [
+        "fetch('" + safeUrl + "', {",
+        "  method: '" + method + "',",
+        "  headers: " + safeHeaders + ",",
+        "  body: '" + safeBody + "',",
+        '})',
+        ".then(function(r) {",
+        "  return r.text().then(function(text) {",
+        "    return JSON.stringify({ ok: r.ok, status: r.status, data: text });",
+        "  });",
+        "})",
+        ".catch(function(err) {",
+        "  return JSON.stringify({ ok: false, status: 0, data: null, error: err.message });",
+        '})',
+      ].join('\n');
+    }
+
+    try {
+      logger.debug('SessionHidden', `fetchInPage: ${url.slice(0, 80)}`);
+      const raw = await win.webContents.executeJavaScript(script);
+      const result = JSON.parse(raw);
+      logger.debug('SessionHidden', `fetchInPage: ${url.slice(0, 80)} -> ${result.status}`);
+      return result;
+    } catch (err) {
+      logger.error('SessionHidden', `fetchInPage failed: ${url.slice(0, 60)}`, err);
+      return { ok: false, status: 0, data: null, error: String(err) };
+    }
   }
 }
 

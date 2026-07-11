@@ -22,8 +22,11 @@ const createWindow = () => {
     backgroundColor: '#0f0f11',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      partition: 'persist:anime-session',
     },
   });
+
+
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -41,6 +44,7 @@ const createWindow = () => {
 app.on('ready', () => {
   logger.info('App', 'App ready, creating window');
   Menu.setApplicationMenu(null);
+
   hiddenSession.create();
   createWindow();
 

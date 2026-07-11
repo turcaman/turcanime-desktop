@@ -1,7 +1,14 @@
 import type { Anime, Episode, VideoServer } from '../../types';
+import { SOURCE_CONFIG } from '../config/source';
 
 export function cleanTitle(title: string): string {
   return title.replace(/^Ver\s+/i, '').replace(/\s*Sub\s*$/i, '').trim();
+}
+
+function toAbsoluteUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${SOURCE_CONFIG.baseUrl}/${url.replace(/^\//, '')}`;
 }
 
 export class ParserUtils {
@@ -38,17 +45,16 @@ export class ParserUtils {
   }
 }
 
-function createAnimeCard(match: RegExpExecArray): Anime {
-  const title = ParserUtils.sanitizeTitle(match[1]?.trim() ?? '');
+function createAnimeCard(url: string, image: string, title: string): Anime {
   return {
-    title,
-    image: match[2]?.trim() ?? '',
-    url: match[3]?.trim() ?? '',
-    status: match[4]?.trim() ?? '',
+    title: cleanTitle(ParserUtils.sanitizeTitle(title)),
+    image: toAbsoluteUrl(image),
+    url: ParserUtils.cleanUrl(url),
+    status: '',
   };
 }
 
-const CARD_REGEX = /<article[^>]*data-title="([^"]*)"[^>]*data-image="([^"]*)"[^>]*data-url="([^"]*)"[^>]*data-status="([^"]*)">/g;
+const CARD_LINK_REGEX = /<a[^>]*class="group block"[^>]*href="\/anime\/([^"]+)"[^>]*>[\s\S]*?<img[^>]*(?:src|data-src)="([^"]*)"[\s\S]*?alt="([^"]*)"/g;
 
 const EPISODE_JSON_REGEX = /"episodes":(\[.*?\])/;
 const EPISODE_SCRIPT_REGEX = /<script[^>]*>[\s\S]*?window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});/;
@@ -56,11 +62,14 @@ const EPISODE_HTML_REGEX = /<a[^>]*href="([^"]*)"[^>]*class="[^"]*episode[^"]*"[
 
 export class HtmlParser {
   parseCards(html: string): Anime[] {
+    const seen = new Set<string>();
     const cards: Anime[] = [];
     let match: RegExpExecArray | null;
-    const regex = new RegExp(CARD_REGEX.source, 'g');
-    while ((match = regex.exec(html)) !== null) {
-      cards.push(createAnimeCard(match));
+    while ((match = CARD_LINK_REGEX.exec(html)) !== null) {
+      const url = match[1];
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      cards.push(createAnimeCard(url, match[2], match[3]));
     }
     return cards;
   }

@@ -1,14 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { HomePage } from './renderer/pages/HomePage';
+import { useUserInitializationStore } from './renderer/stores/userIndex';
+import { sessionManager } from './renderer/services/session';
+import { Skeleton } from './renderer/components/ui/Skeleton';
 
 const App: React.FC = () => {
-  return (
-    <div className="h-screen w-screen flex flex-col bg-white dark:bg-[#0f0f11] text-gray-900 dark:text-gray-100">
-      <main className="flex-1 flex flex-col p-8">
-      </main>
+  const initialize = useUserInitializationStore((s) => s.initialize);
+  const isInitialized = useUserInitializationStore((s) => s.isInitialized);
+  const [ready, setReady] = useState(false);
 
-      <footer className="h-7 px-4 flex items-center border-t border-gray-200 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-600 select-none">
-        <span>Turcanime Desktop</span>
-      </footer>
+  useEffect(() => {
+    const init = async () => {
+      await sessionManager.initialize();
+      await initialize();
+      sessionManager.refreshSession().catch(() => {});
+      setReady(true);
+    };
+    init();
+  }, [initialize]);
+
+  if (!ready || !isInitialized) {
+    return (
+      <div className="h-screen w-screen bg-[#0f0f11] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Skeleton className="w-48 h-4 rounded" />
+          <Skeleton className="w-32 h-3 rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen w-screen bg-[#0f0f11]">
+      <HomePage />
     </div>
   );
 };

@@ -80,6 +80,12 @@ export const HomePage: React.FC = () => {
       )}
 
       {showError && <ErrorState onRetry={handleRetry} />}
+
+      {!showSkeleton && !showContent && !showError && (
+        <div className="flex items-center justify-center h-full text-neutral-500 text-sm select-none">
+          Sin datos disponibles
+        </div>
+      )}
     </div>
   );
 };

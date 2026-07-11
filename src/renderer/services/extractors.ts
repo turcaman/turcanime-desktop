@@ -72,7 +72,7 @@ async function decrypt(
   const payloadBytes = b64url(payload);
 
   try {
-    const { gcm } = await import('@noble/ciphers/aes');
+    const { gcm } = await import('@noble/ciphers/aes.js');
     const aes = gcm(keyBytes, ivBytes);
     const decrypted = aes.decrypt(payloadBytes);
     const text = new TextDecoder().decode(decrypted);

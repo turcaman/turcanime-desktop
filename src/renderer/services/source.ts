@@ -12,7 +12,10 @@ async function fetchWithSession(
   options?: Record<string, unknown>,
   retryCount = 0,
 ): Promise<{ ok: boolean; status: number; data: string }> {
-  await sessionManager.waitForCookies();
+  const hasCookies = await sessionManager.waitForCookies();
+  if (!hasCookies) {
+    throw { type: 'AUTH_ERROR', message: 'No se pudo obtener sesión después de esperar' };
+  }
 
   const fullUrl = url.startsWith('http') ? url : `${SOURCE_CONFIG.baseUrl}${url}`;
   const res = await window.electronAPI.fetch(fullUrl, options);
@@ -43,6 +46,7 @@ export const source = {
     const html = res.data;
     const parser = new HtmlParser();
     const recent = parser.parseCards(html);
+    logger.info('Source', `getHomeData: parsed ${recent.length} cards from ${html.length} bytes`);
     return { recent };
   },
 
