@@ -43,7 +43,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
           </div>
         )}
       </div>
-      <p className="text-sm text-neutral-300 group-hover:text-neutral-100 line-clamp-2 leading-snug transition-colors duration-200">
+      <p className="text-sm text-neutral-300 group-hover:text-neutral-100 line-clamp-2 leading-snug h-10 transition-colors duration-200">
         {title}
       </p>
     </button>

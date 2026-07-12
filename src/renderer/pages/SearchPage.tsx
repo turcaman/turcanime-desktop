@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Search, Frown } from 'lucide-react';
 import { useSearchScreen } from '../hooks/useSearchScreen';
 import { SearchBar } from '../components/search/SearchBar';
 import { RecentSearches } from '../components/search/RecentSearches';
@@ -6,17 +7,8 @@ import { SuggestionsList } from '../components/search/SuggestionsList';
 import { SearchSkeleton } from '../components/skeletons/SearchSkeleton';
 import { AnimeCard } from '../components/AnimeCard';
 import { ErrorState } from '../components/ui/ErrorState';
+import { calcCardWidth, calcColumns, LAYOUT_CONFIG } from '../config/layout';
 import type { Anime, AutocompleteAnime } from '../../types';
-
-const CARD_GAP = 12;
-const SIDE_PADDING = 48;
-const CARD_COLUMNS = 3;
-
-function calcCardWidth(containerWidth: number): number {
-  const availableWidth = containerWidth - SIDE_PADDING;
-  const totalGaps = CARD_GAP * (CARD_COLUMNS - 1);
-  return Math.floor((availableWidth - totalGaps) / CARD_COLUMNS);
-}
 
 interface SearchPageProps {
   onAnimePress?: (anime: Anime) => void;
@@ -73,7 +65,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
   const ContentArea: React.FC = () => {
     if (status === 'searching' || isSearchLoading) {
-      return <SearchSkeleton cardWidth={cardWidth} />;
+      return <SearchSkeleton cardWidth={cardWidth} containerWidth={containerRef.current?.offsetWidth ?? 800} />;
     }
 
     if (status === 'typing') {
@@ -98,19 +90,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       }
       return (
         <div className="flex flex-col items-center justify-center pt-20 select-none">
-          <svg
-            className="w-12 h-12 text-neutral-700 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
-            />
-          </svg>
+          <Search className="w-12 h-12 text-neutral-700 mb-4" />
           <p className="text-sm text-neutral-500">
             Busca tu anime favorito
           </p>
@@ -126,19 +106,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       if (searchAnimes.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center pt-20 select-none">
-            <svg
-              className="w-12 h-12 text-neutral-700 mb-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <Frown className="w-12 h-12 text-neutral-700 mb-4" />
             <p className="text-sm text-neutral-500">
               Sin resultados para &quot;{term}&quot;
             </p>
@@ -151,8 +119,9 @@ export const SearchPage: React.FC<SearchPageProps> = ({
           <div
             className="grid"
             style={{
-              gridTemplateColumns: `repeat(${CARD_COLUMNS}, ${cardWidth}px)`,
-              gap: `${CARD_GAP}px`,
+              gridTemplateColumns: `repeat(${calcColumns(containerRef.current?.offsetWidth ?? 800)}, ${cardWidth}px)`,
+              gap: `${LAYOUT_CONFIG.cardGap}px`,
+              justifyContent: 'center',
             }}
           >
             {searchAnimes.map((anime) => (

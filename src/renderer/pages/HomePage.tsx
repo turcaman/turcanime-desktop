@@ -4,17 +4,8 @@ import { ContinueWatching } from '../components/home/ContinueWatching';
 import { AnimeGridSection } from '../components/home/AnimeGridSection';
 import { HomeSkeleton } from '../components/skeletons/HomeSkeleton';
 import { ErrorState } from '../components/ui/ErrorState';
+import { calcCardWidth } from '../config/layout';
 import type { Anime, HistoryItem } from '../../types';
-
-const CARD_GAP = 12;
-const SIDE_PADDING = 48;
-const CARD_COLUMNS = 3;
-
-function calcCardWidth(containerWidth: number): number {
-  const availableWidth = containerWidth - SIDE_PADDING;
-  const totalGaps = CARD_GAP * (CARD_COLUMNS - 1);
-  return Math.floor((availableWidth - totalGaps) / CARD_COLUMNS);
-}
 
 interface HomePageProps {
   onAnimePress?: (anime: Anime) => void;
@@ -58,7 +49,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div ref={containerRef} className="h-full w-full bg-[#0f0f11] overflow-y-auto">
-      {showSkeleton && <HomeSkeleton cardWidth={cardWidth} />}
+      {showSkeleton && <HomeSkeleton cardWidth={cardWidth} containerWidth={containerRef.current?.offsetWidth ?? 0} />}
 
       {showContent && (
         <div>
@@ -68,6 +59,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <ContinueWatching
                   key="continue"
                   items={section.data}
+                  cardWidth={cardWidth}
                   onItemPress={handleHistoryPress}
                 />
               );
@@ -78,6 +70,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 label={section.title}
                 items={section.data}
                 cardWidth={cardWidth}
+                containerWidth={containerRef.current?.offsetWidth ?? 0}
                 onItemPress={handleAnimePress}
               />
             );

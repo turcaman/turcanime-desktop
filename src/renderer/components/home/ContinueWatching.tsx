@@ -4,19 +4,23 @@ import type { HistoryItem } from '../../../types';
 
 interface ContinueWatchingProps {
   items: HistoryItem[];
+  cardWidth: number;
   onItemPress?: (item: HistoryItem) => void;
 }
 
 export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
   items,
+  cardWidth,
   onItemPress,
 }) => {
   if (items.length === 0) return null;
 
+  const itemWidth = Math.round(cardWidth * 0.6);
+
   return (
     <div className="select-none">
       <SectionTitle label="Continuar viendo" />
-      <div className="flex gap-3 px-6 overflow-x-auto pb-4 scrollbar-none">
+      <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
         {items.map((item) => {
           const progress =
             item.duration && item.duration > 0
@@ -27,9 +31,10 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
             <button
               key={item.url}
               onClick={() => onItemPress?.(item)}
-              className="flex-shrink-0 w-[110px] text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              style={{ width: itemWidth }}
             >
-              <div className="relative w-full" style={{ aspectRatio: '110/165' }}>
+              <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>
                 <img
                   src={item.image}
                   alt={item.title}
