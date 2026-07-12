@@ -101,20 +101,13 @@ export const source = {
     const poster = parser.extractPosterFromRsc(html) || '';
     const episodes = parser.parseEpisodes(html, slug);
 
-    let banner = meta.image || '';
+    let banner = meta.image || poster || '';
     let relations = null;
 
     const scriptsResult = parser.parseAllFromScripts(html);
     if (scriptsResult) {
-      const rsc = scriptsResult;
-      const posterStr = typeof rsc.poster === 'string' ? rsc.poster : '';
-      if (posterStr) {
-        const cleanPoster = ParserUtils.sanitizeTitle(posterStr);
-        if (cleanPoster) {
-          banner = posterStr;
-        }
-      }
-      relations = parser.extractRelations(JSON.stringify(rsc));
+      if (scriptsResult.poster) banner = scriptsResult.poster;
+      relations = scriptsResult.relations;
     }
 
     return {

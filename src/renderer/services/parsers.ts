@@ -197,48 +197,77 @@ export class HtmlParser {
     return [];
   }
 
-  parseAllFromScripts(html: string): Record<string, unknown> | null {
+  private collectRscText(html: string): string {
     const scriptRegex = /<script[^>]*>[\s\S]*?self\.__next_f\.push\(\[[^,]*,\s*"([\s\S]*?)"\s*\]\)/g;
     let match: RegExpExecArray | null;
-    const rscChunks: string[] = [];
+    const chunks: string[] = [];
     while ((match = scriptRegex.exec(html)) !== null) {
-      rscChunks.push(match[1]);
+      chunks.push(match[1]);
     }
-    if (rscChunks.length === 0) return null;
-    const combined = rscChunks.join('');
-    return this.parseRscPayload(combined);
+    return chunks.join('');
   }
 
-  parseRscPayload(text: string): Record<string, unknown> | null {
-    try {
-      const data: Record<string, unknown> = {};
-      const lines = text.split('\\n');
-      for (const line of lines) {
-        if (line.includes('poster') || line.includes('synopsis') || line.includes('genres')) {
-          const parts = line.split(':');
-          if (parts.length >= 2) {
-            const key = parts[0].trim().replace(/^"|"$/g, '');
-            const value = parts.slice(1).join(':').trim().replace(/^"|"$/g, '');
-            data[key] = value;
-          }
-        }
-      }
-      return Object.keys(data).length > 0 ? data : null;
-    } catch {
-      return null;
-    }
+  parseAllFromScripts(html: string): { poster: string; synopsis: string | null; relations: import('../../types').AnimeRelations | null } | null {
+    const rscText = this.collectRscText(html);
+    if (!rscText) return null;
+
+    const poster = this.extractPosterRaw(rscText);
+    const relations = this.extractRelations(rscText);
+
+    return { poster, synopsis: null, relations };
   }
 
   extractPosterFromRsc(html: string): string {
-    const parsed = this.parseAllFromScripts(html);
-    if (parsed && typeof parsed.poster === 'string') {
-      return parsed.poster;
+    return this.extractPosterRaw(this.collectRscText(html));
+  }
+
+  private extractPosterRaw(rsc: string): string {
+    const posterMatch = rsc.match(/"poster"\s*:\s*"([^"]+)"/);
+    if (posterMatch) {
+      const path = posterMatch[1];
+      if (path.startsWith('http')) return path;
+      if (path.startsWith('/')) return `https://image.tmdb.org/t/p/w300${path}`;
+    }
+    const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
+    const idx = rsc.indexOf(tmdbPattern);
+    if (idx !== -1) {
+      const end = rsc.indexOf('"', idx + tmdbPattern.length);
+      return end !== -1 ? rsc.slice(idx, end) : '';
     }
     return '';
   }
 
   extractRelations(rsc: string): import('../../types').AnimeRelations | null {
-    return null; // TODO: port RSC relation extraction from mobile
+    const key = '"relations":{"prequel":';
+    const idx = rsc.indexOf(key);
+    if (idx === -1) return null;
+
+    const start = rsc.indexOf('{', idx);
+    if (start === -1) return null;
+
+    let depth = 1;
+    let end = start + 1;
+    while (depth > 0 && end < rsc.length) {
+      if (rsc[end] === '{') depth++;
+      else if (rsc[end] === '}') depth--;
+      end++;
+    }
+
+    const raw = rsc.slice(start, end);
+    try {
+      const parsed = JSON.parse(raw) as import('../../types').AnimeRelations;
+      const normalize = (item: { poster: string }) => {
+        if (item.poster && !item.poster.startsWith('http')) {
+          item.poster = `https://image.tmdb.org/t/p/w300${item.poster}`;
+        }
+      };
+      parsed.prequel.forEach(normalize);
+      parsed.sequel.forEach(normalize);
+      parsed.related.forEach(normalize);
+      return parsed;
+    } catch {
+      return null;
+    }
   }
 
   parseEpisodeServers(html: string): VideoServer[] {

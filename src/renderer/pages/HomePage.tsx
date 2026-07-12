@@ -58,6 +58,25 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div ref={containerRef} className="h-full w-full bg-[#0f0f11] overflow-y-auto">
+      <div className="sticky top-0 z-10 flex items-center justify-end px-6 py-2 bg-[#0f0f11]/70 backdrop-blur-sm">
+        <button
+          onClick={handleRetry}
+          disabled={isLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-neutral-400 hover:text-neutral-200 bg-neutral-900/80 hover:bg-neutral-800 rounded-lg transition-colors disabled:opacity-40"
+        >
+          <svg
+            className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {isLoading ? 'Cargando...' : 'Actualizar'}
+        </button>
+      </div>
+
       {showSkeleton && <HomeSkeleton cardWidth={cardWidth} />}
 
       {showContent && (
