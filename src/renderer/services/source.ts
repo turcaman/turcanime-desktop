@@ -93,7 +93,7 @@ export const source = {
     const parser = new HtmlParser();
 
     const meta = parser.extractMetaTags(html);
-    const title = cleanTitle(ParserUtils.sanitizeTitle(meta.title || parser.extractTitleFromHtml(html)));
+    const title = cleanTitle(ParserUtils.sanitizeTitle(parser.extractTitleFromHtml(html) || meta.title));
     const image = meta.image || '';
     const status = parser.extractStatusFromHtml(html);
     const synopsis = parser.extractSynopsisFromDom(html) || parser.extractSynopsisFromJsonLd(html) || '';

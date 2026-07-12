@@ -49,6 +49,13 @@ const App: React.FC = () => {
     setNav({ screen: 'detail', slug: anime.url });
   }, []);
 
+  const handleHistoryPress = useCallback((item: { url: string; number: number }) => {
+    const slug = item.url.split('/')[0];
+    if (slug) {
+      setNav({ screen: 'player', slug, episodeNumber: item.number });
+    }
+  }, []);
+
   if (!ready || !isInitialized) {
     return (
       <div className="h-screen w-screen bg-[#0f0f11] flex items-center justify-center">
@@ -110,7 +117,7 @@ const App: React.FC = () => {
       )}
 
       <div className="flex-1 overflow-hidden">
-        {nav.screen === 'home' && <HomePage onAnimePress={handleAnimePress} />}
+        {nav.screen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
         {nav.screen === 'search' && (
           <SearchPage
             onAnimePress={handleAnimePress}

@@ -87,35 +87,40 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
         {anime.relations && (
           <div className="mb-4">
-            {anime.relations.prequel.length > 0 && (
-              <div className="mb-2">
-                <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
-                  Precuela
-                </h3>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                  {anime.relations.prequel.map((r) => (
-                    <div
-                      key={r.slug}
-                      className="flex-shrink-0 w-24"
-                    >
-                      <div className="w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1">
-                        {r.poster && (
-                          <img
-                            src={r.poster}
-                            alt={r.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        )}
+            <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+              Relacionados
+            </h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {[
+                ...anime.relations.prequel.map((r) => ({ ...r, _label: 'Precuela' as const })),
+                ...anime.relations.sequel.map((r) => ({ ...r, _label: 'Secuela' as const })),
+                ...anime.relations.related.map((r) => ({ ...r, _label: null as string | null })),
+              ].map((r) => (
+                <div
+                  key={r.slug}
+                  className="flex-shrink-0 w-24"
+                >
+                  <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1">
+                    {r.poster && (
+                      <img
+                        src={r.poster}
+                        alt={r.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    {r._label && (
+                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-purple-500/80 rounded text-[8px] text-white font-bold uppercase">
+                        {r._label}
                       </div>
-                      <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight">
-                        {r.name}
-                      </p>
-                    </div>
-                  ))}
+                    )}
+                  </div>
+                  <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight">
+                    {r.name}
+                  </p>
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
       </div>
