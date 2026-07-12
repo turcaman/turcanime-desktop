@@ -16,7 +16,15 @@ function calcCardWidth(containerWidth: number): number {
   return Math.floor((availableWidth - totalGaps) / CARD_COLUMNS);
 }
 
-export const HomePage: React.FC = () => {
+interface HomePageProps {
+  onAnimePress?: (anime: Anime) => void;
+  onHistoryPress?: (item: HistoryItem) => void;
+}
+
+export const HomePage: React.FC<HomePageProps> = ({
+  onAnimePress: externalAnimePress,
+  onHistoryPress: externalHistoryPress,
+}) => {
   const { sections, isLoading, error, fetchHome, hasContent } = useHomeScreen();
   const [cardWidth, setCardWidth] = useState(200);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,12 +41,12 @@ export const HomePage: React.FC = () => {
   }, []);
 
   const handleAnimePress = useCallback((anime: Anime) => {
-    console.log('[HomePage] Navigate to anime:', anime.url);
-  }, []);
+    externalAnimePress?.(anime);
+  }, [externalAnimePress]);
 
   const handleHistoryPress = useCallback((item: HistoryItem) => {
-    console.log('[HomePage] Navigate to history item:', item.url);
-  }, []);
+    externalHistoryPress?.(item);
+  }, [externalHistoryPress]);
 
   const handleRetry = useCallback(() => {
     fetchHome(true);

@@ -2,7 +2,11 @@ import type { Anime, Episode, VideoServer } from '../../types';
 import { SOURCE_CONFIG } from '../config/source';
 
 export function cleanTitle(title: string): string {
-  return title.replace(/^Ver\s+/i, '').replace(/\s*Sub\s*$/i, '').trim();
+  return title
+    .replace(/^Ver\s+/i, '')
+    .replace(/\s*Sub\s*$/i, '')
+    .replace(/\s*\|\s*Ver\s+Online.*$/i, '')
+    .trim();
 }
 
 function toAbsoluteUrl(url: string): string {
@@ -58,7 +62,7 @@ const CARD_LINK_REGEX = /<a[^>]*class="group block"[^>]*href="\/anime\/([^"]+)"[
 
 const EPISODE_JSON_REGEX = /"episodes":(\[.*?\])/;
 const EPISODE_SCRIPT_REGEX = /<script[^>]*>[\s\S]*?window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});/;
-const EPISODE_HTML_REGEX = /<a[^>]*href="([^"]*)"[^>]*class="[^"]*episode[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)[\s\S]*?<\/a>/gi;
+const EPISODE_HTML_REGEX = /<a[^>]*href="\/ver\/([^/]+)\/(\d+)"[^>]*>/gi;
 
 export class HtmlParser {
   parseCards(html: string): Anime[] {
@@ -75,10 +79,10 @@ export class HtmlParser {
   }
 
   parseEpisodes(html: string, slug: string): Episode[] {
-    const jsonMatch = html.match(EPISODE_JSON_REGEX);
-    if (jsonMatch) {
+    const jsonStr = ParserUtils.extractJson(html, '"episodes":', '[', ']');
+    if (jsonStr) {
       try {
-        const episodes = JSON.parse(jsonMatch[1]);
+        const episodes = JSON.parse(jsonStr);
         return episodes.map((ep: Record<string, unknown>) => ({
           id: String(ep.id ?? ''),
           number: Number(ep.number ?? 0),
@@ -113,11 +117,12 @@ export class HtmlParser {
     const regex = new RegExp(EPISODE_HTML_REGEX.source, 'gi');
     const seen = new Set<number>();
     while ((match = regex.exec(html)) !== null) {
-      const url = match[1]?.trim() ?? '';
+      const epSlug = match[1]?.trim() ?? '';
+      if (epSlug !== slug) continue;
       const num = parseFloat(match[2]);
       if (!seen.has(num) && !isNaN(num)) {
         seen.add(num);
-        episodes.push({ id: `${slug}-${num}`, number: num, url });
+        episodes.push({ id: `${slug}-${num}`, number: num, url: `/ver/${epSlug}/${num}` });
       }
     }
     return episodes.sort((a, b) => a.number - b.number);
@@ -237,19 +242,56 @@ export class HtmlParser {
   }
 
   parseEpisodeServers(html: string): VideoServer[] {
-    const servers: VideoServer[] = [];
-    const serverRegex = /<iframe[^>]*src="([^"]*)"[^>]*data-language="([^"]*)"[^>]*>/gi;
-    let match: RegExpExecArray | null;
-    let id = 0;
-    while ((match = serverRegex.exec(html)) !== null) {
-      id++;
-      servers.push({
-        id: String(id),
-        title: `Server ${id}`,
-        url: match[1],
-        language: match[2] || 'sub',
-      });
+    const languageMap: Record<string, string> = {
+      SUB: 'sub',
+      LAT: 'latino',
+      ESP: 'castellano',
+    };
+
+    const scripts = html.matchAll(/<script[^>]*>(.*?)<\/script>/gs);
+    for (const match of scripts) {
+      const text = match[1];
+      if (!text || !text.includes('self.__next_f.push')) continue;
+
+      const s = text.indexOf('([');
+      const e = text.lastIndexOf('])');
+      if (s === -1 || e === -1 || e <= s) continue;
+
+      try {
+        const slice = text.slice(s + 1, e + 1);
+        const arr = JSON.parse(slice);
+        if (!Array.isArray(arr) || typeof arr[1] !== 'string') continue;
+        const payload = arr[1];
+        if (!payload.includes('"players":')) continue;
+
+        const playersJson = ParserUtils.extractJson(payload, '"players":', '[', ']');
+        if (!playersJson) continue;
+
+        const players = JSON.parse(playersJson) as Array<{
+          id: number;
+          server_name: string;
+          bridge_url: string;
+          language?: string;
+        }>;
+
+        if (!Array.isArray(players)) continue;
+
+        const deltaServers = players.filter(
+          (p) => p.server_name === 'Delta',
+        );
+        const targetServers = deltaServers.length > 0 ? deltaServers : players;
+
+        return targetServers.map((p, idx) => ({
+          id: String(p.id ?? idx + 1),
+          title: p.server_name ?? `Server ${idx + 1}`,
+          url: p.bridge_url ?? '',
+          language: languageMap[p.language ?? ''] ?? 'sub',
+        }));
+      } catch {
+        continue;
+      }
     }
-    return servers;
+
+    return [];
   }
 }

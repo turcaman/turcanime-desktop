@@ -23,26 +23,27 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
   return (
     <button
       onClick={onPress}
-      className="flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-lg overflow-hidden"
+      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl overflow-hidden"
       style={{ width }}
     >
       <div
-        className="relative bg-neutral-800 rounded-lg overflow-hidden mb-1.5"
+        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-2.5 shadow-lg shadow-black/20 group-hover:shadow-purple-500/10 group-hover:shadow-xl transition-all duration-300"
         style={{ height }}
       >
         <img
           src={image}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-black/0 group-hover:from-black/10 transition-colors duration-300" />
         {episodeNumber !== undefined && (
-          <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 rounded text-[10px] text-neutral-200 font-medium">
+          <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 backdrop-blur-sm rounded-md text-[11px] text-neutral-200 font-medium shadow-sm">
             Ep. {episodeNumber}
           </div>
         )}
       </div>
-      <p className="text-xs text-neutral-300 line-clamp-2 leading-tight">
+      <p className="text-sm text-neutral-300 group-hover:text-neutral-100 line-clamp-2 leading-snug transition-colors duration-200">
         {title}
       </p>
     </button>

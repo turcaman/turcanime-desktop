@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, net } from 'electron';
 import { hiddenSession } from './sessionHidden';
 import ElectronStore from 'electron-store';
 import { logger } from './logger';
@@ -61,5 +61,22 @@ export function registerIpcHandlers(): void {
     logger.debug('IPC', `fetch:request ${url.slice(0, 80)}`);
     const result = await hiddenSession.fetchInPage(url, options);
     return result;
+  });
+
+  ipcMain.handle('fetch:bridge', async (_event, url: string, headers: Record<string, string>) => {
+    logger.debug('IPC', `fetch:bridge ${url.slice(0, 80)}`);
+    try {
+      logger.debug('IPC', `fetch:bridge headers: ${JSON.stringify(headers)}`);
+      const response = await net.fetch(url, { method: 'GET', headers });
+      const data = await response.text();
+      logger.debug('IPC', `fetch:bridge ${url.slice(0, 60)} -> ${response.status} (${data.length} bytes)`);
+      if (!response.ok) {
+        logger.warn('IPC', `fetch:bridge response body (first 500): ${data.slice(0, 500)}`);
+      }
+      return { ok: response.ok, status: response.status, data };
+    } catch (err) {
+      logger.error('IPC', `fetch:bridge failed: ${url.slice(0, 60)}: ${err}`);
+      return { ok: false, status: 0, data: null, error: String(err) };
+    }
   });
 }

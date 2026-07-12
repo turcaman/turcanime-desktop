@@ -1,6 +1,6 @@
 import { SOURCE_CONFIG } from '../config/source';
 import { sessionManager } from './session';
-import { HtmlParser, ParserUtils } from './parsers';
+import { HtmlParser, ParserUtils, cleanTitle } from './parsers';
 import { extractBest } from './extractors';
 import { logger } from '../utils/logger';
 import type { Anime, AnimeDetail, AutocompleteAnime, Episode, HomeData, VideoServer } from '../../types';
@@ -93,7 +93,7 @@ export const source = {
     const parser = new HtmlParser();
 
     const meta = parser.extractMetaTags(html);
-    const title = ParserUtils.sanitizeTitle(meta.title || parser.extractTitleFromHtml(html));
+    const title = cleanTitle(ParserUtils.sanitizeTitle(meta.title || parser.extractTitleFromHtml(html)));
     const image = meta.image || '';
     const status = parser.extractStatusFromHtml(html);
     const synopsis = parser.extractSynopsisFromDom(html) || parser.extractSynopsisFromJsonLd(html) || '';
@@ -132,13 +132,68 @@ export const source = {
   },
 
   async getEpisodeServers(slug: string, number: number): Promise<VideoServer[]> {
-    const res = await fetchWithSession(`/anime/${slug}/${number}`);
+    const res = await fetchWithSession(`/ver/${slug}/${number}`);
     const html = res.data;
     const parser = new HtmlParser();
     return parser.parseEpisodeServers(html);
   },
 
   async resolveStreamUrl(videoUrl: string): Promise<{ url: string; headers?: Record<string, string> }> {
-    return extractBest(videoUrl);
+    await sessionManager.waitForCookies();
+    const session = await sessionManager.getSession();
+    const ua = session?.userAgent ?? '';
+    const cookies = session?.cookies ?? '';
+
+    logger.info('Source', `resolveStreamUrl: fetching bridge ${videoUrl.slice(0, 80)}`);
+
+    const res = await (window as any).electronAPI.bridgeFetch(videoUrl, {
+      'Referer': `${SOURCE_CONFIG.baseUrl}/`,
+      'User-Agent': ua,
+      'Cookie': cookies,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'same-origin',
+      'Sec-Fetch-User': '?1',
+    });
+
+    logger.info('Source', `resolveStreamUrl: bridge fetch -> status ${res.status}, ok=${res.ok}, dataLen=${res.data?.length ?? 0}`);
+
+    if (!res.ok) {
+      logger.error('Source', `resolveStreamUrl: bridge fetch failed: ${res.error ?? 'unknown error'}`);
+      throw { type: 'NETWORK_ERROR', message: `Bridge page HTTP ${res.status}` };
+    }
+
+    if (!res.data || res.data.length < 10) {
+      logger.error('Source', `resolveStreamUrl: bridge response too short: ${res.data?.length ?? 0} bytes`);
+      throw { type: 'NETWORK_ERROR', message: 'Bridge page response too short' };
+    }
+
+    const html = res.data;
+    const m = html.match(/<iframe[^>]*src="([^"]+)"[^>]*>/);
+    if (!m) {
+      logger.error('Source', `resolveStreamUrl: no iframe found in bridge HTML (first 300 chars: ${html.slice(0, 300)})`);
+      throw { type: 'NETWORK_ERROR', message: 'No iframe found in bridge page' };
+    }
+
+    const iframeUrl = m[1];
+    logger.info('Source', `resolveStreamUrl: iframe URL: ${iframeUrl.slice(0, 100)}`);
+
+    if (iframeUrl.includes('/e/')) {
+      logger.info('Source', 'resolveStreamUrl: /e/ detected, calling extractBest');
+      const result = await extractBest(iframeUrl, { userAgent: ua });
+      if (result) {
+        logger.info('Source', `resolveStreamUrl: extractBest OK: ${result.url.slice(0, 80)}`);
+        return result;
+      }
+      logger.warn('Source', 'resolveStreamUrl: extractBest returned null, falling back to iframe URL');
+    } else {
+      logger.info('Source', 'resolveStreamUrl: no /e/ in iframe, returning iframe URL directly');
+    }
+
+    return { url: iframeUrl };
   },
 };

@@ -18,7 +18,15 @@ function calcCardWidth(containerWidth: number): number {
   return Math.floor((availableWidth - totalGaps) / CARD_COLUMNS);
 }
 
-export const SearchPage: React.FC = () => {
+interface SearchPageProps {
+  onAnimePress?: (anime: Anime) => void;
+  onNavigateDetail?: (anime: Anime) => void;
+}
+
+export const SearchPage: React.FC<SearchPageProps> = ({
+  onAnimePress: externalAnimePress,
+  onNavigateDetail: externalNavigateDetail,
+}) => {
   const {
     term,
     status,
@@ -52,11 +60,15 @@ export const SearchPage: React.FC = () => {
   }, []);
 
   const handleAnimePress = (anime: Anime) => {
-    console.log('[SearchPage] Navigate to anime:', anime.url);
+    externalAnimePress?.(anime);
+    externalNavigateDetail?.(anime);
   };
 
   const handleSuggestionSelect = (item: AutocompleteAnime) => {
     handleSelectSuggestion(item);
+    if (externalNavigateDetail) {
+      externalNavigateDetail({ title: item.name, image: item.poster, url: item.slug, status: '' });
+    }
   };
 
   const ContentArea: React.FC = () => {
