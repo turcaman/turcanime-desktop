@@ -7,29 +7,17 @@ import type { AnimeDetail, Episode, EpisodeRange, VideoServer } from '../../type
 
 const EPISODES_PER_PAGE = 50;
 
-function computeEpisodePagination(
-  episodes: Episode[],
-  order: 'asc' | 'desc',
-): { ranges: EpisodeRange[]; episodesInOrder: Episode[] } {
-  const sorted = [...episodes].sort((a, b) =>
-    order === 'asc' ? a.number - b.number : b.number - a.number,
-  );
-  const ranges: EpisodeRange[] = [];
-  if (episodes.length === 0) return { ranges, episodesInOrder: sorted };
-
-  const total = episodes.length;
-  const numRanges = Math.ceil(total / EPISODES_PER_PAGE);
-  for (let i = 0; i < numRanges; i++) {
-    const start = i * EPISODES_PER_PAGE + 1;
-    const end = Math.min((i + 1) * EPISODES_PER_PAGE, total);
-    ranges.push({
-      label: `${episodes[start - 1].number}-${episodes[end - 1].number}`,
-      start: episodes[start - 1].number,
-      end: episodes[end - 1].number,
-    });
+function buildRanges(episodes: Episode[]): EpisodeRange[] {
+  if (episodes.length === 0) return [];
+  const last = episodes[episodes.length - 1];
+  if (episodes.length <= EPISODES_PER_PAGE) {
+    return [{ label: `1-${last!.number}`, start: 0, end: episodes.length }];
   }
-
-  return { ranges, episodesInOrder: sorted };
+  return Array.from({ length: Math.ceil(episodes.length / EPISODES_PER_PAGE) }, (_, i) => {
+    const start = i * EPISODES_PER_PAGE;
+    const end = Math.min(start + EPISODES_PER_PAGE, episodes.length);
+    return { label: `${episodes[start]!.number}-${episodes[end - 1]!.number}`, start, end };
+  });
 }
 
 export function useAnimeDetail(slug: string) {
@@ -56,22 +44,19 @@ export function useAnimeDetail(slug: string) {
     fetchDetails(slug);
   }, [slug, fetchDetails]);
 
-  const { ranges, episodesInOrder } = useMemo(
-    () => computeEpisodePagination(
-      activeAnime?.episodes ?? [],
-      ascending ? 'asc' : 'desc',
-    ),
-    [activeAnime?.episodes, ascending],
-  );
+  const sortedEpisodes = useMemo(() => {
+    const eps = activeAnime?.episodes ?? [];
+    return [...eps].sort((a, b) => a.number - b.number);
+  }, [activeAnime?.episodes]);
+
+  const ranges = useMemo(() => buildRanges(sortedEpisodes), [sortedEpisodes]);
 
   const visibleEpisodes = useMemo(() => {
-    if (ranges.length === 0) return episodesInOrder;
     const range = ranges[activeRangeIdx];
-    if (!range) return episodesInOrder;
-    return episodesInOrder.filter(
-      (ep) => ep.number >= range.start && ep.number <= range.end,
-    );
-  }, [episodesInOrder, ranges, activeRangeIdx]);
+    if (!range) return ascending ? sortedEpisodes : [...sortedEpisodes].reverse();
+    const slice = sortedEpisodes.slice(range.start, range.end);
+    return ascending ? slice : [...slice].reverse();
+  }, [sortedEpisodes, ranges, activeRangeIdx, ascending]);
 
   const handleEpisodePress = useCallback(
     async (episode: Episode) => {
@@ -79,7 +64,7 @@ export function useAnimeDetail(slug: string) {
       await addToHistory({
         title: activeAnime?.title ?? '',
         image: activeAnime?.image ?? '',
-        url: `${slug}/${episode.number}`,
+        url: slug,
         number: episode.number,
         progress: 0,
         duration: 0,

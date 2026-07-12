@@ -94,7 +94,7 @@ export function usePlayer(
   useEffect(() => {
     if (!videoRef.current) return;
     const historyItem = lastViewed.find(
-      (item) => item.url === `${slug}/${episodeNumber}`,
+      (item) => item.url === slug && item.number === episodeNumber,
     );
     if (historyItem && historyItem.progress > 0) {
       videoRef.current.currentTime = historyItem.progress;
@@ -123,7 +123,7 @@ export function usePlayer(
         addToHistory({
           title: anime?.title ?? '',
           image: anime?.image ?? '',
-          url: `${slug}/${episodeNumber}`,
+          url: slug,
           number: episodeNumber,
           progress: ct,
           duration: dur,
@@ -138,7 +138,7 @@ export function usePlayer(
         addToHistory({
           title: anime?.title ?? '',
           image: anime?.image ?? '',
-          url: `${slug}/${episodeNumber}`,
+          url: slug,
           number: episodeNumber,
           progress: videoRef.current.currentTime,
           duration: videoRef.current.duration || 0,

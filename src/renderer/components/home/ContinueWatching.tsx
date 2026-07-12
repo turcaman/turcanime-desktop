@@ -16,39 +16,41 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
   return (
     <div className="select-none">
       <SectionTitle label="Continuar viendo" />
-      <div className="flex gap-3 px-6 overflow-x-auto pb-2 scrollbar-none">
+      <div className="flex gap-3 px-6 overflow-x-auto pb-4 scrollbar-none">
         {items.map((item) => {
           const progress =
-            item.duration > 0
-              ? Math.min(item.progress / item.duration, 1)
+            item.duration && item.duration > 0
+              ? Math.min((item.progress ?? 0) / item.duration, 1)
               : 0;
 
           return (
             <button
               key={item.url}
               onClick={() => onItemPress?.(item)}
-              className="flex-shrink-0 w-36 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-lg overflow-hidden"
+              className="flex-shrink-0 w-[110px] text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
-              <div className="relative bg-neutral-800 rounded-lg overflow-hidden mb-1.5 h-28">
+              <div className="relative w-full" style={{ aspectRatio: '110/165' }}>
                 <img
                   src={item.image}
                   alt={item.title}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-700">
-                  <div
-                    className="h-full bg-purple-500 transition-all"
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                </div>
-                <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-black/80 rounded text-[10px] text-neutral-200 font-medium">
-                  Ep. {item.number}
+                <div className="absolute bottom-0 left-0 right-0 bg-neutral-950/80 px-2 pb-2 pt-1.5">
+                  <p className="text-[11px] font-semibold text-neutral-400 mb-0.5 leading-tight">
+                    Ep. {item.number}
+                  </p>
+                  <p className="text-sm font-bold text-white leading-tight truncate">
+                    {item.title}
+                  </p>
+                  <div className="h-0.5 bg-neutral-800 mt-1 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full transition-all"
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-neutral-300 line-clamp-2 leading-tight">
-                {item.title}
-              </p>
             </button>
           );
         })}

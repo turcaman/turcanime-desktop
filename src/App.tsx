@@ -49,10 +49,9 @@ const App: React.FC = () => {
     setNav({ screen: 'detail', slug: anime.url });
   }, []);
 
-  const handleHistoryPress = useCallback((item: { url: string; number: number }) => {
-    const slug = item.url.split('/')[0];
-    if (slug) {
-      setNav({ screen: 'player', slug, episodeNumber: item.number });
+  const handleHistoryPress = useCallback((item: { url: string }) => {
+    if (item.url) {
+      setNav({ screen: 'detail', slug: item.url });
     }
   }, []);
 
