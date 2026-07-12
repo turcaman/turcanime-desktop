@@ -1,4 +1,5 @@
 import React from 'react';
+import { Film } from 'lucide-react';
 import { SOURCE_CONFIG } from '../../config/source';
 import type { AutocompleteAnime } from '../../../types';
 
@@ -41,9 +42,7 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-neutral-600">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-                  </svg>
+                  <Film className="w-4 h-4" />
                 </div>
               )}
             </div>

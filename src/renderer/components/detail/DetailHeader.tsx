@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
+import { ChevronUp } from 'lucide-react';
+import { ImageWithLoader } from '../ui/ImageWithLoader';
 import type { AnimeDetail } from '../../../types';
 
 interface DetailHeaderProps {
   anime: AnimeDetail;
   isAscending: boolean;
   onToggleSort: () => void;
+  onRelatedPress?: (slug: string) => void;
 }
 
 export const DetailHeader: React.FC<DetailHeaderProps> = ({
   anime,
   isAscending,
   onToggleSort,
+  onRelatedPress,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const banner = anime.banner || anime.image;
@@ -23,13 +27,14 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         style={{ height: '38vh', minHeight: 260 }}
       >
         {banner && (
-          <img
+          <ImageWithLoader
             src={banner}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-2 mb-2">
@@ -67,21 +72,23 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
             <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
               Sinopsis
             </h3>
-            <p
-              className={`text-sm text-neutral-300 leading-relaxed ${
-                !expanded && hasLongSynopsis ? 'line-clamp-3' : ''
-              }`}
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-left w-full"
             >
-              {anime.synopsis}
-            </p>
-            {hasLongSynopsis && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="text-xs text-purple-400 hover:text-purple-300 mt-1 transition-colors"
+              <p
+                className={`text-sm text-neutral-300 leading-relaxed ${
+                  !expanded && hasLongSynopsis ? 'line-clamp-3' : ''
+                }`}
               >
-                {expanded ? 'Mostrar menos' : 'Leer más'}
-              </button>
-            )}
+                {anime.synopsis}
+              </p>
+              {hasLongSynopsis && (
+                <span className="text-xs text-purple-400 hover:text-purple-300 mt-1 transition-colors block">
+                  {expanded ? 'Mostrar menos' : 'Leer más'}
+                </span>
+              )}
+            </button>
           </div>
         )}
 
@@ -96,9 +103,10 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                 ...anime.relations.sequel.map((r) => ({ ...r, _label: 'Secuela' as const })),
                 ...anime.relations.related.map((r) => ({ ...r, _label: null as string | null })),
               ].map((r) => (
-                <div
+                <button
                   key={r.slug}
-                  className="flex-shrink-0 w-24"
+                  onClick={() => onRelatedPress?.(r.slug)}
+                  className="flex-shrink-0 w-24 text-left"
                 >
                   <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1">
                     {r.poster && (
@@ -118,7 +126,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                   <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight">
                     {r.name}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -133,15 +141,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
           onClick={onToggleSort}
           className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors"
         >
-          <svg
-            className={`w-3.5 h-3.5 transition-transform ${isAscending ? '' : 'rotate-180'}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          </svg>
+          <ChevronUp className={`w-3.5 h-3.5 transition-transform ${isAscending ? '' : 'rotate-180'}`} />
           {isAscending ? 'Ascendente' : 'Descendente'}
         </button>
       </div>
