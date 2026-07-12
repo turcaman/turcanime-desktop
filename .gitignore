@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# pre-indexed knowledge graph
+.codegraph
