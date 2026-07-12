@@ -1,39 +1,48 @@
 import React from 'react';
 import { Skeleton } from '../ui/Skeleton';
+import { SectionTitle } from '../ui/SectionTitle';
+import { calcColumns, LAYOUT_CONFIG } from '../../config/layout';
 
 interface HomeSkeletonProps {
   cardWidth: number;
+  containerWidth: number;
 }
 
-export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth }) => {
+export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, containerWidth }) => {
+  const columns = calcColumns(containerWidth);
+
   return (
-    <div className="p-6 select-none">
-      {/* Continue Watching skeleton */}
-      <Skeleton className="h-5 w-40 mb-4" />
-      <div className="flex gap-3 mb-8">
-        {[0, 1].map((i) => (
-          <div key={i} className="flex-shrink-0" style={{ width: 144 }}>
-            <Skeleton className="rounded-lg mb-1.5" style={{ height: 112 }} />
+    <div className="select-none">
+      <SectionTitle label="Continuar viendo" />
+      <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex-shrink-0" style={{ width: Math.round(cardWidth * 0.6) }}>
+            <Skeleton className="rounded-lg mb-1.5" style={{ height: Math.round(cardWidth * 0.6 * 1.5) }} />
             <Skeleton className="h-3 w-full rounded" />
           </div>
         ))}
       </div>
 
-      {/* Grid skeleton */}
-      <Skeleton className="h-5 w-36 mb-4" />
-      {[0, 1, 2].map((row) => (
-        <div key={row} className="flex gap-3 mb-3">
-          {[0, 1, 2].map((col) => (
-            <div key={col} style={{ width: cardWidth }}>
+      <SectionTitle label="&nbsp;" />
+      <div className="px-5">
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${columns}, ${cardWidth}px)`,
+            gap: `${LAYOUT_CONFIG.cardGap}px`,
+          }}
+        >
+          {Array.from({ length: columns * 3 }).map((_, idx) => (
+            <div key={idx} className="flex flex-col gap-2">
               <Skeleton
-                className="rounded-lg mb-1.5"
-                style={{ height: cardWidth * 1.4 }}
+                className="rounded-lg"
+                style={{ width: cardWidth, height: cardWidth * 1.4 }}
               />
-              <Skeleton className="h-3 w-full rounded" />
+              <Skeleton className="h-3 w-4/5 rounded" />
             </div>
           ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 };

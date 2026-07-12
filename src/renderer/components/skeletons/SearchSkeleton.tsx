@@ -1,36 +1,37 @@
 import React from 'react';
 import { Skeleton } from '../ui/Skeleton';
+import { calcColumns, LAYOUT_CONFIG } from '../../config/layout';
 
 interface SearchSkeletonProps {
   cardWidth: number;
+  containerWidth: number;
   rows?: number;
 }
 
 export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
   cardWidth,
+  containerWidth,
   rows = 5,
 }) => {
-  const cardHeight = cardWidth * 1.4;
-  const widths = [85, 75, 65, 80, 70, 60, 75, 65, 55, 70, 60, 50, 65, 55, 45];
-  const items = Array.from({ length: rows * 3 });
+  const columns = calcColumns(containerWidth);
 
   return (
     <div className="px-6 pt-4">
       <div
         className="grid"
         style={{
-          gridTemplateColumns: `repeat(3, ${cardWidth}px)`,
-          gap: '12px',
+          gridTemplateColumns: `repeat(${columns}, ${cardWidth}px)`,
+          gap: `${LAYOUT_CONFIG.cardGap}px`,
+          justifyContent: 'center',
         }}
       >
-        {items.map((_, idx) => (
+        {Array.from({ length: rows * columns }).map((_, idx) => (
           <div key={idx} className="flex flex-col gap-2">
             <Skeleton
               className="rounded-lg"
-              style={{ width: cardWidth, height: cardHeight }}
+              style={{ width: cardWidth, height: cardWidth * 1.4 }}
             />
-            <Skeleton className="h-3 rounded" style={{ width: `${widths[idx * 2 % widths.length]}%` }} />
-            <Skeleton className="h-2 rounded" style={{ width: `${widths[(idx * 2 + 1) % widths.length]}%` }} />
+            <Skeleton className="h-3 w-4/5 rounded" />
           </div>
         ))}
       </div>
