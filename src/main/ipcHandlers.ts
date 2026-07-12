@@ -63,6 +63,27 @@ export function registerIpcHandlers(): void {
     return result;
   });
 
+  ipcMain.handle('fetch:proxy', async (_event, url: string, opts: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }) => {
+    logger.debug('IPC', `fetch:proxy ${url.slice(0, 80)}`);
+    try {
+      const method = opts?.method ?? 'GET';
+      const headers = opts?.headers ?? {};
+      const body = opts?.body;
+      const response = await net.fetch(url, { method, headers, body });
+      if (opts?.json) {
+        const data = await response.json();
+        logger.debug('IPC', `fetch:proxy ${url.slice(0, 60)} -> ${response.status} (JSON)`);
+        return { ok: response.ok, status: response.status, data };
+      }
+      const data = await response.text();
+      logger.debug('IPC', `fetch:proxy ${url.slice(0, 60)} -> ${response.status} (${data.length} bytes)`);
+      return { ok: response.ok, status: response.status, data };
+    } catch (err) {
+      logger.error('IPC', `fetch:proxy failed: ${url.slice(0, 60)}: ${err}`);
+      return { ok: false, status: 0, data: null, error: String(err) };
+    }
+  });
+
   ipcMain.handle('fetch:bridge', async (_event, url: string, headers: Record<string, string>) => {
     logger.debug('IPC', `fetch:bridge ${url.slice(0, 80)}`);
     try {

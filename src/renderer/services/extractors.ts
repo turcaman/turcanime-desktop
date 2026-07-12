@@ -110,6 +110,19 @@ function bestStream(streams: HlsStream[]): HlsStream | null {
   });
 }
 
+interface ProxyFetchResult {
+  ok: boolean;
+  status: number;
+  data: unknown;
+  json: boolean;
+}
+
+async function proxyFetch(url: string, opts?: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }): Promise<ProxyFetchResult> {
+  logger.debug('Extractors', `proxyFetch: ${url.slice(0, 80)}`);
+  const result = await (window as any).electronAPI.proxyFetch(url, opts);
+  return result as ProxyFetchResult;
+}
+
 export async function extractBest(
   iframeUrl: string,
   options?: { signal?: AbortSignal; userAgent?: string },
@@ -119,18 +132,20 @@ export async function extractBest(
   const id = u.pathname.split('/').filter(Boolean).pop();
   if (id == null) return null;
 
-  const fetchHeaders: Record<string, string> = {
-    'User-Agent': options?.userAgent ?? '',
-    Accept: 'application/json',
-  };
+  const ua = options?.userAgent ?? '';
 
   const apiUrl = `https://${host}/api/videos/${id}`;
-  const raw = await fetch(apiUrl, { headers: fetchHeaders, signal: options?.signal });
+  logger.info('Extractors', `Fetching Byse API: ${apiUrl}`);
+
+  const raw = await proxyFetch(apiUrl, {
+    headers: { 'User-Agent': ua, Accept: 'application/json' },
+    json: true,
+  });
   if (!raw.ok) {
     throw new Error(`Byse API HTTP ${raw.status}`);
   }
 
-  const videoData: { playback?: PlaybackData } = await raw.json();
+  const videoData = raw.data as { playback?: PlaybackData };
   if (videoData.playback == null) {
     throw new Error('No playback data from Byse API');
   }
@@ -147,22 +162,19 @@ export async function extractBest(
     throw new Error('No sources in decrypted Byse data');
   }
 
-  const ua = options?.userAgent ?? '';
-
   const allStreams: HlsStream[] = [];
   for (const src of decrypted.sources) {
     const su = src.url ?? src.file;
     if (su == null || su.length === 0) continue;
 
-    const hlsBody = await fetch(su, {
+    const hlsRes = await proxyFetch(su, {
       headers: { 'User-Agent': ua, Referer: `https://${host}/`, Accept: '*/*' },
-      signal: options?.signal,
-    }).then((r) => {
-      if (!r.ok) throw new Error(`Master playlist HTTP ${r.status}: ${su}`);
-      return r.text();
     });
+    if (!hlsRes.ok) {
+      throw new Error(`Master playlist HTTP ${hlsRes.status}: ${su}`);
+    }
 
-    allStreams.push(...parseMaster(hlsBody, su));
+    allStreams.push(...parseMaster(hlsRes.data as string, su));
   }
 
   const best = bestStream(allStreams);

@@ -24,6 +24,7 @@ export function usePlayer(
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < episodes.length - 1;
 
+  // Restore progress from history
   useEffect(() => {
     if (!videoRef.current) return;
     const historyItem = lastViewed.find(
@@ -34,14 +35,21 @@ export function usePlayer(
     }
   }, [slug, episodeNumber, lastViewed, videoRef]);
 
+  // Native HLS playback via Chromium's FFmpeg + autoplay
   useEffect(() => {
-    if (streamUrl && videoRef.current) {
-      videoRef.current.src = streamUrl;
-      videoRef.current.load();
-      setLoaded(true);
-    }
+    if (!streamUrl || !videoRef.current) return;
+
+    const video = videoRef.current;
+    video.src = streamUrl;
+    video.load();
+    setLoaded(true);
+
+    video.play().then(() => setPlaying(true)).catch(() => {
+      // Autoplay blocked by browser, user must press play manually
+    });
   }, [streamUrl, videoRef]);
 
+  // Progress tracking
   useEffect(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
     progressTimer.current = setInterval(() => {

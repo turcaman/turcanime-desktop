@@ -37,4 +37,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     console.log(`[Preload] bridgeFetch: ${url.slice(0, 60)}...`);
     return ipcRenderer.invoke('fetch:bridge', url, headers);
   },
+  proxyFetch: (url: string, opts?: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }) => {
+    console.log(`[Preload] proxyFetch: ${url.slice(0, 60)}...`);
+    return ipcRenderer.invoke('fetch:proxy', url, opts);
+  },
 });
