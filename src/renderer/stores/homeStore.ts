@@ -13,7 +13,7 @@ interface HomeState {
   isHomeLoading: boolean;
   isRefreshing: boolean;
   error: AppError | null;
-  fetchHome: (force?: boolean) => Promise<void>;
+  fetchHome: (force?: boolean, retryCount?: number) => Promise<void>;
   prepareRefresh: () => void;
   reset: () => void;
 }
@@ -24,7 +24,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   isRefreshing: false,
   error: null,
 
-  fetchHome: async (force) => {
+  fetchHome: async (force, retryCount = 0) => {
     if (homeController) {
       homeController.abort();
     }
@@ -34,7 +34,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
     const result = await withCache(
       CACHE_PREFIXES.HOME,
-      async (signal) => {
+      async () => {
         const data = await source.getHomeData();
         return data;
       },
@@ -42,42 +42,19 @@ export const useHomeStore = create<HomeState>((set, get) => ({
     );
 
     if (result.error) {
-      if (result.error.type === 'AUTH_ERROR') {
-        logger.info('homeStore', 'Auth error, refreshing session...');
-        const session = await sessionManager.refreshSession();
-        // Only retry if we actually got cookies
-        if (session.cookies.length > 0) {
-          await new Promise((r) => setTimeout(r, 500));
-          const retry = await withCache(
-            CACHE_PREFIXES.HOME,
-            async () => source.getHomeData(),
-            { force: true },
-          );
-          if (retry.error) {
-            set({ error: retry.error, isHomeLoading: false, isRefreshing: false });
-            return;
-          }
-          set({ homeData: retry.data ?? { recent: [] }, isHomeLoading: false, isRefreshing: false });
-          return;
-        }
-        logger.warn('homeStore', 'Session refresh returned no cookies, will wait');
-        // If still no cookies, wait for cookies properly (blocks until available or timeout)
-        const hasCookies = await sessionManager.waitForCookies();
-        if (hasCookies) {
-          const retry = await withCache(
-            CACHE_PREFIXES.HOME,
-            async () => source.getHomeData(),
-            { force: true },
-          );
-          if (retry.error) {
-            set({ error: retry.error, isHomeLoading: false, isRefreshing: false });
-            return;
-          }
-          set({ homeData: retry.data ?? { recent: [] }, isHomeLoading: false, isRefreshing: false });
-          return;
-        }
-        set({ error: { type: 'AUTH_ERROR', message: 'No se pudo obtener sesión después de esperar' }, isHomeLoading: false, isRefreshing: false });
-        return;
+      const isAuth = result.error.type === 'AUTH_ERROR';
+      if (isAuth && retryCount < 3) {
+        const backoff = Math.min(1000 * Math.pow(2, retryCount), 8000);
+        logger.info('homeStore', `Auth error (attempt ${retryCount + 1}/3), refreshing session...`);
+        await sessionManager.refreshSession();
+        await new Promise((r) => setTimeout(r, backoff));
+        return get().fetchHome(true, retryCount + 1);
+      }
+      if (retryCount < 2 && !isAuth) {
+        const backoff = Math.min(1000 * Math.pow(2, retryCount), 4000);
+        logger.info('homeStore', `Retry ${retryCount + 1}/3 after ${backoff}ms`);
+        await new Promise((r) => setTimeout(r, backoff));
+        return get().fetchHome(true, retryCount + 1);
       }
       set({ error: result.error, isHomeLoading: false, isRefreshing: false });
       return;

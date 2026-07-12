@@ -1,6 +1,6 @@
 import { storage } from './storage';
 import { logger } from './logger';
-import { LIMITS } from '../../config/cache';
+import { CACHE_PREFIXES, LIMITS } from '../../config/cache';
 import type { CacheEntry, AppError, AppErrorType } from '../../types';
 
 const DEFAULT_TTL = 6 * 60 * 60 * 1000;
@@ -54,5 +54,20 @@ export async function withCache<T>(
       message: err instanceof Error ? err.message : String(err),
     };
     return { data: null, error: appError, fromCache: false };
+  }
+}
+
+const CACHE_PREFIX_VALUES = Object.values(CACHE_PREFIXES);
+
+export async function clearAllCache(): Promise<void> {
+  try {
+    const allKeys = Object.keys(await (window as any).electronAPI.store.get('__all_keys__') ?? {});
+    for (const key of allKeys) {
+      if (CACHE_PREFIX_VALUES.some((prefix) => key.startsWith(prefix))) {
+        await storage.remove(key);
+      }
+    }
+  } catch (err) {
+    logger.warn('Cache', 'Failed to clear all cache entries', err);
   }
 }

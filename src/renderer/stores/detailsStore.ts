@@ -12,16 +12,16 @@ interface DetailsState {
   activeAnime: AnimeDetail | null;
   isDetailsLoading: boolean;
   error: AppError | null;
-  fetchDetails: (slug: string) => Promise<void>;
+  fetchDetails: (slug: string, retryCount?: number) => Promise<void>;
   reset: () => void;
 }
 
-export const useDetailsStore = create<DetailsState>((set) => ({
+export const useDetailsStore = create<DetailsState>((set, get) => ({
   activeAnime: null,
   isDetailsLoading: false,
   error: null,
 
-  fetchDetails: async (slug) => {
+  fetchDetails: async (slug, retryCount = 0) => {
     if (detailsController) {
       detailsController.abort();
     }
@@ -39,20 +39,19 @@ export const useDetailsStore = create<DetailsState>((set) => ({
     );
 
     if (result.error) {
-      if (result.error.type === 'AUTH_ERROR') {
-        logger.info('detailsStore', 'Auth error, refreshing session');
+      const isAuth = result.error.type === 'AUTH_ERROR';
+      if (isAuth && retryCount < 3) {
+        const backoff = Math.min(1000 * Math.pow(2, retryCount), 8000);
+        logger.info('detailsStore', `Auth error (attempt ${retryCount + 1}/3), refreshing session`);
         await sessionManager.refreshSession();
-        const retry = await withCache(
-          `${CACHE_PREFIXES.ANIME}_${slug}`,
-          async () => source.getDetails(slug),
-          { force: true },
-        );
-        if (retry.error) {
-          set({ error: retry.error, isDetailsLoading: false });
-          return;
-        }
-        set({ activeAnime: retry.data, isDetailsLoading: false });
-        return;
+        await new Promise((r) => setTimeout(r, backoff));
+        return get().fetchDetails(slug, retryCount + 1);
+      }
+      if (retryCount < 2 && !isAuth) {
+        const backoff = Math.min(1000 * Math.pow(2, retryCount), 4000);
+        logger.info('detailsStore', `Retry ${retryCount + 1}/3 after ${backoff}ms`);
+        await new Promise((r) => setTimeout(r, backoff));
+        return get().fetchDetails(slug, retryCount + 1);
       }
       set({ error: result.error, isDetailsLoading: false });
       return;

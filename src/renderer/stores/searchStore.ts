@@ -15,14 +15,14 @@ interface SearchState {
   isSearchLoading: boolean;
   isSuggestionsLoading: boolean;
   error: AppError | null;
-  fetchSearch: (query: string, force?: boolean) => Promise<void>;
+  fetchSearch: (query: string, force?: boolean, retryCount?: number) => Promise<void>;
   fetchSuggestions: (query: string) => Promise<void>;
   cancelSearch: () => void;
   resetSearch: () => void;
   setSearchTerm: (term: string) => void;
 }
 
-export const useSearchStore = create<SearchState>((set) => ({
+export const useSearchStore = create<SearchState>((set, get) => ({
   searchAnimes: [],
   suggestions: [],
   lastSearchTerm: '',
@@ -30,7 +30,7 @@ export const useSearchStore = create<SearchState>((set) => ({
   isSuggestionsLoading: false,
   error: null,
 
-  fetchSearch: async (query, force) => {
+  fetchSearch: async (query, force, retryCount = 0) => {
     if (searchController) {
       searchController.abort();
     }
@@ -49,19 +49,17 @@ export const useSearchStore = create<SearchState>((set) => ({
     clearTimeout(timeout);
 
     if (result.error) {
-      if (result.error.type === 'AUTH_ERROR') {
+      const isAuth = result.error.type === 'AUTH_ERROR';
+      if (isAuth && retryCount < 3) {
+        const backoff = Math.min(1000 * Math.pow(2, retryCount), 8000);
         await sessionManager.refreshSession();
-        const retry = await withCache(
-          `${CACHE_PREFIXES.SEARCH}_${query}`,
-          async () => source.search(query),
-          { force: true },
-        );
-        if (retry.error) {
-          set({ error: retry.error, isSearchLoading: false });
-          return;
-        }
-        set({ searchAnimes: retry.data ?? [], isSearchLoading: false });
-        return;
+        await new Promise((r) => setTimeout(r, backoff));
+        return get().fetchSearch(query, true, retryCount + 1);
+      }
+      if (retryCount < 2 && !isAuth) {
+        const backoff = Math.min(1000 * Math.pow(2, retryCount), 4000);
+        await new Promise((r) => setTimeout(r, backoff));
+        return get().fetchSearch(query, true, retryCount + 1);
       }
       set({ error: result.error, isSearchLoading: false });
       return;

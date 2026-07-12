@@ -3,7 +3,7 @@ import { sessionManager } from './session';
 import { HtmlParser, ParserUtils, cleanTitle } from './parsers';
 import { extractBest } from './extractors';
 import { logger } from '../utils/logger';
-import type { Anime, AnimeDetail, AutocompleteAnime, Episode, HomeData, VideoServer } from '../../types';
+import type { Anime, AnimeDetail, AutocompleteAnime, HomeData, VideoServer } from '../../types';
 
 const RETRY_DELAY = 1_000;
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300';
@@ -105,10 +105,8 @@ export const source = {
     let relations = null;
 
     const scriptsResult = parser.parseAllFromScripts(html);
-    if (scriptsResult) {
-      if (scriptsResult.poster) banner = scriptsResult.poster;
-      relations = scriptsResult.relations;
-    }
+    if (scriptsResult.poster) banner = scriptsResult.poster;
+    relations = scriptsResult.relations;
 
     return {
       title,

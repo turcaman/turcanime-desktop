@@ -1,18 +1,20 @@
 import React, { useState, useCallback } from 'react';
 import { sessionManager } from '../services/session';
 import { useUIStore } from '../stores/uiStore';
+import { clearAllCache } from '../utils/cache';
 
 interface SettingsPageProps {
   onBack: () => void;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = () => {
   const isRefreshingSession = useUIStore((s) => s.isRefreshingSession);
   const setSessionRefreshing = useUIStore((s) => s.setSessionRefreshing);
   const [refreshed, setRefreshed] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     setSessionRefreshing(true);
+    await clearAllCache();
     await sessionManager.refreshSession();
     setSessionRefreshing(false);
     setRefreshed(true);

@@ -1,5 +1,6 @@
-import type { Anime, Episode, VideoServer } from '../../types';
+import type { Anime, AnimeRelations, Episode, VideoServer } from '../../types';
 import { SOURCE_CONFIG } from '../config/source';
+
 
 export function cleanTitle(title: string): string {
   return title
@@ -60,7 +61,6 @@ function createAnimeCard(url: string, image: string, title: string): Anime {
 
 const CARD_LINK_REGEX = /<a[^>]*class="group block"[^>]*href="\/anime\/([^"]+)"[^>]*>[\s\S]*?<img[^>]*(?:src|data-src)="([^"]*)"[\s\S]*?alt="([^"]*)"/g;
 
-const EPISODE_JSON_REGEX = /"episodes":(\[.*?\])/;
 const EPISODE_SCRIPT_REGEX = /<script[^>]*>[\s\S]*?window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});/;
 const EPISODE_HTML_REGEX = /<a[^>]*href="\/ver\/([^/]+)\/(\d+)"[^>]*>/gi;
 
@@ -79,10 +79,10 @@ export class HtmlParser {
   }
 
   parseEpisodes(html: string, slug: string): Episode[] {
-    const jsonStr = ParserUtils.extractJson(html, '"episodes":', '[', ']');
-    if (jsonStr) {
+    const rawJsonMatch = ParserUtils.extractJson(html, '"episodes":', '[', ']');
+    if (rawJsonMatch) {
       try {
-        const episodes = JSON.parse(jsonStr);
+        const episodes = JSON.parse(rawJsonMatch);
         return episodes.map((ep: Record<string, unknown>) => ({
           id: String(ep.id ?? ''),
           number: Number(ep.number ?? 0),
@@ -90,6 +90,26 @@ export class HtmlParser {
         }));
       } catch {
         // fall through
+      }
+    }
+
+    const scripts = html.matchAll(/<script[^>]*>(.*?)<\/script>/gs);
+    for (const match of scripts) {
+      const text = match[1];
+      if (!text) continue;
+      const unescaped = text.replace(/\\"/g, '"');
+      const scriptJsonMatch = ParserUtils.extractJson(unescaped, '"episodes":', '[', ']');
+      if (scriptJsonMatch) {
+        try {
+          const episodes = JSON.parse(scriptJsonMatch);
+          return episodes.map((ep: Record<string, unknown>) => ({
+            id: String(ep.id ?? ''),
+            number: Number(ep.number ?? 0),
+            url: String(ep.url ?? ''),
+          }));
+        } catch {
+          continue;
+        }
       }
     }
 
@@ -197,47 +217,127 @@ export class HtmlParser {
     return [];
   }
 
-  private collectRscText(html: string): string {
-    const scriptRegex = /<script[^>]*>[\s\S]*?self\.__next_f\.push\(\[[^,]*,\s*"([\s\S]*?)"\s*\]\)/g;
-    let match: RegExpExecArray | null;
-    const chunks: string[] = [];
-    while ((match = scriptRegex.exec(html)) !== null) {
-      chunks.push(match[1]);
+  private parseRscPayload(text: string): string {
+    const s = text.indexOf('([');
+    const e = text.lastIndexOf('])');
+    if (s === -1 || e === -1 || e <= s) return '';
+    try {
+      const slice = text.slice(s + 1, e + 1);
+      const a = JSON.parse(slice);
+      if (!Array.isArray(a) || typeof a[1] !== 'string') return '';
+      return a[1];
+    } catch {
+      return '';
     }
-    return chunks.join('');
-  }
-
-  parseAllFromScripts(html: string): { poster: string; synopsis: string | null; relations: import('../../types').AnimeRelations | null } | null {
-    const rscText = this.collectRscText(html);
-    if (!rscText) return null;
-
-    const poster = this.extractPosterRaw(rscText);
-    const relations = this.extractRelations(rscText);
-
-    return { poster, synopsis: null, relations };
   }
 
   extractPosterFromRsc(html: string): string {
-    return this.extractPosterRaw(this.collectRscText(html));
-  }
+    const scripts = html.matchAll(/<script[^>]*>(.*?)<\/script>/gs);
+    for (const match of scripts) {
+      const text = match[1];
+      if (!text || !text.includes('self.__next_f.push')) continue;
 
-  private extractPosterRaw(rsc: string): string {
-    const posterMatch = rsc.match(/"poster"\s*:\s*"([^"]+)"/);
-    if (posterMatch) {
-      const path = posterMatch[1];
-      if (path.startsWith('http')) return path;
-      if (path.startsWith('/')) return `https://image.tmdb.org/t/p/w300${path}`;
-    }
-    const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
-    const idx = rsc.indexOf(tmdbPattern);
-    if (idx !== -1) {
-      const end = rsc.indexOf('"', idx + tmdbPattern.length);
-      return end !== -1 ? rsc.slice(idx, end) : '';
+      const posterMatch = text.match(/"poster"\s*:\s*"([^"]+)"/);
+      if (posterMatch) {
+        const path = posterMatch[1];
+        if (path.startsWith('http')) return path;
+        if (path.startsWith('/')) return 'https://image.tmdb.org/t/p/w300' + path;
+      }
+      const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
+      const idx = text.indexOf(tmdbPattern);
+      if (idx !== -1) {
+        const end = text.indexOf('"', idx + tmdbPattern.length);
+        if (end !== -1) return text.slice(idx, end);
+      }
     }
     return '';
   }
 
-  extractRelations(rsc: string): import('../../types').AnimeRelations | null {
+  private resolveRscReference(html: string, refId: string): string | null {
+    try {
+      const hexPattern = new RegExp('"' + refId + ':T\\w+,((?:[^"\\\\]|\\\\.)*)"(?:,|$)', '');
+      const hexMatch = html.match(hexPattern);
+      if (hexMatch) return this.unescapeRscValue(hexMatch[1]);
+
+      const refPattern = new RegExp('"' + refId + '":\\s*T\\d+,"((?:[^"\\\\]|\\\\.)*)"', '');
+      const refMatch = html.match(refPattern);
+      if (refMatch) return this.unescapeRscValue(refMatch[1]);
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+
+  private unescapeRscValue(raw: string): string {
+    return raw.replace(/\\\\/g, '\\').replace(/\\"/g, '"').replace(/\\n/g, '\n');
+  }
+
+  extractSynopsisFromRsc(rsc: string, fullHtml: string): string | null {
+    const ovMatch = rsc.match(/page_overview__[^"]*"\s*,\s*"children"\s*:\s*"((?:\\.|[^"\\])*)"/);
+    if (ovMatch) {
+      const val = ovMatch[1];
+      if (val.startsWith('$')) {
+        const rid = val.slice(1);
+        const resolved = this.resolveRscReference(fullHtml, rid);
+        if (resolved != null && resolved.length > 20) return resolved;
+      } else {
+        try {
+          const parsed = JSON.parse('"' + val + '"');
+          if (typeof parsed === 'string' && parsed.length > 20) return parsed;
+        } catch {
+          if (val.length > 20) return val;
+        }
+      }
+    }
+
+    const tMatch = rsc.match(/^\d+:T(?:\w+,)?([\s\S]+)$/);
+    if (tMatch) {
+      const candidate = tMatch[1];
+      if (candidate.length > 30 && !candidate.startsWith('Ver ')) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  parseAllFromScripts(html: string): { poster: string; synopsis: string | null; relations: AnimeRelations | null } {
+    let poster = '';
+    let relations: AnimeRelations | null = null;
+    let relationsLocked = false;
+
+    const scripts = html.matchAll(/<script[^>]*>(.*?)<\/script>/gs);
+    for (const match of scripts) {
+      const text = match[1];
+      if (!text || !text.includes('self.__next_f.push')) continue;
+
+      if (!poster) {
+        const posterMatch = text.match(/"poster"\s*:\s*"([^"]+)"/);
+        if (posterMatch) {
+          const path = posterMatch[1];
+          if (path.startsWith('http')) poster = path;
+          else if (path.startsWith('/')) poster = 'https://image.tmdb.org/t/p/w300' + path;
+        }
+        if (!poster) {
+          const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
+          const idx = text.indexOf(tmdbPattern);
+          if (idx !== -1) {
+            const end = text.indexOf('"', idx + tmdbPattern.length);
+            if (end !== -1) poster = text.slice(idx, end);
+          }
+        }
+      }
+
+      const p = this.parseRscPayload(text);
+      if (!relationsLocked && p) {
+        const result = this.extractRelations(p);
+        if (result != null) { relations = result; relationsLocked = true; }
+      }
+    }
+
+    return { poster, synopsis: null, relations };
+  }
+
+  extractRelations(rsc: string): AnimeRelations | null {
     const key = '"relations":{"prequel":';
     const idx = rsc.indexOf(key);
     if (idx === -1) return null;
@@ -255,10 +355,10 @@ export class HtmlParser {
 
     const raw = rsc.slice(start, end);
     try {
-      const parsed = JSON.parse(raw) as import('../../types').AnimeRelations;
+      const parsed = JSON.parse(raw) as AnimeRelations;
       const normalize = (item: { poster: string }) => {
         if (item.poster && !item.poster.startsWith('http')) {
-          item.poster = `https://image.tmdb.org/t/p/w300${item.poster}`;
+          item.poster = 'https://image.tmdb.org/t/p/w300' + item.poster;
         }
       };
       parsed.prequel.forEach(normalize);
