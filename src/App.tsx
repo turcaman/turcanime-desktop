@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Home, Search, Settings } from 'lucide-react';
 import { HomePage } from './renderer/pages/HomePage';
 import { SearchPage } from './renderer/pages/SearchPage';
 import { DetailPage } from './renderer/pages/DetailPage';
@@ -11,49 +12,79 @@ import type { Anime } from './types';
 
 type Screen = 'home' | 'search' | 'detail' | 'player' | 'settings';
 
-interface NavState {
+interface NavEntry {
   screen: Screen;
   slug?: string;
   episodeNumber?: number;
 }
 
+const INITIAL_STACK: NavEntry[] = [{ screen: 'home' }];
+
 const App: React.FC = () => {
   const initialize = useUserInitializationStore((s) => s.initialize);
   const isInitialized = useUserInitializationStore((s) => s.isInitialized);
   const [ready, setReady] = useState(false);
-  const [nav, setNav] = useState<NavState>({ screen: 'home' });
+  const [navStack, setNavStack] = useState<NavEntry[]>(INITIAL_STACK);
+
+  const current = navStack[navStack.length - 1];
 
   useEffect(() => {
     const init = async () => {
       await sessionManager.initialize();
       await initialize();
-      sessionManager.refreshSession().catch(() => {});
+      sessionManager.refreshSession().catch(() => undefined);
       setReady(true);
     };
     init();
   }, [initialize]);
 
   const navigate = useCallback((s: Screen, slug?: string) => {
-    setNav({ screen: s, slug });
+    setNavStack([{ screen: s, slug }]);
+  }, []);
+
+  const push = useCallback((s: Screen, slug?: string, episodeNumber?: number) => {
+    setNavStack((prev) => [...prev, { screen: s, slug, episodeNumber }]);
   }, []);
 
   const navigateToPlayer = useCallback((slug: string, episodeNumber: number) => {
-    setNav({ screen: 'player', slug, episodeNumber });
+    setNavStack((prev) => [...prev, { screen: 'player', slug, episodeNumber }]);
+  }, []);
+
+  const updatePlayerEpisode = useCallback((episodeNumber: number) => {
+    setNavStack((prev) => {
+      const last = prev[prev.length - 1];
+      if (last?.screen !== 'player') return prev;
+      const copy = [...prev];
+      copy[copy.length - 1] = { ...last, episodeNumber };
+      return copy;
+    });
+  }, []);
+
+  const replaceCurrentDetail = useCallback((slug: string) => {
+    setNavStack((prev) => {
+      const last = prev[prev.length - 1];
+      if (last?.screen === 'detail') {
+        const copy = [...prev];
+        copy[copy.length - 1] = { screen: 'detail', slug };
+        return copy;
+      }
+      return [...prev, { screen: 'detail', slug }];
+    });
   }, []);
 
   const goBack = useCallback(() => {
-    setNav({ screen: 'home' });
+    setNavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   }, []);
 
   const handleAnimePress = useCallback((anime: Anime) => {
-    setNav({ screen: 'detail', slug: anime.url });
-  }, []);
+    push('detail', anime.url);
+  }, [push]);
 
   const handleHistoryPress = useCallback((item: { url: string }) => {
     if (item.url) {
-      setNav({ screen: 'detail', slug: item.url });
+      push('detail', item.url);
     }
-  }, []);
+  }, [push]);
 
   if (!ready || !isInitialized) {
     return (
@@ -66,79 +97,74 @@ const App: React.FC = () => {
     );
   }
 
-  const isRootScreen = nav.screen === 'home' || nav.screen === 'search' || nav.screen === 'settings';
+  const currentScreen = current.screen;
+  const showNavbar = currentScreen === 'home' || currentScreen === 'search' || currentScreen === 'settings';
 
   return (
     <div className="h-screen w-screen bg-[#0f0f11] flex flex-col">
-      {isRootScreen && (
+      {showNavbar && (
         <nav className="flex items-center gap-1 px-8 pt-3 pb-2 bg-[#0f0f11] border-b border-neutral-800/40">
           <button
             onClick={() => navigate('home')}
             className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
-              nav.screen === 'home'
+              currentScreen === 'home'
                 ? 'bg-purple-500/10 text-purple-400 font-medium shadow-sm shadow-purple-500/5'
                 : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
+            <Home className="w-4 h-4" />
             <span>Inicio</span>
           </button>
           <button
             onClick={() => navigate('search')}
             className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
-              nav.screen === 'search'
+              currentScreen === 'search'
                 ? 'bg-purple-500/10 text-purple-400 font-medium shadow-sm shadow-purple-500/5'
                 : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-            </svg>
+            <Search className="w-4 h-4" />
             <span>Buscar</span>
           </button>
           <button
             onClick={() => navigate('settings')}
             className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
-              nav.screen === 'settings'
+              currentScreen === 'settings'
                 ? 'bg-purple-500/10 text-purple-400 font-medium shadow-sm shadow-purple-500/5'
                 : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <Settings className="w-4 h-4" />
             <span>Ajustes</span>
           </button>
         </nav>
       )}
 
       <div className="flex-1 overflow-hidden">
-        {nav.screen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
-        {nav.screen === 'search' && (
+        {currentScreen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
+        {currentScreen === 'search' && (
           <SearchPage
             onAnimePress={handleAnimePress}
             onNavigateDetail={handleAnimePress}
           />
         )}
-        {nav.screen === 'detail' && nav.slug && (
+        {currentScreen === 'detail' && current.slug && (
           <DetailPage
-            slug={nav.slug}
+            slug={current.slug}
             onNavigateToPlayer={navigateToPlayer}
             onBack={goBack}
+            onRelatedPress={replaceCurrentDetail}
           />
         )}
-        {nav.screen === 'player' && nav.slug && nav.episodeNumber && (
+        {currentScreen === 'player' && current.slug && current.episodeNumber != null && (
           <PlayerPage
-            slug={nav.slug}
-            episodeNumber={nav.episodeNumber}
+            slug={current.slug}
+            episodeNumber={current.episodeNumber}
             onBack={goBack}
-            onNavigateToEpisode={(num) => navigateToPlayer(nav.slug!, num)}
+            onNavigateToEpisode={updatePlayerEpisode}
           />
         )}
-        {nav.screen === 'settings' && <SettingsPage onBack={goBack} />}
+        {currentScreen === 'settings' && <SettingsPage />}
       </div>
     </div>
   );
