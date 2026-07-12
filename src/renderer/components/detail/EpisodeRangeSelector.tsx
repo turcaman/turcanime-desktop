@@ -5,23 +5,26 @@ interface EpisodeRangeSelectorProps {
   ranges: EpisodeRange[];
   activeRangeIdx: number;
   onSelect: (idx: number) => void;
+  isRestoring?: boolean;
 }
 
 export const EpisodeRangeSelector: React.FC<EpisodeRangeSelectorProps> = ({
   ranges,
   activeRangeIdx,
   onSelect,
+  isRestoring,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isRestoring) return;
     if (containerRef.current) {
       const child = containerRef.current.children[activeRangeIdx] as HTMLElement;
       if (child) {
         child.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
       }
     }
-  }, [activeRangeIdx]);
+  }, [activeRangeIdx, isRestoring]);
 
   if (ranges.length <= 1) return null;
 

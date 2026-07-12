@@ -1,9 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDetailsStore } from '../stores/detailsStore';
 import { usePlayerStore } from '../stores/playerStore';
-import { useHistoryStore } from '../stores/historyStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import type { AnimeDetail, Episode, EpisodeRange, VideoServer } from '../../types';
+import { storage } from '../utils/storage';
+import { logger } from '../utils/logger';
+import type { Episode, EpisodeRange, VideoServer } from '../../types';
 
 const EPISODES_PER_PAGE = 50;
 
@@ -28,13 +29,31 @@ export function useAnimeDetail(slug: string) {
     fetchServers,
     resolveStream,
   } = usePlayerStore();
-  const { addToHistory } = useHistoryStore();
   const { episodeOrder } = useSettingsStore();
 
   const [expanded, setExpanded] = useState(false);
   const [ascending, setAscending] = useState(episodeOrder === 'asc');
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
-  const [activeRangeIdx, setActiveRangeIdx] = useState(0);
+  const [activeRangeIdx, setActiveRangeIdxState] = useState(0);
+  const [rangeRestored, setRangeRestored] = useState(false);
+
+  const setActiveRangeIdx = useCallback((idx: number) => {
+    setActiveRangeIdxState(idx);
+    storage.set(`range_${slug}`, idx).catch((err) => {
+      logger.error('useAnimeDetail', 'Failed to persist range', err);
+    });
+  }, [slug]);
+
+  useEffect(() => {
+    setActiveRangeIdxState(0);
+    setRangeRestored(false);
+    storage.get<number>(`range_${slug}`).then((idx) => {
+      if (idx != null) setActiveRangeIdxState(idx);
+      setRangeRestored(true);
+    }).catch(() => {
+      setRangeRestored(true);
+    });
+  }, [slug]);
 
   const retry = useCallback(() => {
     fetchDetails(slug);
@@ -59,20 +78,11 @@ export function useAnimeDetail(slug: string) {
   }, [sortedEpisodes, ranges, activeRangeIdx, ascending]);
 
   const handleEpisodePress = useCallback(
-    async (episode: Episode) => {
+    (episode: Episode) => {
       setSelectedEpisode(episode);
-      await addToHistory({
-        title: activeAnime?.title ?? '',
-        image: activeAnime?.image ?? '',
-        url: slug,
-        number: episode.number,
-        progress: 0,
-        duration: 0,
-        timestamp: Date.now(),
-      });
       fetchServers(slug, episode.number);
     },
-    [slug, activeAnime, addToHistory, fetchServers],
+    [slug, fetchServers],
   );
 
   const handleServerSelect = useCallback(
@@ -89,7 +99,7 @@ export function useAnimeDetail(slug: string) {
   const handleToggleSort = useCallback(() => {
     setAscending((prev) => !prev);
     setActiveRangeIdx(0);
-  }, []);
+  }, [setActiveRangeIdx]);
 
   return {
     anime: activeAnime,
@@ -99,6 +109,7 @@ export function useAnimeDetail(slug: string) {
     ranges,
     activeRangeIdx,
     setActiveRangeIdx,
+    isRestoring: !rangeRestored,
     ascending,
     expanded,
     setExpanded,

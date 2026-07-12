@@ -1,5 +1,7 @@
 import React from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useAnimeDetail } from '../hooks/useAnimeDetail';
+import { useHistoryStore } from '../stores/historyStore';
 import { DetailHeader } from '../components/detail/DetailHeader';
 import { EpisodeRangeSelector } from '../components/detail/EpisodeRangeSelector';
 import { EpisodeItem } from '../components/detail/EpisodeItem';
@@ -11,13 +13,16 @@ interface DetailPageProps {
   slug: string;
   onNavigateToPlayer: (slug: string, episodeNumber: number) => void;
   onBack: () => void;
+  onRelatedPress?: (slug: string) => void;
 }
 
 export const DetailPage: React.FC<DetailPageProps> = ({
   slug,
   onNavigateToPlayer,
   onBack,
+  onRelatedPress,
 }) => {
+  const { addToHistory, lastViewed } = useHistoryStore();
   const {
     anime,
     isLoading,
@@ -26,6 +31,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
     ranges,
     activeRangeIdx,
     setActiveRangeIdx,
+    isRestoring,
     ascending,
     selectedEpisode,
     servers,
@@ -55,7 +61,19 @@ export const DetailPage: React.FC<DetailPageProps> = ({
 
   const handleServerSelectAndNavigate = async (server: Parameters<typeof handleServerSelect>[0]) => {
     await handleServerSelect(server);
-    if (selectedEpisode) {
+    if (selectedEpisode && anime) {
+      const existing = lastViewed.find(
+        (h) => h.url === slug && h.number === selectedEpisode.number,
+      );
+      await addToHistory({
+        title: anime.title,
+        image: anime.image,
+        url: slug,
+        number: selectedEpisode.number,
+        progress: existing?.progress ?? 0,
+        duration: existing?.duration ?? 0,
+        timestamp: Date.now(),
+      });
       onNavigateToPlayer(slug, selectedEpisode.number);
     }
   };
@@ -67,9 +85,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
           onClick={onBack}
           className="p-1.5 rounded-md hover:bg-neutral-800 transition-colors"
         >
-          <svg className="w-5 h-5 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronLeft className="w-5 h-5 text-neutral-300" />
         </button>
       </div>
 
@@ -77,12 +93,14 @@ export const DetailPage: React.FC<DetailPageProps> = ({
         anime={anime}
         isAscending={ascending}
         onToggleSort={handleToggleSort}
+        onRelatedPress={onRelatedPress}
       />
 
       <EpisodeRangeSelector
         ranges={ranges}
         activeRangeIdx={activeRangeIdx}
         onSelect={setActiveRangeIdx}
+        isRestoring={isRestoring}
       />
 
       <div className="pb-8">
