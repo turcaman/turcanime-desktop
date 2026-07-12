@@ -3,7 +3,7 @@ import { usePlayerStore } from '../stores/playerStore';
 import { useHistoryStore } from '../stores/historyStore';
 import type { AnimeDetail } from '../../types';
 
-const PROGRESS_INTERVAL = 10_000;
+const PROGRESS_INTERVAL = 250;
 
 export function usePlayer(
   slug: string,
@@ -21,25 +21,46 @@ export function usePlayer(
   const [offline, setOffline] = useState(!navigator.onLine);
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
+  const lastSavedEp = useRef(episodeNumber);
 
-  const episodes = anime?.episodes ?? [];
+  const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < episodes.length - 1;
 
+  const saveProgress = useCallback(() => {
+    if (videoRef.current) {
+      addToHistory({
+        title: anime?.title ?? '',
+        image: anime?.image ?? '',
+        url: slug,
+        number: lastSavedEp.current,
+        progress: videoRef.current.currentTime,
+        duration: videoRef.current.duration || 0,
+        timestamp: Date.now(),
+      });
+    }
+  }, [slug, anime, addToHistory, videoRef]);
+
   const navigatePrev = useCallback(() => {
-    if (hasPrev) onNavigateEpisode?.(episodeNumber - 1);
-  }, [hasPrev, episodeNumber, onNavigateEpisode]);
+    if (hasPrev) {
+      saveProgress();
+      onNavigateEpisode?.(episodeNumber - 1);
+    }
+  }, [hasPrev, episodeNumber, onNavigateEpisode, saveProgress]);
 
   const navigateNext = useCallback(() => {
-    if (hasNext) onNavigateEpisode?.(episodeNumber + 1);
-  }, [hasNext, episodeNumber, onNavigateEpisode]);
+    if (hasNext) {
+      saveProgress();
+      onNavigateEpisode?.(episodeNumber + 1);
+    }
+  }, [hasNext, episodeNumber, onNavigateEpisode, saveProgress]);
 
   useEffect(() => {
     const goOnline = () => {
       setOffline(false);
       if (wasPlayingBeforeOffline.current && videoRef.current) {
-        videoRef.current.play().then(() => setPlaying(true)).catch(() => {});
+        videoRef.current.play().then(() => setPlaying(true)).catch(() => undefined);
       }
     };
     const goOffline = () => {
@@ -74,6 +95,18 @@ export function usePlayer(
     }
   }, [videoRef]);
 
+  const seekBack10 = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10);
+    }
+  }, [videoRef]);
+
+  const seekForward10 = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(videoRef.current.duration || 0, videoRef.current.currentTime + 10);
+    }
+  }, [videoRef]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === ' ') {
@@ -81,15 +114,15 @@ export function usePlayer(
         togglePlay();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        navigatePrev();
+        seekBack10();
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        navigateNext();
+        seekForward10();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, navigatePrev, navigateNext]);
+  }, [togglePlay, seekBack10, seekForward10]);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -103,50 +136,60 @@ export function usePlayer(
   useEffect(() => {
     if (!streamUrl || !videoRef.current) return;
 
+    setCurrentTime(0);
+    setDuration(0);
+
     const video = videoRef.current;
     video.src = streamUrl;
     video.load();
     setLoaded(true);
+    lastSavedEp.current = episodeNumber;
 
-    video.play().then(() => setPlaying(true)).catch(() => {
-      // Autoplay blocked by browser, user must press play manually
-    });
-  }, [streamUrl, videoRef]);
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+      setDuration(video.duration || 0);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration || 0);
+    };
+
+    const handleEnded = () => {
+      if (hasNext) {
+        saveProgress();
+        onNavigateEpisode?.(episodeNumber + 1);
+      }
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('ended', handleEnded);
+
+    video.play().then(() => setPlaying(true)).catch(() => undefined);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, [streamUrl, videoRef, episodeNumber, hasNext, onNavigateEpisode, saveProgress]);
   useEffect(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
+    lastSavedEp.current = episodeNumber;
     progressTimer.current = setInterval(() => {
       if (videoRef.current && !videoRef.current.paused) {
         const ct = videoRef.current.currentTime;
         const dur = videoRef.current.duration || 0;
         setCurrentTime(ct);
         setDuration(dur);
-        addToHistory({
-          title: anime?.title ?? '',
-          image: anime?.image ?? '',
-          url: slug,
-          number: episodeNumber,
-          progress: ct,
-          duration: dur,
-          timestamp: Date.now(),
-        });
       }
     }, PROGRESS_INTERVAL);
 
     return () => {
       if (progressTimer.current) clearInterval(progressTimer.current);
-      if (videoRef.current) {
-        addToHistory({
-          title: anime?.title ?? '',
-          image: anime?.image ?? '',
-          url: slug,
-          number: episodeNumber,
-          progress: videoRef.current.currentTime,
-          duration: videoRef.current.duration || 0,
-          timestamp: Date.now(),
-        });
-      }
+      saveProgress();
     };
-  }, [slug, episodeNumber, anime, addToHistory, videoRef]);
+  }, [slug, episodeNumber, anime, videoRef, saveProgress]);
 
   return {
     playing,
@@ -159,9 +202,14 @@ export function usePlayer(
     offline,
     hasPrev,
     hasNext,
+    animeTitle: anime?.title,
+    episodeNumber,
     togglePlay,
     seek,
+    seekBack10,
+    seekForward10,
     navigatePrev,
     navigateNext,
+    saveProgress,
   };
 }

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { AlertTriangle, WifiOff } from 'lucide-react';
 import { usePlayer } from '../hooks/usePlayer';
 import { useDetailsStore } from '../stores/detailsStore';
+import { usePlayerStore } from '../stores/playerStore';
 import { PlayerControls } from '../components/player/PlayerControls';
-import { PlayerLoadingOverlay } from '../components/player/PlayerLoadingOverlay';
 
 interface PlayerPageProps {
   slug: string;
@@ -18,44 +19,67 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
   onNavigateToEpisode,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { activeAnime } = useDetailsStore();
+  const { fetchServers, lastLanguage, resolveStream, reset } = usePlayerStore();
   const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => {
+      setFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      containerRef.current?.requestFullscreen();
+    }
+  }, []);
 
   const {
     playing,
     currentTime,
     duration,
-    loaded,
     isLoading,
     error,
     offline,
     hasPrev,
     hasNext,
+    animeTitle,
+    episodeNumber: currentEpNumber,
     togglePlay,
     seek,
+    seekBack10,
+    seekForward10,
     navigatePrev,
     navigateNext,
   } = usePlayer(slug, episodeNumber, activeAnime, videoRef, onNavigateToEpisode);
 
+  const prevEpisodeRef = useRef(episodeNumber);
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F11') {
-        e.preventDefault();
-        setFullscreen((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    const prev = prevEpisodeRef.current;
+    prevEpisodeRef.current = episodeNumber;
+    if (prev === episodeNumber) return;
 
-  const handleTimeUpdate = useCallback(() => {}, []);
-  const handleLoadedMetadata = useCallback(() => {}, []);
+    reset();
+    fetchServers(slug, episodeNumber).then(() => {
+      const s = usePlayerStore.getState().servers;
+      if (s.length === 0) return;
+      const preferred = lastLanguage
+        ? s.find((sv) => sv.language.toLowerCase() === lastLanguage.toLowerCase())
+        : null;
+      resolveStream(preferred ?? s[0]);
+    });
+  }, [slug, episodeNumber, fetchServers, lastLanguage, resolveStream]);
 
   return (
     <div
-      className={`bg-black flex flex-col ${
-        fullscreen ? 'fixed inset-0 z-50' : 'h-full w-full'
-      }`}
+      ref={containerRef}
+      className="bg-black flex flex-col h-full w-full"
     >
       <div className="relative bg-black flex-1 flex items-center justify-center">
         <video
@@ -63,23 +87,14 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           className="w-full h-full"
           style={{ maxHeight: '100vh', objectFit: 'contain' }}
           onClick={togglePlay}
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
           preload="auto"
           playsInline
         />
 
-        {(!loaded || isLoading) && (
-          <PlayerLoadingOverlay visible={!loaded || isLoading} />
-        )}
-
-        {/* Error overlay at bottom */}
         {error && (
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
             <div className="flex items-center gap-3 px-4 py-2.5 bg-red-500/15 backdrop-blur-sm border border-red-500/20 rounded-lg">
-              <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
               <span className="text-sm text-red-200">{error}</span>
               <button
                 onClick={onBack}
@@ -91,13 +106,10 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           </div>
         )}
 
-        {/* Offline overlay at bottom */}
         {offline && (
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
             <div className="flex items-center gap-3 px-4 py-2.5 bg-yellow-500/15 backdrop-blur-sm border border-yellow-500/20 rounded-lg">
-              <svg className="w-4 h-4 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 010 12.728m-2.829-2.829a5 5 0 000-7.07m-4.243 4.243a1 1 0 010-1.414" />
-              </svg>
+              <WifiOff className="w-4 h-4 text-yellow-400 flex-shrink-0" />
               <span className="text-sm text-yellow-200">Sin conexión — el video se reanudará cuando haya red</span>
             </div>
           </div>
@@ -110,11 +122,17 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           loading={isLoading}
           hasPrev={hasPrev}
           hasNext={hasNext}
+          isFullscreen={fullscreen}
+          animeTitle={animeTitle}
+          episodeNumber={currentEpNumber}
           onPlayPause={togglePlay}
           onSeek={seek}
+          onSeekBack={seekBack10}
+          onSeekForward={seekForward10}
           onPrev={navigatePrev}
           onNext={navigateNext}
           onBack={onBack}
+          onToggleFullscreen={toggleFullscreen}
         />
       </div>
     </div>
