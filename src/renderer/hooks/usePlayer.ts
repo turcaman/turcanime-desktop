@@ -15,6 +15,7 @@ export function usePlayer(
   const { streamUrl, isLoading, error } = usePlayerStore();
   const { addToHistory, lastViewed } = useHistoryStore();
   const [playing, setPlaying] = useState(false);
+  const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -138,6 +139,7 @@ export function usePlayer(
 
     setCurrentTime(0);
     setDuration(0);
+    setBuffering(false);
 
     const video = videoRef.current;
     video.src = streamUrl;
@@ -161,9 +163,16 @@ export function usePlayer(
       }
     };
 
+    const handleWaiting = () => setBuffering(true);
+    const handleCanPlay = () => setBuffering(false);
+    const handlePlaying = () => setBuffering(false);
+
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('ended', handleEnded);
+    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('playing', handlePlaying);
 
     video.play().then(() => setPlaying(true)).catch(() => undefined);
 
@@ -171,6 +180,9 @@ export function usePlayer(
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('playing', handlePlaying);
     };
   }, [streamUrl, videoRef, episodeNumber, hasNext, onNavigateEpisode, saveProgress]);
   useEffect(() => {
@@ -203,6 +215,7 @@ export function usePlayer(
 
   return {
     playing,
+    buffering,
     currentTime,
     duration,
     loaded,

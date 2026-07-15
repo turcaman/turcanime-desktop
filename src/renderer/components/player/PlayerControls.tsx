@@ -15,6 +15,7 @@ import { useAutoHide } from '../../hooks/useAutoHide';
 
 interface PlayerControlsProps {
   playing: boolean;
+  buffering: boolean;
   currentTime: number;
   duration: number;
   loading: boolean;
@@ -44,6 +45,7 @@ function formatTime(seconds: number): string {
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
   playing,
+  buffering,
   currentTime,
   duration,
   loading,
@@ -62,6 +64,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onToggleFullscreen,
 }) => {
   const [visible, setVisible] = useState(true);
+  const showLoader = loading || buffering;
   const [slidingValue, setSlidingValue] = useState<number | null>(null);
   const [pendingSeek, setPendingSeek] = useState<number | null>(null);
   const { restartTimer, clearTimer } = useAutoHide(visible, playing, 3000, () => { setVisible(false); });
@@ -82,6 +85,13 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       setPendingSeek(null);
     }
   }, [currentTime, pendingSeek]);
+
+  const handleMouseMove = useCallback(() => {
+    if (!visible) {
+      setVisible(true);
+    }
+    restartTimer();
+  }, [visible, restartTimer]);
 
   const toggle = useCallback(() => {
     setVisible((v) => !v);
@@ -107,29 +117,29 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const btnClass = 'flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30';
 
   return (
-    <div className="absolute inset-0 z-40" onClick={toggle}>
-      <div className="absolute top-0 left-0 right-0 flex items-start px-4 pt-4 z-50 pointer-events-none">
-        <button
-          onClick={(e) => { e.stopPropagation(); onBack(); }}
-          className="pointer-events-auto p-1.5 rounded-full hover:bg-white/10 transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6 text-white" />
-        </button>
-        <div className="ml-3 flex-1 min-w-0 pointer-events-auto">
-          {animeTitle && (
-            <p className="text-white font-semibold text-sm truncate">{animeTitle}</p>
-          )}
-          {episodeNumber != null && (
-            <p className="text-neutral-400 text-xs">Episodio {episodeNumber}</p>
-          )}
-        </div>
-      </div>
-
+    <div className="absolute inset-0 z-40" onClick={toggle} onMouseMove={handleMouseMove} onDoubleClick={onToggleFullscreen}>
       <div
         ref={fadeRef}
         className="absolute inset-0"
         style={{ opacity: 1, pointerEvents: visible ? 'auto' : 'none' }}
       >
+        <div className="absolute top-0 left-0 right-0 flex items-start px-4 pt-4 z-50 pointer-events-none">
+          <button
+            onClick={(e) => { e.stopPropagation(); onBack(); }}
+            className="pointer-events-auto p-1.5 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+          <div className="ml-3 flex-1 min-w-0 pointer-events-auto">
+            {animeTitle && (
+              <p className="text-white font-semibold text-sm truncate">{animeTitle}</p>
+            )}
+            {episodeNumber != null && (
+              <p className="text-neutral-400 text-xs">Episodio {episodeNumber}</p>
+            )}
+          </div>
+        </div>
+
         <div className="absolute inset-0 bg-black/40" />
 
         <div className="absolute inset-0 flex items-center justify-center">
@@ -152,15 +162,15 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
             <button
               onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
-              disabled={loading}
-              className="flex items-center justify-center w-16 h-16 rounded-full bg-white/90 hover:bg-white transition-colors disabled:opacity-70"
+              disabled={showLoader}
+              className={`${btnClass} w-16 h-16 disabled:opacity-70`}
             >
-              {loading ? (
-                <Loader2 className="w-7 h-7 text-black animate-spin" />
+              {showLoader ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : playing ? (
-                <Pause className="w-7 h-7 text-black" />
+                <Pause className="w-5 h-5" />
               ) : (
-                <Play className="w-7 h-7 text-black ml-0.5" />
+                <Play className="w-5 h-5 ml-0.5" />
               )}
             </button>
 
