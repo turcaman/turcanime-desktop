@@ -22,11 +22,13 @@ const config: ForgeConfig = {
     new MakerSquirrel({}),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({
-      options: {
+      options: Object.assign({
         icon: path.resolve(__dirname, 'assets', 'icon.png'),
         categories: ['AudioVideo'],
         group: 'Applications/Multimedia',
-      },
+      }, {
+        desktopTemplate: path.resolve(__dirname, 'assets', 'rpm-desktop.ejs'),
+      }),
     }),
     new MakerDeb({
       options: {

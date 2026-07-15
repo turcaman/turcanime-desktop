@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=<%= productName %>
+<% if (description) { %>Comment=<%= description %>
+<% } %>GenericName=<%= genericName %>
+Exec=<%= name %> %U<% if (execArguments && execArguments.length) { %> <%= execArguments.join(' '); %><% } %>
+Icon=<%= name %>
+Type=Application
+Terminal=false
+StartupNotify=true
+StartupWMClass=turcanime-desktop
+<% if (categories && categories.length) { %>Categories=<%= categories.join(';') %>;
+<% } %><% if (mimeType && mimeType.length) { %>MimeType=<%= mimeType.join(';') %>;<% } %>
