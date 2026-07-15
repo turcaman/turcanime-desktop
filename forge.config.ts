@@ -23,7 +23,10 @@ const config: ForgeConfig = {
     new MakerZIP({}, ['darwin']),
     new MakerRpm({
       options: Object.assign({
-        icon: path.resolve(__dirname, 'assets', 'icon.png'),
+        icon: {
+          '256x256': path.resolve(__dirname, 'assets', 'icon.png'),
+          '512x512': path.resolve(__dirname, 'assets', 'icon.png'),
+        },
         categories: ['AudioVideo'],
         group: 'Applications/Multimedia',
       }, {
@@ -31,12 +34,16 @@ const config: ForgeConfig = {
       }),
     }),
     new MakerDeb({
-      options: {
-        icon: path.resolve(__dirname, 'assets', 'icon.png'),
+      options: Object.assign({
+        icon: {
+          '256x256': path.resolve(__dirname, 'assets', 'icon.png'),
+          '512x512': path.resolve(__dirname, 'assets', 'icon.png'),
+        },
         categories: ['AudioVideo'],
         section: 'video',
+      }, {
         desktopTemplate: path.resolve(__dirname, 'assets', 'desktop.ejs'),
-      },
+      }),
     }),
   ],
   plugins: [
