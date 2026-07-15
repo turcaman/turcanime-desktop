@@ -24,13 +24,16 @@ const config: ForgeConfig = {
     new MakerRpm({
       options: {
         icon: path.resolve(__dirname, 'assets', 'icon.png'),
-        categories: ['Video'],
+        categories: ['AudioVideo'],
+        group: 'Applications/Multimedia',
       },
     }),
     new MakerDeb({
       options: {
         icon: path.resolve(__dirname, 'assets', 'icon.png'),
-        categories: ['Video'],
+        categories: ['AudioVideo'],
+        section: 'video',
+        desktopTemplate: path.resolve(__dirname, 'assets', 'desktop.ejs'),
       },
     }),
   ],
