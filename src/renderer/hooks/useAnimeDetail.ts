@@ -29,7 +29,7 @@ export function useAnimeDetail(slug: string) {
     fetchServers,
     resolveStream,
   } = usePlayerStore();
-  const { episodeOrder } = useSettingsStore();
+  const { episodeOrder, setEpisodeOrder } = useSettingsStore();
 
   const [expanded, setExpanded] = useState(false);
   const [ascending, setAscending] = useState(episodeOrder === 'asc');
@@ -97,9 +97,12 @@ export function useAnimeDetail(slug: string) {
   }, []);
 
   const handleToggleSort = useCallback(() => {
-    setAscending((prev) => !prev);
-    setActiveRangeIdx(0);
-  }, [setActiveRangeIdx]);
+    setAscending((prev) => {
+      const newVal = !prev;
+      setEpisodeOrder(newVal ? 'asc' : 'desc');
+      return newVal;
+    });
+  }, [setEpisodeOrder]);
 
   return {
     anime: activeAnime,
