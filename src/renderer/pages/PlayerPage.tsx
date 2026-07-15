@@ -42,6 +42,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
 
   const {
     playing,
+    buffering,
     currentTime,
     duration,
     isLoading,
@@ -86,7 +87,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           ref={videoRef}
           className="w-full h-full"
           style={{ maxHeight: '100vh', objectFit: 'contain' }}
-          onClick={togglePlay}
           preload="auto"
           playsInline
         />
@@ -117,6 +117,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
 
         <PlayerControls
           playing={playing}
+          buffering={buffering}
           currentTime={currentTime}
           duration={duration}
           loading={isLoading}

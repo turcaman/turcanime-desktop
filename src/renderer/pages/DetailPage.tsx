@@ -58,13 +58,13 @@ export const DetailPage: React.FC<DetailPageProps> = ({
     );
   }
 
-  const handleServerSelectAndNavigate = async (server: Parameters<typeof handleServerSelect>[0]) => {
-    await handleServerSelect(server);
+  const handleServerSelectAndNavigate = (server: Parameters<typeof handleServerSelect>[0]) => {
+    closeModal();
     if (selectedEpisode && anime) {
       const existing = lastViewed.find(
         (h) => h.url === slug && h.number === selectedEpisode.number,
       );
-      await addToHistory({
+      addToHistory({
         title: anime.title,
         image: anime.image,
         url: slug,
