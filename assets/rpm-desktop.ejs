@@ -2,7 +2,7 @@
 Name=<%= productName %>
 <% if (description) { %>Comment=<%= description %>
 <% } %>GenericName=<%= genericName %>
-Exec=<%= name %> %U<% if (execArguments && execArguments.length) { %> <%= execArguments.join(' '); %><% } %>
+Exec=<%= name %> %U<% if (execArguments && execArguments.length) { %> <%= execArguments.join(' ') %><% } %>
 Icon=<%= name %>
 Type=Application
 Terminal=false
