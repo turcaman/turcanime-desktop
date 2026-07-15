@@ -134,7 +134,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                       </div>
                     )}
                   </div>
-                  <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight">
+                  <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight min-h-[25px]">
                     {r.name}
                   </p>
                 </button>
