@@ -11,7 +11,7 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     icon: 'assets/icon',
-    name: 'Turcanime Desktop',
+    executableName: 'turcanime-desktop',
   },
   rebuildConfig: {},
   makers: [
