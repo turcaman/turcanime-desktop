@@ -5,6 +5,12 @@ import { hiddenSession } from './main/sessionHidden';
 import { registerIpcHandlers } from './main/ipcHandlers';
 import { logger } from './main/logger';
 
+// On Linux/Wayland, match the WM_CLASS to the .desktop filename
+// so the compositor associates the correct icon with the window.
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('--class', 'turcanime-desktop');
+}
+
 if (started) {
   app.quit();
 }
@@ -20,6 +26,9 @@ const createWindow = () => {
     minHeight: 600,
     show: false,
     backgroundColor: '#0f0f11',
+    icon: app.isPackaged
+      ? path.join(process.resourcesPath, 'assets', 'icon.png')
+      : undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       partition: 'persist:anime-session',

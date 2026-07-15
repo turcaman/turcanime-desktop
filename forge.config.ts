@@ -12,6 +12,9 @@ const config: ForgeConfig = {
     asar: true,
     icon: 'assets/icon',
     executableName: 'turcanime-desktop',
+    extraResources: [
+      { from: 'assets/', to: 'assets/' },
+    ],
   },
   rebuildConfig: {},
   makers: [
