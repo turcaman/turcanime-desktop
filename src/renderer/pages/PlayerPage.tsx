@@ -134,7 +134,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           onNext={navigateNext}
           onBack={onBack}
           onToggleFullscreen={toggleFullscreen}
-          containerRef={containerRef}
         />
       </div>
     </div>
