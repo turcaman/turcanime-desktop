@@ -77,9 +77,12 @@ jobs:
         run: |
           VERSION="${{ steps.build-info.outputs.version }}"
           mkdir -p release
-          cp linux-packages/deb/x64/*.deb "release/Turcanime-${VERSION}-linux-x64.deb"
-          cp linux-packages/rpm/x64/*.rpm "release/Turcanime-${VERSION}-linux-x64.rpm"
-          cp windows-installer/squirrel.windows/x64/*.exe "release/Turcanime-${VERSION}-win-x64-setup.exe"
+          DEB=$(find . -name '*.deb' | head -n1)
+          RPM=$(find . -name '*.rpm' | head -n1)
+          EXE=$(find . -name '*.exe' | head -n1)
+          cp "$DEB" "release/Turcanime-${VERSION}-linux-x64.deb"
+          cp "$RPM" "release/Turcanime-${VERSION}-linux-x64.rpm"
+          cp "$EXE" "release/Turcanime-${VERSION}-win-x64-setup.exe"
       - name: Create GitHub Release (draft)
         uses: softprops/action-gh-release@v2
         with:
