@@ -1,6 +1,7 @@
 {
   "name": "turcanime-desktop",
   "productName": "Turcanime Desktop",
+  "desktopName": "turcanime-desktop.desktop",
   "version": "1.0.0",
   "description": "A desktop application for Turcanime",
   "main": ".vite/build/main.js",
