@@ -18,6 +18,10 @@ interface ElectronAPI {
     data: string | null;
     error?: string;
   }>;
+  fullscreen: {
+    set: (flag: boolean) => Promise<void>;
+    onChanged: (cb: (flag: boolean) => void) => () => void;
+  };
 }
 
 interface Window {

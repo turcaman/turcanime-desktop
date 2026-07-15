@@ -41,4 +41,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     console.log(`[Preload] proxyFetch: ${url.slice(0, 60)}...`);
     return ipcRenderer.invoke('fetch:proxy', url, opts);
   },
+  fullscreen: {
+    set: (flag: boolean) => {
+      console.log(`[Preload] fullscreen:set ${flag}`);
+      return ipcRenderer.invoke('player:setFullScreen', flag);
+    },
+    onChanged: (cb: (flag: boolean) => void) => {
+      const handler = (_event: unknown, flag: boolean) => cb(flag);
+      ipcRenderer.on('player:fullscreen', handler);
+      return () => ipcRenderer.removeListener('player:fullscreen', handler);
+    },
+  },
 });

@@ -1,10 +1,16 @@
-import { ipcMain, net } from 'electron';
+import { ipcMain, net, type BrowserWindow } from 'electron';
 import { hiddenSession } from './sessionHidden';
 import { store } from './store';
 import { logger } from './logger';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const electronStore = store as any;
+
+let mainWindow: BrowserWindow | undefined;
+
+export function setMainWindow(win: BrowserWindow): void {
+  mainWindow = win;
+}
 
 export function registerIpcHandlers(): void {
   logger.info('IPC', 'Registering IPC handlers');
@@ -99,5 +105,11 @@ export function registerIpcHandlers(): void {
       logger.error('IPC', `fetch:bridge failed: ${url.slice(0, 60)}: ${err}`);
       return { ok: false, status: 0, data: null, error: String(err) };
     }
+  });
+
+  ipcMain.handle('player:setFullScreen', (_event, flag: boolean) => {
+    logger.debug('IPC', `player:setFullScreen ${flag}`);
+    mainWindow?.setFullScreen(flag);
+    return true;
   });
 }

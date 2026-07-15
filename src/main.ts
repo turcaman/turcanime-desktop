@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { hiddenSession } from './main/sessionHidden';
-import { registerIpcHandlers } from './main/ipcHandlers';
+import { registerIpcHandlers, setMainWindow } from './main/ipcHandlers';
 import { loadWindowState, saveWindowState } from './main/windowState';
 import { logger } from './main/logger';
 
@@ -48,6 +48,15 @@ const createWindow = () => {
   }
 
   mainWindow.on('close', () => saveWindowState(mainWindow));
+
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.send('player:fullscreen', true);
+  });
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.send('player:fullscreen', false);
+  });
+
+  setMainWindow(mainWindow);
 
 
 

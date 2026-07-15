@@ -19,25 +19,25 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
   onNavigateToEpisode,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const { activeAnime } = useDetailsStore();
   const { fetchServers, lastLanguage, resolveStream, reset } = usePlayerStore();
   const [fullscreen, setFullscreen] = useState(false);
+  const fullscreenRef = useRef(false);
+  fullscreenRef.current = fullscreen;
 
   useEffect(() => {
-    const onChange = () => {
-      setFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', onChange);
-    return () => document.removeEventListener('fullscreenchange', onChange);
+    const off = window.electronAPI.fullscreen.onChanged((flag: boolean) => setFullscreen(flag));
+    return off;
+  }, []);
+
+  useEffect(() => () => {
+    if (fullscreenRef.current) {
+      window.electronAPI.fullscreen.set(false);
+    }
   }, []);
 
   const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      containerRef.current?.requestFullscreen();
-    }
+    window.electronAPI.fullscreen.set(!fullscreenRef.current);
   }, []);
 
   const {
@@ -79,7 +79,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
 
   return (
     <div
-      ref={containerRef}
       className="bg-black flex flex-col h-full w-full"
     >
       <div className="relative bg-black flex-1 flex items-center justify-center">
