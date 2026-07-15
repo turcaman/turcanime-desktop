@@ -139,10 +139,10 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         </span>
         <button
           onClick={onToggleSort}
-          className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+          className="p-1.5 rounded-md text-purple-400 hover:text-purple-300 hover:bg-neutral-800/50 transition-colors"
+          aria-label={isAscending ? 'Orden descendente' : 'Orden ascendente'}
         >
-          <ChevronUp className={`w-3.5 h-3.5 transition-transform ${isAscending ? '' : 'rotate-180'}`} />
-          {isAscending ? 'Ascendente' : 'Descendente'}
+          <ChevronUp className={`w-4 h-4 transition-transform ${isAscending ? '' : 'rotate-180'}`} />
         </button>
       </div>
     </div>
