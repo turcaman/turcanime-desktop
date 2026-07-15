@@ -3,6 +3,7 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { hiddenSession } from './main/sessionHidden';
 import { registerIpcHandlers } from './main/ipcHandlers';
+import { loadWindowState, saveWindowState } from './main/windowState';
 import { logger } from './main/logger';
 
 // On Linux/Wayland, match the WM_CLASS to the .desktop filename
@@ -19,6 +20,7 @@ logger.info('App', 'Starting application');
 registerIpcHandlers();
 
 const createWindow = () => {
+  const saved = loadWindowState();
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -34,6 +36,18 @@ const createWindow = () => {
       partition: 'persist:anime-session',
     },
   });
+
+  if (saved) {
+    if (saved.maximized) {
+      mainWindow.maximize();
+    } else {
+      mainWindow.setBounds(saved.bounds);
+    }
+  } else {
+    mainWindow.maximize();
+  }
+
+  mainWindow.on('close', () => saveWindowState(mainWindow));
 
 
 

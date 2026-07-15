@@ -1,10 +1,10 @@
 import { ipcMain, net } from 'electron';
 import { hiddenSession } from './sessionHidden';
-import ElectronStore from 'electron-store';
+import { store } from './store';
 import { logger } from './logger';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const store = new ElectronStore() as any;
+const electronStore = store as any;
 
 export function registerIpcHandlers(): void {
   logger.info('IPC', 'Registering IPC handlers');
@@ -36,24 +36,24 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('store:get', async (_event, key: string) => {
     logger.debug('IPC', `store:get ${key}`);
-    return store.get(key);
+    return electronStore.get(key);
   });
 
   ipcMain.handle('store:set', async (_event, key: string, value: unknown) => {
     logger.debug('IPC', `store:set ${key}`);
-    store.set(key, value);
+    electronStore.set(key, value);
     return true;
   });
 
   ipcMain.handle('store:delete', async (_event, key: string) => {
     logger.debug('IPC', `store:delete ${key}`);
-    store.delete(key);
+    electronStore.delete(key);
     return true;
   });
 
   ipcMain.handle('store:clear', async () => {
     logger.info('IPC', 'store:clear');
-    store.clear();
+    electronStore.clear();
     return true;
   });
 

@@ -32,6 +32,7 @@ interface PlayerControlsProps {
   onNext: () => void;
   onBack: () => void;
   onToggleFullscreen: () => void;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 function formatTime(seconds: number): string {
@@ -62,6 +63,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onNext,
   onBack,
   onToggleFullscreen,
+  containerRef,
 }) => {
   const [visible, setVisible] = useState(true);
   const showLoader = loading || buffering;
@@ -69,6 +71,13 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const [pendingSeek, setPendingSeek] = useState<number | null>(null);
   const { restartTimer, clearTimer } = useAutoHide(visible, playing, 3000, () => { setVisible(false); });
   const fadeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.style.cursor = isFullscreen && !visible ? 'none' : '';
+    return () => { el.style.cursor = ''; };
+  }, [isFullscreen, visible, containerRef]);
 
   useEffect(() => {
     if (fadeRef.current) {
