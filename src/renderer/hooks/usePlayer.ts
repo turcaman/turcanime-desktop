@@ -13,7 +13,7 @@ export function usePlayer(
   onNavigateEpisode?: (num: number) => void,
 ) {
   const { streamUrl, isLoading, error } = usePlayerStore();
-  const { addToHistory, saveProgressSilent, lastViewed } = useHistoryStore();
+  const { addToHistory, lastViewed } = useHistoryStore();
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -125,15 +125,17 @@ export function usePlayer(
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePlay, seekBack10, seekForward10]);
 
+  // Restore progress once per episode — read store directly to avoid re-running on every update
   useEffect(() => {
     if (!videoRef.current) return;
-    const historyItem = lastViewed.find(
+    const items = useHistoryStore.getState().lastViewed;
+    const historyItem = items.find(
       (item) => item.url === slug && item.number === episodeNumber,
     );
     if (historyItem && historyItem.progress > 0) {
       videoRef.current.currentTime = historyItem.progress;
     }
-  }, [slug, episodeNumber, lastViewed, videoRef]);
+  }, [slug, episodeNumber, videoRef]);
   useEffect(() => {
     if (!streamUrl || !videoRef.current) return;
 
@@ -203,29 +205,15 @@ export function usePlayer(
     };
   }, [slug, episodeNumber, anime, videoRef, saveProgress]);
 
-  // Persist progress to disk periodically without Zustand updates to avoid stutter
+  // Periodically save progress (state + disk) so it survives app close
   const persistTimer = useRef<ReturnType<typeof setInterval>>();
-  const lastPersistTime = useRef(0);
   useEffect(() => {
     if (!streamUrl) return;
-    persistTimer.current = setInterval(() => {
-      if (videoRef.current && Date.now() - lastPersistTime.current > 25000) {
-        lastPersistTime.current = Date.now();
-        saveProgressSilent({
-          title: anime?.title ?? '',
-          image: anime?.image ?? '',
-          url: slug,
-          number: lastSavedEp.current,
-          progress: videoRef.current.currentTime,
-          duration: videoRef.current.duration || 0,
-          timestamp: Date.now(),
-        });
-      }
-    }, 30000);
+    persistTimer.current = setInterval(saveProgress, 10000);
     return () => {
       if (persistTimer.current) clearInterval(persistTimer.current);
     };
-  }, [streamUrl, slug, anime, videoRef, saveProgressSilent]);
+  }, [streamUrl, saveProgress]);
 
   return {
     playing,
