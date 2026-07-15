@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
@@ -12,16 +13,26 @@ const config: ForgeConfig = {
     asar: true,
     icon: 'assets/icon',
     executableName: 'turcanime-desktop',
-    extraResources: [
-      { from: 'assets/', to: 'assets/' },
+    extraResource: [
+      'assets/',
     ],
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({}),
+    new MakerRpm({
+      options: {
+        icon: path.resolve(__dirname, 'assets', 'icon.png'),
+        categories: ['Video'],
+      },
+    }),
+    new MakerDeb({
+      options: {
+        icon: path.resolve(__dirname, 'assets', 'icon.png'),
+        categories: ['Video'],
+      },
+    }),
   ],
   plugins: [
     new VitePlugin({
