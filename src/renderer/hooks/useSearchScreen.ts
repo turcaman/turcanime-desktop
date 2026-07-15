@@ -8,11 +8,8 @@ type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 const DEBOUNCE_MS = 300;
 
 export function useSearchScreen() {
-  const [term, setTerm] = useState('');
-  const [status, setStatus] = useState<SearchStatus>('idle');
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-
   const {
+    lastSearchTerm,
     searchAnimes,
     suggestions,
     isSearchLoading,
@@ -23,6 +20,9 @@ export function useSearchScreen() {
     resetSearch,
     setSearchTerm,
   } = useSearchStore();
+  const [term, setTerm] = useState(lastSearchTerm);
+  const [status, setStatus] = useState<SearchStatus>(lastSearchTerm ? 'searched' : 'idle');
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const {
     recentSearches,

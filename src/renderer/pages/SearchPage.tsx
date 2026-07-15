@@ -53,7 +53,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
   const handleAnimePress = (anime: Anime) => {
     externalAnimePress?.(anime);
-    externalNavigateDetail?.(anime);
   };
 
   const handleSuggestionSelect = (item: AutocompleteAnime) => {
