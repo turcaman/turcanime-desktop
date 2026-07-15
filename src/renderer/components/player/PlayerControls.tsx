@@ -77,6 +77,16 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     }
   }, [visible]);
 
+
+  // Hide cursor when controls are hidden in fullscreen.
+  // Works natively on Windows, macOS and Linux X11.
+  // Not supported on Wayland (cursor-shape protocol ignores cursor:none).
+  useEffect(() => {
+    document.documentElement.style.cursor =
+      isFullscreen && !visible ? 'none' : '';
+    return () => { document.documentElement.style.cursor = ''; };
+  }, [isFullscreen, visible]);
+
   const displayTime = slidingValue ?? pendingSeek ?? currentTime;
   const isSliding = slidingValue != null;
 
