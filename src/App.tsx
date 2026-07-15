@@ -32,7 +32,7 @@ const App: React.FC = () => {
     const init = async () => {
       await sessionManager.initialize();
       await initialize();
-      sessionManager.refreshSession().catch(() => undefined);
+      sessionManager.refreshSession().catch((): void => undefined);
       setReady(true);
     };
     init();

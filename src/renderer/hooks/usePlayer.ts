@@ -66,7 +66,7 @@ export function usePlayer(
     const goOnline = () => {
       setOffline(false);
       if (wasPlayingBeforeOffline.current && videoRef.current) {
-        videoRef.current.play().then(() => setPlaying(true)).catch(() => undefined);
+        videoRef.current.play().then(() => setPlaying(true)).catch((): void => undefined);
       }
     };
     const goOffline = () => {
@@ -181,7 +181,7 @@ export function usePlayer(
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('playing', handlePlaying);
 
-    video.play().then(() => setPlaying(true)).catch(() => undefined);
+    video.play().then(() => setPlaying(true)).catch((): void => undefined);
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
