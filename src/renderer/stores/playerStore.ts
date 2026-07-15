@@ -112,11 +112,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   reset: () => {
+    const lang = get().lastLanguage;
     set({
       servers: [],
       streamUrl: '',
       streamHeaders: {},
-      lastLanguage: 'sub',
+      lastLanguage: lang,
       isLoading: false,
       error: null,
     });

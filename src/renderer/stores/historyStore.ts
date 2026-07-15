@@ -12,6 +12,7 @@ interface HistoryState {
   continueWatching: HistoryItem[];
   initialize: (items: HistoryItem[]) => void;
   addToHistory: (item: HistoryItem) => Promise<void>;
+  saveProgressSilent: (item: HistoryItem) => Promise<void>;
   removeFromHistory: (url: string) => Promise<void>;
   clearHistory: () => Promise<void>;
 }
@@ -43,6 +44,19 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     } catch (err) {
       set({ lastViewed: prev, continueWatching: computeContinueWatching(prev) });
       logger.error('historyStore', 'Failed to persist history', err);
+    }
+  },
+
+  saveProgressSilent: async (item) => {
+    // Only persist to disk without updating Zustand state to avoid re-render stutters
+    const prev = get().lastViewed;
+    const updated = [item, ...prev.filter(
+      (i) => i.url !== item.url || i.number !== item.number,
+    )].slice(0, MAX_HISTORY);
+    try {
+      await storage.set(STORAGE_KEY, updated);
+    } catch (err) {
+      logger.error('historyStore', 'Failed to persist progress silently', err);
     }
   },
 

@@ -13,7 +13,7 @@ export function usePlayer(
   onNavigateEpisode?: (num: number) => void,
 ) {
   const { streamUrl, isLoading, error } = usePlayerStore();
-  const { addToHistory, lastViewed } = useHistoryStore();
+  const { addToHistory, saveProgressSilent, lastViewed } = useHistoryStore();
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -203,15 +203,29 @@ export function usePlayer(
     };
   }, [slug, episodeNumber, anime, videoRef, saveProgress]);
 
-  // Persist progress periodically so it survives app close
+  // Persist progress to disk periodically without Zustand updates to avoid stutter
   const persistTimer = useRef<ReturnType<typeof setInterval>>();
+  const lastPersistTime = useRef(0);
   useEffect(() => {
     if (!streamUrl) return;
-    persistTimer.current = setInterval(saveProgress, 10000);
+    persistTimer.current = setInterval(() => {
+      if (videoRef.current && Date.now() - lastPersistTime.current > 25000) {
+        lastPersistTime.current = Date.now();
+        saveProgressSilent({
+          title: anime?.title ?? '',
+          image: anime?.image ?? '',
+          url: slug,
+          number: lastSavedEp.current,
+          progress: videoRef.current.currentTime,
+          duration: videoRef.current.duration || 0,
+          timestamp: Date.now(),
+        });
+      }
+    }, 30000);
     return () => {
       if (persistTimer.current) clearInterval(persistTimer.current);
     };
-  }, [streamUrl, saveProgress]);
+  }, [streamUrl, slug, anime, videoRef, saveProgressSilent]);
 
   return {
     playing,
