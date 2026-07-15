@@ -71,15 +71,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const fadeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // why: the app runs under XWayland (--ozone-platform=x11) so Chromium owns
-    // the cursor and `cursor:none` hides it. On native Wayland the compositor
-    // draws the cursor via the cursor-shape protocol, which has no hidden shape,
-    // so this would be ignored.
-    document.body.style.cursor = isFullscreen && !visible ? 'none' : '';
-    return () => { document.body.style.cursor = ''; };
-  }, [isFullscreen, visible]);
-
-  useEffect(() => {
     if (fadeRef.current) {
       fadeRef.current.style.transition = 'opacity 200ms ease';
       fadeRef.current.style.opacity = visible ? '1' : '0';
