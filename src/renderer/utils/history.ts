@@ -22,9 +22,9 @@ export function removeBy<T>(
 export function computeContinueWatching(
   lastViewed: HistoryItem[],
 ): HistoryItem[] {
-  // lastViewed is newest-first; iterate forward so Map insertion order is newest-first
+  // lastViewed is newest-first; iterate backward so the newest episode per URL wins
   const unique = new Map<string, HistoryItem>();
-  for (let i = 0; i < lastViewed.length; i++) {
+  for (let i = lastViewed.length - 1; i >= 0; i--) {
     const item = lastViewed[i];
     unique.set(item.url, item);
   }

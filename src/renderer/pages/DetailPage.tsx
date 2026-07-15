@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAnimeDetail } from '../hooks/useAnimeDetail';
-import { useHistoryStore } from '../stores/historyStore';
 import { usePlayerStore } from '../stores/playerStore';
 import { DetailHeader } from '../components/detail/DetailHeader';
 import { EpisodeRangeSelector } from '../components/detail/EpisodeRangeSelector';
@@ -22,8 +21,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
   onBack,
   onRelatedPress,
 }) => {
-  const { addToHistory, lastViewed } = useHistoryStore();
-  const { setLastLanguage } = usePlayerStore();
+  const setLastLanguage = usePlayerStore((s) => s.setLastLanguage);
   const {
     anime,
     isLoading,
@@ -64,18 +62,6 @@ export const DetailPage: React.FC<DetailPageProps> = ({
     setLastLanguage(server.language);
     closeModal();
     if (selectedEpisode && anime) {
-      const existing = lastViewed.find(
-        (h) => h.url === slug && h.number === selectedEpisode.number,
-      );
-      addToHistory({
-        title: anime.title,
-        image: anime.image,
-        url: slug,
-        number: selectedEpisode.number,
-        progress: existing?.progress ?? 0,
-        duration: existing?.duration ?? 0,
-        timestamp: Date.now(),
-      });
       onNavigateToPlayer(slug, selectedEpisode.number);
     }
   };

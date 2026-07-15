@@ -12,8 +12,11 @@ export function usePlayer(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   onNavigateEpisode?: (num: number) => void,
 ) {
-  const { streamUrl, isLoading, error } = usePlayerStore();
-  const { addToHistory, lastViewed } = useHistoryStore();
+  const streamUrl = usePlayerStore((s) => s.streamUrl);
+  const isLoading = usePlayerStore((s) => s.isLoading);
+  const error = usePlayerStore((s) => s.error);
+  const addToHistory = useHistoryStore((s) => s.addToHistory);
+  const lastViewed = useHistoryStore((s) => s.lastViewed);
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -23,6 +26,8 @@ export function usePlayer(
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
   const lastSavedEp = useRef(episodeNumber);
+  const animeInfoRef = useRef({ title: '', image: '' });
+  animeInfoRef.current = { title: anime?.title ?? '', image: anime?.image ?? '' };
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
@@ -32,8 +37,8 @@ export function usePlayer(
   const saveProgress = useCallback(() => {
     if (videoRef.current) {
       addToHistory({
-        title: anime?.title ?? '',
-        image: anime?.image ?? '',
+        title: animeInfoRef.current.title,
+        image: animeInfoRef.current.image,
         url: slug,
         number: lastSavedEp.current,
         progress: videoRef.current.currentTime,
@@ -41,7 +46,7 @@ export function usePlayer(
         timestamp: Date.now(),
       });
     }
-  }, [slug, anime, addToHistory, videoRef]);
+  }, [slug, addToHistory, videoRef]);
 
   const navigatePrev = useCallback(() => {
     if (hasPrev) {
@@ -203,7 +208,7 @@ export function usePlayer(
       if (progressTimer.current) clearInterval(progressTimer.current);
       saveProgress();
     };
-  }, [slug, episodeNumber, anime, videoRef, saveProgress]);
+  }, [slug, episodeNumber, videoRef, saveProgress]);
 
   // Periodically save progress (state + disk) so it survives app close
   const persistTimer = useRef<ReturnType<typeof setInterval>>();
@@ -212,6 +217,7 @@ export function usePlayer(
     persistTimer.current = setInterval(saveProgress, 10000);
     return () => {
       if (persistTimer.current) clearInterval(persistTimer.current);
+      saveProgress();
     };
   }, [streamUrl, saveProgress]);
 
