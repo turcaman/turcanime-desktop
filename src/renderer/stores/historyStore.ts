@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '../utils/storage';
-import { prependDedup, removeBy, computeContinueWatching } from '../utils/history';
+import { removeBy, computeContinueWatching } from '../utils/history';
 import { logger } from '../utils/logger';
 import type { HistoryItem } from '../../types';
 
@@ -28,13 +28,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   addToHistory: async (item) => {
+    const newItem = { ...item, timestamp: Date.now() };
     const prev = get().lastViewed;
-    const updated = prependDedup(
-      prev,
-      { ...item, timestamp: Date.now() },
-      MAX_HISTORY,
-      'url' as keyof HistoryItem,
-    );
+    // Dedup by url+number so each anime+episode appears once (like Android)
+    const updated = [newItem, ...prev.filter(
+      (i) => i.url !== newItem.url || i.number !== newItem.number,
+    )].slice(0, MAX_HISTORY);
     set({
       lastViewed: updated,
       continueWatching: computeContinueWatching(updated),

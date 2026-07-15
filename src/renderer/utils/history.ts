@@ -22,8 +22,10 @@ export function removeBy<T>(
 export function computeContinueWatching(
   lastViewed: HistoryItem[],
 ): HistoryItem[] {
+  // Iterate in reverse so the NEWEST item for each anime wins
   const unique = new Map<string, HistoryItem>();
-  for (const item of lastViewed) {
+  for (let i = lastViewed.length - 1; i >= 0; i--) {
+    const item = lastViewed[i];
     unique.set(item.url, item);
   }
   return Array.from(unique.values()).slice(0, 8);

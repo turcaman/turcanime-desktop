@@ -191,6 +191,16 @@ export function usePlayer(
     };
   }, [slug, episodeNumber, anime, videoRef, saveProgress]);
 
+  // Persist progress periodically so it survives app close
+  const persistTimer = useRef<ReturnType<typeof setInterval>>();
+  useEffect(() => {
+    if (!streamUrl) return;
+    persistTimer.current = setInterval(saveProgress, 10000);
+    return () => {
+      if (persistTimer.current) clearInterval(persistTimer.current);
+    };
+  }, [streamUrl, saveProgress]);
+
   return {
     playing,
     currentTime,

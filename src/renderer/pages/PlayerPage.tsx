@@ -59,7 +59,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     navigateNext,
   } = usePlayer(slug, episodeNumber, activeAnime, videoRef, onNavigateToEpisode);
 
-  const prevEpisodeRef = useRef(episodeNumber);
+  const prevEpisodeRef = useRef<number | undefined>(undefined);
   useEffect(() => {
     const prev = prevEpisodeRef.current;
     prevEpisodeRef.current = episodeNumber;
