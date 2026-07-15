@@ -143,7 +143,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         <div className="absolute inset-0 bg-black/40" />
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex items-center justify-center gap-6">
+          <div className="flex items-center justify-center gap-6" onDoubleClick={(e) => e.stopPropagation()}>
             <button
               onClick={(e) => { e.stopPropagation(); onPrev(); }}
               disabled={!hasPrev || loading}

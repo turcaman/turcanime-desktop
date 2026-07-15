@@ -22,9 +22,9 @@ export function removeBy<T>(
 export function computeContinueWatching(
   lastViewed: HistoryItem[],
 ): HistoryItem[] {
-  // Iterate in reverse so the NEWEST item for each anime wins
+  // lastViewed is newest-first; iterate forward so Map insertion order is newest-first
   const unique = new Map<string, HistoryItem>();
-  for (let i = lastViewed.length - 1; i >= 0; i--) {
+  for (let i = 0; i < lastViewed.length; i++) {
     const item = lastViewed[i];
     unique.set(item.url, item);
   }
