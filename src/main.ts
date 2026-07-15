@@ -10,6 +10,11 @@ import { logger } from './main/logger';
 // so the compositor associates the correct icon with the window.
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('--class', 'turcanime-desktop');
+  // why: on Wayland Chromium uses the cursor-shape protocol, which has no
+  // hidden shape, so `cursor:none` is ignored and the OS cursor stays visible
+  // in fullscreen. Running under XWayland lets Chromium own the cursor so
+  // `cursor:none` actually hides it.
+  app.commandLine.appendSwitch('--ozone-platform', 'x11');
 }
 
 if (started) {
