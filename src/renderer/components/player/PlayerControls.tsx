@@ -71,8 +71,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const fadeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.body.style.cursor = isFullscreen && !visible ? 'none' : '';
-    return () => { document.body.style.cursor = ''; };
+    // why: on KDE/Wayland Chromium uses the cursor-shape protocol, which has no
+    // hidden shape, so `cursor:none` is ignored and the OS cursor stays visible.
+    // A transparent client-provided image cursor hides it instead (and still
+    // works on X11). `none` is the fallback.
+    const TRANSPARENT_CURSOR =
+      'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=") 0 0, none';
+    document.documentElement.style.cursor = isFullscreen && !visible ? TRANSPARENT_CURSOR : '';
+    return () => { document.documentElement.style.cursor = ''; };
   }, [isFullscreen, visible]);
 
   useEffect(() => {
