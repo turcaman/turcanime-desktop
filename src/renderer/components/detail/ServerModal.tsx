@@ -80,7 +80,6 @@ export const ServerModal: React.FC<ServerModalProps> = ({
             <div className="space-y-3">
               <Skeleton className="h-11 rounded-lg w-full" />
               <Skeleton className="h-11 rounded-lg w-full" />
-              <Skeleton className="h-11 rounded-lg w-3/4" />
             </div>
           )}
 
