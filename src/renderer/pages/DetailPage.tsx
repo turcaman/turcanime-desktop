@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronLeft } from 'lucide-react';
 import { useAnimeDetail } from '../hooks/useAnimeDetail';
 import { useHistoryStore } from '../stores/historyStore';
 import { DetailHeader } from '../components/detail/DetailHeader';
@@ -80,20 +79,12 @@ export const DetailPage: React.FC<DetailPageProps> = ({
 
   return (
     <div className="h-full w-full bg-[#0f0f11] overflow-y-auto">
-      <div className="sticky top-0 z-10 flex items-center px-4 py-2 bg-[#0f0f11]/90 backdrop-blur-sm border-b border-neutral-800/40">
-        <button
-          onClick={onBack}
-          className="p-1.5 rounded-md hover:bg-neutral-800 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 text-neutral-300" />
-        </button>
-      </div>
-
       <DetailHeader
         anime={anime}
         isAscending={ascending}
         onToggleSort={handleToggleSort}
         onRelatedPress={onRelatedPress}
+        onBack={onBack}
       />
 
       <EpisodeRangeSelector

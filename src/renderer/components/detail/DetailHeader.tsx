@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronUp } from 'lucide-react';
 import { ImageWithLoader } from '../ui/ImageWithLoader';
 import type { AnimeDetail } from '../../../types';
 
@@ -8,6 +8,7 @@ interface DetailHeaderProps {
   isAscending: boolean;
   onToggleSort: () => void;
   onRelatedPress?: (slug: string) => void;
+  onBack?: () => void;
 }
 
 export const DetailHeader: React.FC<DetailHeaderProps> = ({
@@ -15,6 +16,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   isAscending,
   onToggleSort,
   onRelatedPress,
+  onBack,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const banner = anime.banner || anime.image;
@@ -35,6 +37,15 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+        )}
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-2 mb-2">
