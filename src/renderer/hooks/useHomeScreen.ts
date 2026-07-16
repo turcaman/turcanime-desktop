@@ -47,8 +47,10 @@ export function useHomeScreen() {
   const isLoading =
     isHomeLoading || isRefreshing || (homeData.recent.length === 0 && !isInitialized);
 
-  const hasContent =
-    isInitialized && (homeData.recent.length > 0 || continueWatching.length > 0);
+  const hasContent = isInitialized && (
+    homeData.recent.length > 0 ||
+    (homeData.sections && homeData.sections.some(s => s.animes.length > 0))
+  );
 
   return {
     sections,
