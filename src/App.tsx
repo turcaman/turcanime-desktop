@@ -7,6 +7,7 @@ import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
 import { useUserInitializationStore } from './renderer/stores/userIndex';
 import { sessionManager } from './renderer/services/session';
+import { Skeleton } from './renderer/components/ui/Skeleton';
 import type { Anime } from './types';
 
 type Screen = 'home' | 'search' | 'detail' | 'player' | 'settings';
@@ -87,28 +88,10 @@ const App: React.FC = () => {
 
   if (!ready || !isInitialized) {
     return (
-      <div className="h-screen w-screen bg-[#0f0f11] flex flex-col items-center justify-center gap-5 animate-fade-in">
-        <svg className="w-[72px] h-[72px]" viewBox="0 0 80 80" fill="none" aria-hidden="true">
-          <rect width="80" height="80" rx="20" fill="url(#splashGradient)" />
-          <path d="M32 26v28l22-14z" fill="white" />
-          <defs>
-            <linearGradient id="splashGradient" x1="0" y1="0" x2="80" y2="80">
-              <stop stopColor="#A855F7" />
-              <stop offset="1" stopColor="#7C3AED" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <span className="text-lg font-semibold text-neutral-200 tracking-tight select-none">
-          Turcanime Desktop
-        </span>
-        <div className="flex gap-1.5 mt-1">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-neutral-600 animate-dot-bounce"
-              style={{ animationDelay: `${i * 0.2}s` }}
-            />
-          ))}
+      <div className="h-screen w-screen bg-[#0f0f11] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 animate-fade-in">
+          <Skeleton className="w-48 h-4 rounded" />
+          <Skeleton className="w-32 h-3 rounded" />
         </div>
       </div>
     );

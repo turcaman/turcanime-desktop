@@ -21,19 +21,24 @@ export const DetailSkeleton: React.FC = () => {
 
       <div className="px-6 pt-4 space-y-4">
         <div>
-          <Skeleton className="h-3 w-20 rounded mb-3" />
-          <Skeleton className="h-3 w-full rounded mb-2" />
-          <Skeleton className="h-3 w-full rounded mb-2" />
-          <Skeleton className="h-3 w-3/4 rounded" />
+          <Skeleton className="h-3 w-20 rounded mb-2" />
+          <div className="space-y-0.5">
+            <Skeleton className="h-[23px] w-full rounded" />
+            <Skeleton className="h-[23px] w-full rounded" />
+            <Skeleton className="h-[23px] w-3/4 rounded" />
+          </div>
         </div>
 
         <div>
-          <Skeleton className="h-3 w-24 rounded mb-3" />
-          <div className="flex gap-3">
+          <Skeleton className="h-3 w-24 rounded mb-2" />
+          <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="w-24">
                 <Skeleton className="w-full aspect-[2/3] rounded-md mb-1" />
-                <Skeleton className="h-2 w-full rounded" />
+                <div className="space-y-0.5">
+                  <Skeleton className="h-3 w-full rounded" />
+                  <Skeleton className="h-3 w-3/4 rounded" />
+                </div>
               </div>
             ))}
           </div>
