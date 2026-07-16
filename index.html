@@ -6,9 +6,88 @@
     <meta name="color-scheme" content="light dark" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://image.tmdb.org https://www.animelatinohd.com; connect-src 'self' https://www.animelatinohd.com https:; media-src 'self' https:;">
     <title>Turcanime Desktop</title>
+    <style>
+      .splash-root {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        background: #0f0f11;
+        animation: splashFadeIn 400ms ease-out both;
+      }
+
+      .splash-logo {
+        width: 72px;
+        height: 72px;
+        animation: splashPulse 2s ease-in-out infinite;
+      }
+
+      .splash-title {
+        color: #e4e4e7;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .splash-dots {
+        display: flex;
+        gap: 5px;
+        margin-top: 4px;
+      }
+
+      .splash-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #52525b;
+        animation: splashDotBounce 1.4s ease-in-out infinite both;
+      }
+
+      .splash-dot:nth-child(1) { animation-delay: 0s; }
+      .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+      .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+
+      @keyframes splashFadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+
+      @keyframes splashPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.85; transform: scale(0.97); }
+      }
+
+      @keyframes splashDotBounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+        40%           { transform: scale(1); opacity: 1; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="splash-root">
+        <svg class="splash-logo" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+          <rect width="80" height="80" rx="20" fill="url(#splashGradient)" />
+          <path d="M32 26v28l22-14z" fill="white" />
+          <defs>
+            <linearGradient id="splashGradient" x1="0" y1="0" x2="80" y2="80">
+              <stop stop-color="#A855F7" />
+              <stop offset="1" stop-color="#7C3AED" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="splash-title">Turcanime Desktop</span>
+        <div class="splash-dots">
+          <span class="splash-dot" />
+          <span class="splash-dot" />
+          <span class="splash-dot" />
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/renderer.tsx"></script>
   </body>
 </html>
