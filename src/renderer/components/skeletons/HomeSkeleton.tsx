@@ -15,12 +15,25 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
     <div className="select-none">
       <SectionTitle label="Continuar viendo" />
       <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="flex-shrink-0" style={{ width: Math.round(cardWidth * 0.6) }}>
-            <Skeleton className="rounded-lg mb-1.5" style={{ height: Math.round(cardWidth * 0.6 * 1.5) }} />
-            <Skeleton className="h-3 w-full rounded" />
-          </div>
-        ))}
+        {[0, 1, 2].map((i) => {
+          const itemWidth = Math.round(cardWidth * 0.6);
+          return (
+            <div
+              key={i}
+              className="flex-shrink-0 rounded-xl overflow-hidden bg-neutral-950"
+              style={{ width: itemWidth }}
+            >
+              <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>
+                <Skeleton className="absolute inset-0 rounded-none" />
+                <div className="absolute bottom-0 left-0 right-0 bg-neutral-950/80 px-2 pb-2 pt-1.5">
+                  <Skeleton className="h-2 w-12 rounded mb-1" />
+                  <Skeleton className="h-3 w-full rounded mb-0.5" />
+                  <Skeleton className="h-0.5 w-full rounded" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <SectionTitle label="&nbsp;" />
@@ -33,12 +46,15 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
           }}
         >
           {Array.from({ length: columns * 3 }).map((_, idx) => (
-            <div key={idx} className="flex flex-col gap-2">
+            <div key={idx} className="flex flex-col">
               <Skeleton
-                className="rounded-lg"
+                className="rounded-xl mb-2.5"
                 style={{ width: cardWidth, height: cardWidth * 1.4 }}
               />
-              <Skeleton className="h-3 w-4/5 rounded" />
+              <div className="flex flex-col gap-1.5">
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-3/5 rounded" />
+              </div>
             </div>
           ))}
         </div>
