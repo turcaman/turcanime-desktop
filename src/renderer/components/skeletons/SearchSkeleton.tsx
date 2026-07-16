@@ -26,12 +26,15 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
         }}
       >
         {Array.from({ length: rows * columns }).map((_, idx) => (
-          <div key={idx} className="flex flex-col gap-2">
+          <div key={idx} className="flex flex-col">
             <Skeleton
-              className="rounded-lg"
+              className="rounded-xl mb-2.5"
               style={{ width: cardWidth, height: cardWidth * 1.4 }}
             />
-            <Skeleton className="h-3 w-4/5 rounded" />
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-3/5 rounded" />
+            </div>
           </div>
         ))}
       </div>
