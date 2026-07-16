@@ -165,8 +165,17 @@ export class HtmlParser {
   }
 
   extractStatusFromHtml(html: string): string {
-    const match = html.match(/<span[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]*)<\/span>/i);
-    return match ? match[1].trim() : '';
+    const patterns = [
+      /<span[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]*)<\/span>/i,
+      /<span[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
+      /<div[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]*)<\/div>/i,
+      /<[^>]+class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]+)<\/[^>]+>/i,
+    ];
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match) return match[1].trim();
+    }
+    return '';
   }
 
   extractSynopsisFromDom(html: string): string {

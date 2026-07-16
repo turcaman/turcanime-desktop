@@ -21,6 +21,9 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   const [expanded, setExpanded] = useState(false);
   const banner = anime.banner || anime.image;
   const hasLongSynopsis = anime.synopsis.length > 200;
+  const statusLower = anime.status?.toLowerCase();
+  const isAiring = statusLower != null && (statusLower.includes('emisión') || statusLower.includes('emision'));
+  const statusLabel = isAiring ? 'En emisión' : 'Finalizado';
 
   return (
     <div>
@@ -49,7 +52,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
-              {(anime.status === 'Finalizado' ? 'Finalizado' : 'En emisión').toUpperCase()}
+              {statusLabel}
             </span>
           </div>
           <h1 className="text-lg font-bold text-neutral-100 leading-tight line-clamp-2">
