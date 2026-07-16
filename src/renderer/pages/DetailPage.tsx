@@ -45,7 +45,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
   if (isLoading) {
     return (
       <div className="h-full w-full bg-[#0f0f11] overflow-y-auto">
-        <DetailSkeleton />
+        <DetailSkeleton onBack={onBack} />
       </div>
     );
   }
@@ -53,7 +53,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
   if (error || !anime) {
     return (
       <div className="h-full w-full bg-[#0f0f11] flex items-center justify-center">
-        <ErrorState onRetry={retry} />
+        <ErrorState onRetry={retry} onBack={onBack} />
       </div>
     );
   }

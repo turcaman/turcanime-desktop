@@ -1,13 +1,26 @@
 import React from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
 
-export const DetailSkeleton: React.FC = () => {
+interface DetailSkeletonProps {
+  onBack?: () => void;
+}
+
+export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
   return (
     <div>
       <div
         className="relative w-full bg-neutral-900"
         style={{ height: '38vh', minHeight: 260 }}
       >
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/70 active:scale-95 transition-all z-10"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+        )}
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <Skeleton className="h-3 w-16 rounded-full mb-3" />
           <Skeleton className="h-5 w-48 rounded mb-2" />

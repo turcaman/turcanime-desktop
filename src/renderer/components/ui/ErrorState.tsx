@@ -2,11 +2,13 @@ import React from 'react';
 
 interface ErrorStateProps {
   onRetry: () => void;
+  onBack?: () => void;
   title?: string;
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
+  onBack,
   title = 'Error al cargar',
 }) => {
   return (
@@ -26,12 +28,22 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           />
         </svg>
         <p className="text-sm text-neutral-400">{title}</p>
-        <button
-          onClick={onRetry}
-          className="px-4 py-2 text-xs text-neutral-300 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors"
-        >
-          Reintentar
-        </button>
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="px-4 py-2 text-xs text-neutral-300 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors"
+            >
+              Volver
+            </button>
+          )}
+          <button
+            onClick={onRetry}
+            className="px-4 py-2 text-xs text-neutral-300 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     </div>
   );
