@@ -7,7 +7,6 @@ import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
 import { useUserInitializationStore } from './renderer/stores/userIndex';
 import { sessionManager } from './renderer/services/session';
-import { Skeleton } from './renderer/components/ui/Skeleton';
 import type { Anime } from './types';
 
 type Screen = 'home' | 'search' | 'detail' | 'player' | 'settings';
@@ -87,14 +86,7 @@ const App: React.FC = () => {
   }, [push]);
 
   if (!ready || !isInitialized) {
-    return (
-      <div className="h-screen w-screen bg-[#0f0f11] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 animate-fade-in">
-          <Skeleton className="w-48 h-4 rounded" />
-          <Skeleton className="w-32 h-3 rounded" />
-        </div>
-      </div>
-    );
+    return <div className="h-screen w-screen bg-[#0f0f11]" />;
   }
 
   const currentScreen = current.screen;
