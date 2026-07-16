@@ -108,14 +108,24 @@ export const source = {
     if (scriptsResult.poster) banner = scriptsResult.poster;
     relations = scriptsResult.relations;
 
+    if (!banner) {
+      const jsonLdImage = parser.extractImageFromJsonLd(html);
+      if (jsonLdImage) banner = jsonLdImage;
+    }
+
+    if (!banner) {
+      const domImage = html.match(/<img[^>]*(?:src|data-src)="([^"]+)"[^>]*class="[^"]*(?:banner|hero|cover)[^"]*"[^>]*>/i);
+      if (domImage) banner = domImage[1];
+    }
+
     return {
       title,
       image,
       url: slug,
       status,
       synopsis,
-      banner,
-      poster,
+      banner: posterToUrl(banner),
+      poster: posterToUrl(poster),
       genres,
       episodes,
       relations,

@@ -47,6 +47,7 @@ export function useAnimeDetail(slug: string) {
   useEffect(() => {
     setActiveRangeIdxState(0);
     setRangeRestored(false);
+    useDetailsStore.getState().reset();
     storage.get<number>(`range_${slug}`).then((idx) => {
       if (idx != null) setActiveRangeIdxState(idx);
       setRangeRestored(true);
