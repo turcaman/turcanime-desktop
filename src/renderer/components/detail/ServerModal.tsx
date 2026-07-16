@@ -97,12 +97,12 @@ export const ServerModal: React.FC<ServerModalProps> = ({
                 <button
                   key={server.id}
                   onClick={() => onServerSelect(server)}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors group"
+                  className="flex items-center gap-3 w-full px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors"
                 >
-                  <span className="w-5 h-5 rounded bg-neutral-800 flex items-center justify-center text-[11px] text-neutral-500 font-mono group-hover:text-neutral-400 transition-colors">
+                  <span className="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center text-[11px] text-neutral-500 font-mono">
                     {idx + 1}
                   </span>
-                  <span className="text-sm text-neutral-200 font-medium">
+                  <span className="text-sm text-neutral-200">
                     {mapLanguage(server.language)}
                   </span>
                 </button>

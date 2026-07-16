@@ -24,8 +24,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
   return (
     <div>
-      <div
-        className="relative w-full bg-neutral-900 overflow-hidden"
+      <div className="relative w-full bg-neutral-900 overflow-hidden"
         style={{ height: '38vh', minHeight: 260 }}
       >
         {banner && (
@@ -49,14 +48,8 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-2 mb-2">
-            <span
-              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                anime.status === 'Finalizado'
-                  ? 'bg-green-500/15 text-green-400'
-                  : 'bg-yellow-500/15 text-yellow-400'
-              }`}
-            >
-              {anime.status || 'En emisión'}
+            <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+              {(anime.status === 'Finalizado' ? 'Finalizado' : 'En emisión').toUpperCase()}
             </span>
           </div>
           <h1 className="text-lg font-bold text-neutral-100 leading-tight line-clamp-2">
@@ -67,7 +60,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
               {anime.genres.slice(0, 4).map((g) => (
                 <span
                   key={g}
-                  className="text-[10px] text-neutral-400 bg-neutral-800/80 px-2 py-0.5 rounded-full"
+                  className="text-[10px] text-neutral-400 bg-neutral-800/80 px-1.5 py-0.5 rounded-full"
                 >
                   {g}
                 </span>

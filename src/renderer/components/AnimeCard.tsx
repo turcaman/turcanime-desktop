@@ -38,7 +38,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-black/0 group-hover:from-black/10 transition-colors duration-300" />
         {episodeNumber !== undefined && (
-          <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 backdrop-blur-sm rounded-md text-[11px] text-neutral-200 font-medium shadow-sm">
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 rounded text-[11px] text-purple-400 font-bold tracking-wide shadow-sm">
             Ep. {episodeNumber}
           </div>
         )}

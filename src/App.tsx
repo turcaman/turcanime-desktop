@@ -95,12 +95,12 @@ const App: React.FC = () => {
   return (
     <div className="h-screen w-screen bg-[#0f0f11] flex flex-col">
       {showNavbar && (
-        <nav className="flex items-center gap-1 px-8 pt-3 pb-2 bg-[#0f0f11] border-b border-neutral-800/40">
+        <nav className="flex items-center gap-1 px-6 pt-3 pb-2 bg-[#0f0f11] border-b border-neutral-800/40">
           <button
             onClick={() => navigate('home')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl transition-all duration-200 ${
               currentScreen === 'home'
-                ? 'bg-purple-500/10 text-purple-400 font-medium shadow-sm shadow-purple-500/5'
+                ? 'bg-purple-500/10 text-purple-400 font-medium'
                 : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
             }`}
           >
@@ -109,9 +109,9 @@ const App: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('search')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl transition-all duration-200 ${
               currentScreen === 'search'
-                ? 'bg-purple-500/10 text-purple-400 font-medium shadow-sm shadow-purple-500/5'
+                ? 'bg-purple-500/10 text-purple-400 font-medium'
                 : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
             }`}
           >
@@ -120,9 +120,9 @@ const App: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('settings')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl transition-all duration-200 ${
               currentScreen === 'settings'
-                ? 'bg-purple-500/10 text-purple-400 font-medium shadow-sm shadow-purple-500/5'
+                ? 'bg-purple-500/10 text-purple-400 font-medium'
                 : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
             }`}
           >

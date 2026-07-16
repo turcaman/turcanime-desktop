@@ -11,7 +11,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress }) =>
   return (
     <button
       onClick={() => onPress(episode)}
-      className="group flex items-center gap-3 w-full px-6 py-3 border-b border-neutral-800/40 hover:bg-neutral-900/50 transition-colors text-left"
+      className="group flex items-center gap-3 w-full px-6 py-3 hover:bg-neutral-900/50 transition-colors text-left"
     >
       <span className="text-sm text-neutral-300 truncate flex-1 font-medium group-hover:text-neutral-100 transition-colors">
         Episodio {episode.number}
