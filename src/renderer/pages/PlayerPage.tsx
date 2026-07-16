@@ -30,6 +30,21 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     return off;
   }, []);
 
+  useEffect(() => {
+    const syncFs = () => {
+      const isFs = document.fullscreenElement != null || (document as Document & { webkitFullscreenElement?: Element }).webkitFullscreenElement != null;
+      if (!isFs && fullscreenRef.current) {
+        window.electronAPI.fullscreen.set(false);
+      }
+    };
+    document.addEventListener('fullscreenchange', syncFs);
+    document.addEventListener('webkitfullscreenchange', syncFs);
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFs);
+      document.removeEventListener('webkitfullscreenchange', syncFs);
+    };
+  }, []);
+
   useEffect(() => () => {
     if (fullscreenRef.current) {
       window.electronAPI.fullscreen.set(false);
@@ -61,6 +76,22 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
   } = usePlayer(slug, episodeNumber, activeAnime, videoRef, onNavigateToEpisode);
 
   const prevEpisodeRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        window.electronAPI.fullscreen.set(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [toggleFullscreen]);
+
   useEffect(() => {
     const prev = prevEpisodeRef.current;
     prevEpisodeRef.current = episodeNumber;
