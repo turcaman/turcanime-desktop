@@ -16,7 +16,6 @@ export function usePlayer(
   const isLoading = usePlayerStore((s) => s.isLoading);
   const error = usePlayerStore((s) => s.error);
   const addToHistory = useHistoryStore((s) => s.addToHistory);
-  const lastViewed = useHistoryStore((s) => s.lastViewed);
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -36,13 +35,29 @@ export function usePlayer(
 
   const saveProgress = useCallback(() => {
     if (videoRef.current) {
+      const rawDuration = videoRef.current.duration;
+      let duration = (
+        typeof rawDuration === 'number' &&
+        isFinite(rawDuration) &&
+        rawDuration > 0
+      ) ? rawDuration : 0;
+
+      if (!duration) {
+        const prev = useHistoryStore.getState().lastViewed.find(
+          (item) => item.url === slug && item.number === lastSavedEp.current,
+        );
+        if (prev?.duration && isFinite(prev.duration) && prev.duration > 0) {
+          duration = prev.duration;
+        }
+      }
+
       addToHistory({
         title: animeInfoRef.current.title,
         image: animeInfoRef.current.image,
         url: slug,
         number: lastSavedEp.current,
         progress: videoRef.current.currentTime,
-        duration: videoRef.current.duration || 0,
+        duration,
         timestamp: Date.now(),
       });
     }
@@ -130,17 +145,6 @@ export function usePlayer(
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePlay, seekBack10, seekForward10]);
 
-  // Restore progress once per episode — read store directly to avoid re-running on every update
-  useEffect(() => {
-    if (!videoRef.current) return;
-    const items = useHistoryStore.getState().lastViewed;
-    const historyItem = items.find(
-      (item) => item.url === slug && item.number === episodeNumber,
-    );
-    if (historyItem && historyItem.progress > 0) {
-      videoRef.current.currentTime = historyItem.progress;
-    }
-  }, [slug, episodeNumber, videoRef]);
   useEffect(() => {
     if (!streamUrl || !videoRef.current) return;
 
@@ -153,6 +157,14 @@ export function usePlayer(
     video.load();
     setLoaded(true);
     lastSavedEp.current = episodeNumber;
+
+    const restoredItems = useHistoryStore.getState().lastViewed;
+    const historyItem = restoredItems.find(
+      (item) => item.url === slug && item.number === episodeNumber,
+    );
+    if (historyItem && historyItem.progress > 0) {
+      video.currentTime = historyItem.progress;
+    }
 
     const handleTimeUpdate = () => {
       setCurrentTime(video.currentTime);
@@ -206,7 +218,6 @@ export function usePlayer(
 
     return () => {
       if (progressTimer.current) clearInterval(progressTimer.current);
-      saveProgress();
     };
   }, [slug, episodeNumber, videoRef, saveProgress]);
 
