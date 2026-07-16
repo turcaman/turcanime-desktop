@@ -89,9 +89,17 @@ const App: React.FC = () => {
   if (!ready || !isInitialized) {
     return (
       <div className="h-screen w-screen bg-[#0f0f11] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Skeleton className="w-48 h-4 rounded" />
-          <Skeleton className="w-32 h-3 rounded" />
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <Skeleton className="w-48 h-4 rounded" />
+            <Skeleton className="w-32 h-3 rounded" />
+          </div>
         </div>
       </div>
     );
@@ -141,30 +149,32 @@ const App: React.FC = () => {
       )}
 
       <div className="flex-1 overflow-hidden">
-        {currentScreen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
-        {currentScreen === 'search' && (
-          <SearchPage
-            onAnimePress={handleAnimePress}
-            onNavigateDetail={handleAnimePress}
-          />
-        )}
-        {currentScreen === 'detail' && current.slug && (
-          <DetailPage
-            slug={current.slug}
-            onNavigateToPlayer={navigateToPlayer}
-            onBack={goBack}
-            onRelatedPress={replaceCurrentDetail}
-          />
-        )}
-        {currentScreen === 'player' && current.slug && current.episodeNumber != null && (
-          <PlayerPage
-            slug={current.slug}
-            episodeNumber={current.episodeNumber}
-            onBack={goBack}
-            onNavigateToEpisode={updatePlayerEpisode}
-          />
-        )}
-        {currentScreen === 'settings' && <SettingsPage />}
+        <div key={`${currentScreen}-${current.slug ?? ''}`} className="h-full animate-fade-in">
+          {currentScreen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
+          {currentScreen === 'search' && (
+            <SearchPage
+              onAnimePress={handleAnimePress}
+              onNavigateDetail={handleAnimePress}
+            />
+          )}
+          {currentScreen === 'detail' && current.slug && (
+            <DetailPage
+              slug={current.slug}
+              onNavigateToPlayer={navigateToPlayer}
+              onBack={goBack}
+              onRelatedPress={replaceCurrentDetail}
+            />
+          )}
+          {currentScreen === 'player' && current.slug && current.episodeNumber != null && (
+            <PlayerPage
+              slug={current.slug}
+              episodeNumber={current.episodeNumber}
+              onBack={goBack}
+              onNavigateToEpisode={updatePlayerEpisode}
+            />
+          )}
+          {currentScreen === 'settings' && <SettingsPage />}
+        </div>
       </div>
     </div>
   );

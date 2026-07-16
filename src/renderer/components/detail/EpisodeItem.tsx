@@ -11,12 +11,12 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress }) =>
   return (
     <button
       onClick={() => onPress(episode)}
-      className="flex items-center gap-3 w-full px-6 py-3 border-b border-neutral-800/40 hover:bg-neutral-900/50 transition-colors text-left"
+      className="group flex items-center gap-3 w-full px-6 py-3 border-b border-neutral-800/40 hover:bg-neutral-900/50 transition-colors text-left"
     >
-      <span className="text-sm text-neutral-300 truncate flex-1 font-medium">
+      <span className="text-sm text-neutral-300 truncate flex-1 font-medium group-hover:text-neutral-100 transition-colors">
         Episodio {episode.number}
       </span>
-      <Play className="w-4 h-4 text-purple-500 flex-shrink-0" />
+      <Play className="w-4 h-4 text-purple-500 flex-shrink-0 group-hover:translate-x-0.5 group-hover:text-purple-400 transition-all duration-200" />
     </button>
   );
 };

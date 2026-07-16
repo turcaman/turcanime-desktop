@@ -41,7 +41,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         {onBack && (
           <button
             onClick={onBack}
-            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/70 active:scale-95 transition-all z-10"
           >
             <ChevronLeft className="w-5 h-5 text-white" />
           </button>
@@ -117,14 +117,14 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                 <button
                   key={r.slug}
                   onClick={() => onRelatedPress?.(r.slug)}
-                  className="flex-shrink-0 w-24 text-left"
+                  className="flex-shrink-0 w-24 text-left group"
                 >
                   <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1">
                     {r.poster && (
                       <img
                         src={r.poster}
                         alt={r.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
                     )}
@@ -134,7 +134,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                       </div>
                     )}
                   </div>
-                  <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight min-h-[25px]">
+                  <p className="text-[10px] text-neutral-400 line-clamp-2 leading-tight min-h-[25px] group-hover:text-neutral-300 transition-colors">
                     {r.name}
                   </p>
                 </button>
@@ -150,7 +150,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         </span>
         <button
           onClick={onToggleSort}
-          className="p-1.5 rounded-md text-purple-400 hover:text-purple-300 hover:bg-neutral-800/50 transition-colors"
+          className="p-1.5 rounded-md text-purple-400 hover:text-purple-300 hover:bg-neutral-800/50 active:scale-95 transition-all"
           aria-label={isAscending ? 'Orden descendente' : 'Orden ascendente'}
         >
           <ChevronUp className={`w-4 h-4 transition-transform ${isAscending ? '' : 'rotate-180'}`} />

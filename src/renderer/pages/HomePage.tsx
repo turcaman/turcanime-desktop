@@ -52,7 +52,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {showSkeleton && <HomeSkeleton cardWidth={cardWidth} containerWidth={containerRef.current?.offsetWidth ?? 0} />}
 
       {showContent && (
-        <div>
+        <div className="animate-fade-in">
           {sections.map((section, idx) => {
             if (section.type === 'CONTINUE') {
               return (

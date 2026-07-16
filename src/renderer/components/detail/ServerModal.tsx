@@ -54,10 +54,10 @@ export const ServerModal: React.FC<ServerModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/70"
+        className="absolute inset-0 bg-black/70 animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md bg-[#1a1a1e] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md bg-[#1a1a1e] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden animate-scale-in">
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800/60">
           <div>
             <h3 className="text-sm font-semibold text-neutral-200">

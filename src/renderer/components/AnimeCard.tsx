@@ -23,7 +23,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
   return (
     <button
       onClick={onPress}
-      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl overflow-hidden"
+      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150"
       style={{ width }}
     >
       <div
