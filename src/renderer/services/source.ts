@@ -137,7 +137,7 @@ export const source = {
 
     logger.info('Source', `resolveStreamUrl: fetching bridge ${videoUrl.slice(0, 80)}`);
 
-    const res = await (window as any).electronAPI.bridgeFetch(videoUrl, {
+    const res = await window.electronAPI.bridgeFetch(videoUrl, {
       'Referer': `${SOURCE_CONFIG.baseUrl}/`,
       'User-Agent': ua,
       'Cookie': cookies,

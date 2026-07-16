@@ -61,7 +61,7 @@ const CACHE_PREFIX_VALUES = Object.values(CACHE_PREFIXES);
 
 export async function clearAllCache(): Promise<void> {
   try {
-    const allKeys = Object.keys(await (window as any).electronAPI.store.get('__all_keys__') ?? {});
+    const allKeys = Object.keys(await window.electronAPI.store.get('__all_keys__') ?? {});
     for (const key of allKeys) {
       if (CACHE_PREFIX_VALUES.some((prefix) => key.startsWith(prefix))) {
         await storage.remove(key);

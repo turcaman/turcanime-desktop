@@ -94,12 +94,6 @@ export function useSearchScreen() {
     resetSearch();
   }, [cancelSearch, resetSearch]);
 
-  const reset = useCallback(() => {
-    setTerm('');
-    setStatus('idle');
-    resetSearch();
-  }, [resetSearch]);
-
   useEffect(() => {
     return () => {
       cancelSearch();

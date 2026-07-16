@@ -66,7 +66,7 @@ export class HiddenSessionWindow {
     if (!this.window) {
       this.create();
     }
-    return this.window!;
+    return this.window as BrowserWindow;
   }
 
   create(): void {
@@ -185,7 +185,8 @@ export class HiddenSessionWindow {
         }
       }, POLL_TIMEOUT);
 
-      this.window!.loadURL(SESSION_WASH_URL);
+      const win = this.getWindow();
+      win.loadURL(SESSION_WASH_URL);
     });
   }
 

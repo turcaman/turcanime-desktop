@@ -12,12 +12,12 @@ function buildRanges(episodes: Episode[]): EpisodeRange[] {
   if (episodes.length === 0) return [];
   const last = episodes[episodes.length - 1];
   if (episodes.length <= EPISODES_PER_PAGE) {
-    return [{ label: `1-${last!.number}`, start: 0, end: episodes.length }];
+    return [{ label: `1-${last.number}`, start: 0, end: episodes.length }];
   }
   return Array.from({ length: Math.ceil(episodes.length / EPISODES_PER_PAGE) }, (_, i) => {
     const start = i * EPISODES_PER_PAGE;
     const end = Math.min(start + EPISODES_PER_PAGE, episodes.length);
-    return { label: `${episodes[start]!.number}-${episodes[end - 1]!.number}`, start, end };
+    return { label: `${episodes[start].number}-${episodes[end - 1].number}`, start, end };
   });
 }
 

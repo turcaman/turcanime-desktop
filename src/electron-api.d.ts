@@ -18,6 +18,24 @@ interface ElectronAPI {
     data: string | null;
     error?: string;
   }>;
+  bridgeFetch: (
+    url: string,
+    headers?: Record<string, string>,
+  ) => Promise<{
+    ok: boolean;
+    status: number;
+    data: string | null;
+    error?: string;
+  }>;
+  proxyFetch: (
+    url: string,
+    opts?: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean },
+  ) => Promise<{
+    ok: boolean;
+    status: number;
+    data: unknown;
+    json: boolean;
+  }>;
   fullscreen: {
     set: (flag: boolean) => Promise<void>;
     onChanged: (cb: (flag: boolean) => void) => () => void;

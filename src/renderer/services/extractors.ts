@@ -91,7 +91,7 @@ function parseMaster(body: string, baseUrl: string): HlsStream[] {
     if (t.startsWith('#EXT-X-STREAM-INF:')) {
       const h = t.match(/RESOLUTION=(\d+)x(\d+)/);
       const b = t.match(/BANDWIDTH=(\d+)/);
-      info = { height: h ? parseInt(h[2]!, 10) : 0, bw: b ? parseInt(b[1]!, 10) : 0 };
+      info = { height: h ? parseInt(h[2] ?? '0', 10) : 0, bw: b ? parseInt(b[1] ?? '0', 10) : 0 };
     } else if (t && !t.startsWith('#') && info) {
       const url = t.startsWith('http') ? t : new URL(t, baseUrl).href;
       result.push({ quality: info.height ? `${info.height}p` : `bw-${info.bw}`, url });
@@ -119,8 +119,8 @@ interface ProxyFetchResult {
 
 async function proxyFetch(url: string, opts?: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }): Promise<ProxyFetchResult> {
   logger.debug('Extractors', `proxyFetch: ${url.slice(0, 80)}`);
-  const result = await (window as any).electronAPI.proxyFetch(url, opts);
-  return result as ProxyFetchResult;
+  const result = await window.electronAPI.proxyFetch(url, opts);
+  return result;
 }
 
 export async function extractBest(
