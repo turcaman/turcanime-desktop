@@ -24,7 +24,7 @@ Port of the Android app [turcaman/turcanime](https://github.com/turcaman/turcani
 
 - **Node.js** >= 20
 - **npm** >= 9
-- **OS**: Windows 10+, macOS 12+, or Linux (x86_64)
+- **OS**: Windows 10+ or Linux (x86_64)
 
 ## Setup
 
@@ -52,7 +52,7 @@ npm run make           # build installers for the current platform
 - **Player** — Native HTML5 video with overlay controls, seek, server switching, auto-resume, fullscreen (F / Esc) and keyboard shortcuts
 - **No login** — No account needed; the scraper handles source authentication automatically via a hidden BrowserWindow
 - **Smart cache** — Cached results with per-type TTLs (home: 6h, details: 12h, stream: 5min)
-- **Cross-platform** — Windows, macOS and Linux from a single codebase
+- **Cross-platform** — Windows and Linux from a single codebase
 
 ## Project Structure
 
@@ -91,7 +91,6 @@ npm run package          # generates packaged folder in out/
 Makers configured:
 
 - **Windows**: Squirrel (`.exe` installer)
-- **macOS**: ZIP (`.zip`)
 - **Linux**: Deb (`.deb`) + RPM (`.rpm`)
 
 **Version bumps**: Edit `version` in `package.json`. There is no `app.json`.
