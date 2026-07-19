@@ -102,43 +102,43 @@ export const SettingsPage: React.FC = () => {
                 />
               </button>
             </label>
-            <div className="px-4 py-3.5">
-              <button
-                onClick={handleManualCheck}
-                disabled={checkingForUpdates}
-                className="flex items-center gap-3 w-full hover:bg-neutral-800/60 transition-colors disabled:opacity-50 rounded"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-spin' : ''}`}
-                />
+            <button
+              onClick={handleManualCheck}
+              disabled={checkingForUpdates}
+              className="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-spin' : ''}`}
+              />
+              <div className="flex flex-col items-start">
                 <span className="text-sm text-neutral-200">
                   {checkingForUpdates ? 'Buscando...' : 'Buscar actualización'}
                 </span>
-              </button>
-              {lastCheckError && (
-                <p className="text-[11px] text-neutral-500 mt-2 ml-7">{lastCheckError}</p>
-              )}
-              {!checkingForUpdates && !lastCheckError && updateAvailable && (
-                <div className="flex items-center justify-between mt-2 ml-7">
-                  <span className="text-sm text-purple-400 font-medium">
+                {lastCheckError && (
+                  <span className="text-[11px] text-neutral-500 mt-0.5">{lastCheckError}</span>
+                )}
+                {!checkingForUpdates && !lastCheckError && updateAvailable && (
+                  <span className="text-[11px] text-purple-400 mt-0.5">
                     v{updateAvailable} disponible
                   </span>
-                  <button
-                    onClick={handleDownload}
-                    className="flex items-center gap-1.5 text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors"
-                  >
-                    Descargar
-                    <ExternalLink className="w-3 h-3" />
-                  </button>
-                </div>
+                )}
+                {!checkingForUpdates && !lastCheckError && !updateAvailable && currentVersion && (
+                  <span className="text-[11px] text-emerald-400 mt-0.5 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Estás al día
+                  </span>
+                )}
+              </div>
+              {!checkingForUpdates && !lastCheckError && updateAvailable && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                  className="flex items-center gap-1.5 text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors ml-auto flex-shrink-0 cursor-pointer"
+                >
+                  Descargar
+                  <ExternalLink className="w-3 h-3" />
+                </span>
               )}
-              {!checkingForUpdates && !lastCheckError && !updateAvailable && currentVersion && (
-                <p className="text-[11px] text-emerald-400 mt-2 ml-7 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Estás al día
-                </p>
-              )}
-            </div>
+            </button>
           </div>
         </div>
 
