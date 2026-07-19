@@ -27,7 +27,8 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
   return (
     <div>
-      <div className="relative w-full bg-neutral-900 overflow-hidden"
+      <div
+        className="relative w-full bg-neutral-900 overflow-hidden"
         style={{ height: '38vh', minHeight: 260 }}
       >
         {banner && (
@@ -37,13 +38,13 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
             className="absolute inset-0 w-full h-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/50 to-60%" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30" />
 
         {onBack && (
           <button
             onClick={onBack}
-            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/70 active:scale-95 transition-all z-10"
+            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 active:scale-95 transition-all z-10"
           >
             <ChevronLeft className="w-5 h-5 text-white" />
           </button>
@@ -51,11 +52,12 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-neutral-300 uppercase">
+              <span className={`w-1.5 h-1.5 rounded-full ${isAiring ? 'bg-green-500' : 'bg-neutral-500'}`} />
               {statusLabel}
             </span>
           </div>
-          <h1 className="text-lg font-bold text-neutral-100 leading-tight line-clamp-2">
+          <h1 className="text-xl font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
             {anime.title}
           </h1>
           {anime.genres.length > 0 && (
@@ -63,7 +65,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
               {anime.genres.slice(0, 4).map((g) => (
                 <span
                   key={g}
-                  className="text-[10px] text-neutral-400 bg-neutral-800/80 px-1.5 py-0.5 rounded-full"
+                  className="text-[10px] text-neutral-300 bg-black/40 px-2 py-0.5 rounded-full border border-white/5"
                 >
                   {g}
                 </span>
@@ -75,10 +77,11 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
       <div className="px-6 pt-4">
         {anime.synopsis && (
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
-              Sinopsis
-            </h3>
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
+              <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Sinopsis</h3>
+            </div>
             <button
               onClick={() => setExpanded(!expanded)}
               className="text-left w-full"
@@ -100,10 +103,11 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         )}
 
         {anime.relations && (anime.relations.prequel.length > 0 || anime.relations.sequel.length > 0 || anime.relations.related.length > 0) && (
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
-              Relacionados
-            </h3>
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
+              <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Relacionados</h3>
+            </div>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
               {[
                 ...anime.relations.prequel.map((r) => ({ ...r, _label: 'Precuela' as const })),
@@ -115,7 +119,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                   onClick={() => onRelatedPress?.(r.slug)}
                   className="flex-shrink-0 w-24 text-left group"
                 >
-                  <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1">
+                  <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1 border border-transparent group-hover:border-neutral-700/60 transition-colors">
                     {r.poster && (
                       <img
                         src={r.poster}
@@ -141,9 +145,12 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
       </div>
 
       <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-800/60">
-        <span className="text-sm font-semibold text-neutral-300">
-          Episodios ({anime.episodes.length})
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
+          <span className="text-sm font-semibold text-neutral-300">
+            Episodios ({anime.episodes.length})
+          </span>
+        </div>
         <button
           onClick={onToggleSort}
           className="p-1.5 rounded-md text-purple-400 hover:text-purple-300 hover:bg-neutral-800/50 active:scale-95 transition-all"

@@ -57,7 +57,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
         className="absolute inset-0 bg-black/70 animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md bg-[#1a1a1e] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden animate-scale-in">
+      <div className="relative w-full max-w-sm bg-[#141416] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden animate-scale-in">
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800/60">
           <div>
             <h3 className="text-sm font-semibold text-neutral-200">
@@ -75,16 +75,16 @@ export const ServerModal: React.FC<ServerModalProps> = ({
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="p-4">
           {isLoading && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Skeleton className="h-11 rounded-lg w-full" />
               <Skeleton className="h-11 rounded-lg w-full" />
             </div>
           )}
 
           {!isLoading && displayServers.length === 0 && (
-            <div className="flex items-center justify-center h-32">
+            <div className="flex items-center justify-center h-28">
               <p className="text-sm text-neutral-500">
                 No hay servidor disponible
               </p>
@@ -92,14 +92,14 @@ export const ServerModal: React.FC<ServerModalProps> = ({
           )}
 
           {!isLoading && displayServers.length > 0 && (
-            <div className="space-y-2 max-h-72 overflow-y-auto">
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
               {displayServers.map((server, idx) => (
                 <button
                   key={server.id}
                   onClick={() => onServerSelect(server)}
-                  className="flex items-center gap-3 w-full px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors border border-transparent hover:border-neutral-700/60"
                 >
-                  <span className="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center text-[11px] text-neutral-500 font-mono">
+                  <span className="w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-[11px] text-neutral-500 font-semibold">
                     {idx + 1}
                   </span>
                   <span className="text-sm text-neutral-200">

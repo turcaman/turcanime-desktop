@@ -31,16 +31,16 @@ export const EpisodeRangeSelector: React.FC<EpisodeRangeSelectorProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex gap-3 px-6 py-3 overflow-x-auto scrollbar-none"
+      className="flex gap-2 px-6 py-3 overflow-x-auto scrollbar-none"
     >
       {ranges.map((range, idx) => (
         <button
           key={idx}
           onClick={() => onSelect(idx)}
-          className={`flex-shrink-0 px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
+          className={`flex-shrink-0 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
             idx === activeRangeIdx
               ? 'bg-purple-500/15 text-purple-400'
-              : 'bg-neutral-900 text-neutral-500 hover:text-neutral-300'
+              : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
           }`}
         >
           {range.label}
