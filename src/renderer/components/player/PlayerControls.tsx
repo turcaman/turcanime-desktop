@@ -19,6 +19,7 @@ interface PlayerControlsProps {
   loading: boolean;
   hasPrev: boolean;
   hasNext: boolean;
+  isFullscreen: boolean;
   animeTitle?: string;
   episodeNumber?: number;
   onPlayPause: () => void;
@@ -48,6 +49,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   loading,
   hasPrev,
   hasNext,
+  isFullscreen,
   animeTitle,
   episodeNumber,
   onPlayPause,
@@ -73,8 +75,11 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     }
   }, [visible]);
 
-
-
+  useEffect(() => {
+    document.documentElement.style.cursor =
+      isFullscreen && !visible ? 'none' : '';
+    return () => { document.documentElement.style.cursor = ''; };
+  }, [isFullscreen, visible]);
 
   const displayTime = slidingValue ?? pendingSeek ?? currentTime;
   const isSliding = slidingValue != null;

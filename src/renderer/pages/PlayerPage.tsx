@@ -145,14 +145,15 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           </div>
         )}
 
-        <PlayerControls
-          playing={playing}
-          buffering={buffering}
-          currentTime={currentTime}
-          duration={duration}
-          loading={isLoading}
-          hasPrev={hasPrev}
-          hasNext={hasNext}
+          <PlayerControls
+            playing={playing}
+            buffering={buffering}
+            currentTime={currentTime}
+            duration={duration}
+            loading={isLoading}
+            hasPrev={hasPrev}
+            hasNext={hasNext}
+            isFullscreen={fullscreen}
           animeTitle={animeTitle}
           episodeNumber={currentEpNumber}
           onPlayPause={togglePlay}
