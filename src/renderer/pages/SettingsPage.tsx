@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw, Database, Bell, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Database, Bell, ExternalLink, CheckCircle2, Radio } from 'lucide-react';
 import { sessionManager } from '../services/session';
 import { useUIStore } from '../stores/uiStore';
 import { useUpdateStore } from '../stores/updateStore';
@@ -58,15 +58,15 @@ export const SettingsPage: React.FC = () => {
               disabled={isRefreshingSession}
               className="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
             >
-              <RefreshCw
-                className={`w-4 h-4 text-purple-400 ${isRefreshingSession ? 'animate-spin' : ''}`}
+              <Radio
+                className={`w-4 h-4 text-purple-400 ${isRefreshingSession ? 'animate-pulse' : ''}`}
               />
               <div className="flex flex-col items-start">
                 <span className="text-sm text-neutral-200">
-                  {refreshed ? 'Datos actualizados' : 'Actualizar datos de la app'}
+                  {refreshed ? 'Conexión renovada' : 'Renovar conexión'}
                 </span>
                 <span className="text-[11px] text-neutral-500 mt-0.5">
-                  Renueva la conexión con el servidor
+                  Renueva la sesión con el servidor
                 </span>
               </div>
             </button>
@@ -82,7 +82,7 @@ export const SettingsPage: React.FC = () => {
             <label className="flex items-center gap-3 w-full px-4 py-3.5 cursor-pointer hover:bg-neutral-800/60 transition-colors">
               <Bell className="w-4 h-4 text-neutral-500 flex-shrink-0" />
               <div className="flex flex-col items-start flex-1 min-w-0">
-                <span className="text-sm text-neutral-200">Buscar actualizaciones automáticamente</span>
+                <span className="text-sm text-neutral-200">Buscar nueva versión al iniciar</span>
                 <span className="text-[11px] text-neutral-500 mt-0.5">
                   Al iniciar la aplicación
                 </span>
@@ -112,7 +112,7 @@ export const SettingsPage: React.FC = () => {
               />
               <div className="flex flex-col items-start">
                 <span className="text-sm text-neutral-200">
-                  {checkingForUpdates ? 'Buscando...' : 'Buscar actualización'}
+                  {checkingForUpdates ? 'Buscando...' : 'Buscar nueva versión'}
                 </span>
                 {lastCheckError && (
                   <span className="text-[11px] text-neutral-500 mt-0.5">{lastCheckError}</span>
