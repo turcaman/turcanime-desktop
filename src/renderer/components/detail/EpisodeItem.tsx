@@ -17,7 +17,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
   return (
     <button
       onClick={() => onPress(episode)}
-      className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-neutral-800/30 bg-neutral-900/40 hover:bg-neutral-800/50 transition-colors text-left"
+      className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-neutral-800/30 bg-neutral-900/40 hover:bg-neutral-800/60 transition-colors text-left"
     >
       <span className="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-700 text-[11px] text-neutral-300 font-semibold group-hover:bg-neutral-600 group-hover:text-neutral-200 transition-colors flex-shrink-0">
         {episode.number}
@@ -27,7 +27,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
           Episodio {episode.number}
         </span>
         {pct != null && (
-          <div className="w-full h-0.5 bg-neutral-800 rounded-full mt-1.5 overflow-hidden">
+          <div className="w-full h-1 bg-neutral-800 rounded-full mt-1.5 overflow-hidden">
             <div
               className="h-full bg-purple-500 rounded-full transition-all duration-300"
               style={{ width: `${pct * 100}%` }}

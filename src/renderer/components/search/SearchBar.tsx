@@ -34,7 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="px-6 pt-4 pb-3 bg-[#0f0f11]">
-      <div className="relative flex items-center bg-neutral-900 rounded-xl px-4 h-11 ring-1 ring-neutral-800 focus-within:ring-purple-500/40 focus-within:bg-neutral-800/80 transition-all duration-200">
+      <div className="flex items-center bg-neutral-900 rounded-xl px-4 h-11 ring-1 ring-neutral-800 focus-within:ring-purple-500/40 focus-within:bg-neutral-800/80 transition-all duration-200">
         <Search className="w-4 h-4 text-neutral-500 flex-shrink-0 mr-3" />
         <input
           ref={inputRef}

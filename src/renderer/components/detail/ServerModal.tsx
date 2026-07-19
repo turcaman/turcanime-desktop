@@ -54,7 +54,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/70 animate-fade-in"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
       <div className="relative w-full max-w-sm bg-[#141416] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden animate-scale-in">

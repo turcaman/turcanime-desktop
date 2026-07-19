@@ -19,7 +19,6 @@ interface PlayerControlsProps {
   loading: boolean;
   hasPrev: boolean;
   hasNext: boolean;
-  isFullscreen: boolean;
   animeTitle?: string;
   episodeNumber?: number;
   onPlayPause: () => void;
@@ -29,7 +28,6 @@ interface PlayerControlsProps {
   onPrev: () => void;
   onNext: () => void;
   onBack: () => void;
-  onToggleFullscreen: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -49,7 +47,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   loading,
   hasPrev,
   hasNext,
-  isFullscreen,
   animeTitle,
   episodeNumber,
   onPlayPause,
@@ -59,7 +56,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onPrev,
   onNext,
   onBack,
-  onToggleFullscreen,
 }) => {
   const [visible, setVisible] = useState(true);
   const showLoader = loading || buffering;
@@ -70,16 +66,10 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   useEffect(() => {
     if (fadeRef.current) {
-      fadeRef.current.style.transition = 'opacity 200ms ease';
+      fadeRef.current.style.transition = 'opacity 250ms ease';
       fadeRef.current.style.opacity = visible ? '1' : '0';
     }
   }, [visible]);
-
-  useEffect(() => {
-    document.documentElement.style.cursor =
-      isFullscreen && !visible ? 'none' : '';
-    return () => { document.documentElement.style.cursor = ''; };
-  }, [isFullscreen, visible]);
 
   const displayTime = slidingValue ?? pendingSeek ?? currentTime;
   const isSliding = slidingValue != null;
@@ -91,9 +81,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   }, [currentTime, pendingSeek]);
 
   const handleMouseMove = useCallback(() => {
-    if (!visible) {
-      setVisible(true);
-    }
+    if (!visible) setVisible(true);
     restartTimer();
   }, [visible, restartTimer]);
 
@@ -119,31 +107,38 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const progress = duration > 0 ? (displayTime / duration) * 100 : 0;
 
   return (
-    <div className="absolute inset-0 z-40" onClick={toggle} onMouseMove={handleMouseMove} onDoubleClick={onToggleFullscreen}>
+    <div
+      className="absolute inset-0 z-40"
+      onClick={toggle}
+      onMouseMove={handleMouseMove}
+    >
       <div
         ref={fadeRef}
         className="absolute inset-0"
-        style={{ opacity: 1, pointerEvents: visible ? 'auto' : 'none' }}
+        style={{
+          opacity: 1,
+          pointerEvents: visible ? 'auto' : 'none',
+        }}
       >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/10" />
+
         <div className="absolute top-0 left-0 right-0 flex items-start px-4 pt-4 z-50 pointer-events-none">
           <button
             onClick={(e) => { e.stopPropagation(); onBack(); }}
             className="pointer-events-auto p-1.5 rounded-full hover:bg-white/10 transition-colors"
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
+            <ChevronLeft className="w-6 h-6 text-white drop-shadow-lg" />
           </button>
           <div className="ml-3 flex-1 min-w-0 pointer-events-auto">
             {animeTitle && (
-              <p className="text-white font-semibold text-sm truncate drop-shadow-md">{animeTitle}</p>
+              <p className="text-white font-semibold text-sm truncate drop-shadow-lg">{animeTitle}</p>
             )}
             {episodeNumber != null && (
-              <p className="text-neutral-300 text-xs drop-shadow-md">Episodio {episodeNumber}</p>
+              <p className="text-neutral-300 text-xs drop-shadow-lg">Episodio {episodeNumber}</p>
             )}
           </div>
         </div>
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/10" />
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex items-center justify-center gap-5" onDoubleClick={(e) => e.stopPropagation()}>
@@ -195,9 +190,9 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 px-4 pb-5">
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
           <div className="flex items-center gap-2">
-            <span className={`text-xs w-10 text-right tabular-nums drop-shadow-sm ${isSliding ? 'text-purple-400' : 'text-white/80'}`}>
+            <span className={`text-xs w-10 text-right tabular-nums drop-shadow-lg select-none ${isSliding ? 'text-purple-400' : 'text-white/80'}`}>
               {formatTime(displayTime)}
             </span>
             <input
@@ -210,19 +205,20 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               onChange={handleSliderChange}
               onMouseUp={handleSliderEnd}
               onTouchEnd={handleSliderEnd}
-              className="flex-1 h-0.5 appearance-none bg-white/20 rounded-full cursor-pointer
+              className="flex-1 h-1 appearance-none bg-white/20 rounded-full cursor-pointer
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
                 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400
                 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-purple-500/40
-                hover:h-1 transition-all duration-150"
+                hover:h-1.5 transition-all duration-150"
               style={{
-                background: `linear-gradient(to right, rgb(168,85,247) ${progress}%, rgba(255,255,255,0.2) ${progress}%)`,
+                background: `linear-gradient(to right, rgb(168,85,247) ${progress}%, rgba(255,255,255,0.15) ${progress}%)`,
               }}
             />
-            <span className="text-xs text-white/70 w-10 tabular-nums drop-shadow-sm">
+            <span className="text-xs text-white/70 w-10 tabular-nums drop-shadow-lg select-none">
               {formatTime(duration)}
             </span>
           </div>
+
         </div>
       </div>
     </div>

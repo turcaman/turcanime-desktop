@@ -25,7 +25,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
   return (
     <button
       onClick={onPress}
-      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150 animate-scale-in"
+      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f11] rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150 animate-scale-in"
       style={{ width, animationDelay: index != null ? `${index * 50}ms` : '0ms' }}
     >
       <div
@@ -38,9 +38,9 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/0" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/0" />
         {episodeNumber !== undefined && (
-          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/70 rounded-md text-[11px] text-purple-400 font-semibold tracking-wide">
+          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-sm rounded-md text-[11px] text-purple-400 font-semibold tracking-wide">
             Ep. {episodeNumber}
           </div>
         )}

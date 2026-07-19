@@ -153,18 +153,16 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
             loading={isLoading}
             hasPrev={hasPrev}
             hasNext={hasNext}
-            isFullscreen={fullscreen}
-          animeTitle={animeTitle}
-          episodeNumber={currentEpNumber}
-          onPlayPause={togglePlay}
-          onSeek={seek}
-          onSeekBack={seekBack10}
-          onSeekForward={seekForward10}
-          onPrev={navigatePrev}
-          onNext={navigateNext}
-          onBack={onBack}
-          onToggleFullscreen={toggleFullscreen}
-        />
+            animeTitle={animeTitle}
+            episodeNumber={currentEpNumber}
+            onPlayPause={togglePlay}
+            onSeek={seek}
+            onSeekBack={seekBack10}
+            onSeekForward={seekForward10}
+            onPrev={navigatePrev}
+            onNext={navigateNext}
+            onBack={onBack}
+          />
       </div>
     </div>
   );
