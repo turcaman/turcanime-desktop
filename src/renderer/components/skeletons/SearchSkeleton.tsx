@@ -28,7 +28,7 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
         {Array.from({ length: rows * columns }).map((_, idx) => (
           <div key={idx} className="flex flex-col">
             <Skeleton
-              className="rounded-xl mb-2.5"
+              className="rounded-xl mb-2.5 animate-shimmer"
               style={{ width: cardWidth, height: cardWidth * 1.4 }}
             />
             <div className="flex flex-col gap-1.5">

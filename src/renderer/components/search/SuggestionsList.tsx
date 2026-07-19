@@ -25,33 +25,31 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
 
   return (
     <div className="px-6 pt-2">
-      <div className="divide-y divide-neutral-800/60">
-        {suggestions.map((item) => (
-          <button
-            key={item.slug}
-            onClick={() => onSelect(item)}
-            className="flex items-center gap-3 py-3 w-full text-left hover:bg-neutral-900/50 rounded-lg px-2 -mx-2 transition-colors"
-          >
-            <div className="w-10 h-14 rounded-md bg-neutral-800 overflow-hidden flex-shrink-0">
-              {item.poster ? (
-                <img
-                  src={resolvePoster(item.poster)}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-neutral-600">
-                  <Film className="w-4 h-4" />
-                </div>
-              )}
-            </div>
-            <span className="text-sm text-neutral-200 truncate">
-              {item.name}
-            </span>
-          </button>
-        ))}
-      </div>
+      {suggestions.map((item) => (
+        <button
+          key={item.slug}
+          onClick={() => onSelect(item)}
+          className="flex items-center gap-3 py-2.5 w-full text-left hover:bg-neutral-900/50 rounded-lg px-2 -mx-2 transition-colors"
+        >
+          <div className="w-9 h-12 rounded-md bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-800/60">
+            {item.poster ? (
+              <img
+                src={resolvePoster(item.poster)}
+                alt={item.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-neutral-600">
+                <Film className="w-3.5 h-3.5" />
+              </div>
+            )}
+          </div>
+          <span className="text-sm text-neutral-300 truncate">
+            {item.name}
+          </span>
+        </button>
+      ))}
     </div>
   );
 };
