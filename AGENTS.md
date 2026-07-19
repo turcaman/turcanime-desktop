@@ -16,7 +16,7 @@ No test framework configured — no `test` script.
 
 ## Project Overview
 
-Electron 43 + React 18 + TypeScript 5.5 app. Cross-platform (Windows, macOS, Linux).
+Electron 43 + React 18 + TypeScript 5.5 app. Cross-platform (Windows, Linux).
 
 - **Version**: `package.json` only (no `app.json`). Current: 1.0.6.
 - **Entry (main)**: `src/main.ts`.
@@ -303,7 +303,7 @@ Parser: `@typescript-eslint/parser`. No type-aware rules (no `no-floating-promis
 - Do NOT modify `src/renderer/services/source.ts` or `src/renderer/services/session.ts` without understanding the full session/cache/auth flow.
 - Do NOT touch `src/main/sessionHidden.ts` or `src/main/sessionPreload.ts` — they handle Cloudflare bypass and cookie acquisition.
 - Do NOT change the crypto stack (`@noble/ciphers` AES-GCM) or the Byse key assembly without understanding `selectIndexes()`.
-- Do NOT add iOS or web-specific code — this is desktop-only (Windows/macOS/Linux).
+- Do NOT add iOS or web-specific code — this is desktop-only (Windows/Linux).
 - Do NOT add a test framework — there is none configured and CI does not run tests.
 - Do NOT use full store subscriptions (`useStore()` without selector) — always use individual selectors.
 - Do NOT add JSDoc or comments to self-explanatory code.
