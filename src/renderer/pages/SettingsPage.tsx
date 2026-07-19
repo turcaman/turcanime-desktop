@@ -38,7 +38,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleDownload = useCallback(async () => {
     await window.electronAPI.app.openExternal(
-      'https://github.com/turcaman/turcanime-desktop/releases/latest',
+      'https://turcanime.pages.dev',
     );
   }, []);
 
@@ -96,8 +96,8 @@ export const SettingsPage: React.FC = () => {
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 rounded-full bg-white transition-transform duration-200 mt-0.5 ml-0.5 ${
-                    updateCheckEnabled ? 'translate-x-4' : 'translate-x-0'
+                  className={`inline-block h-4 w-4 rounded-full bg-white transition-all duration-200 mt-0.5 ml-0.5 ${
+                    updateCheckEnabled ? 'translate-x-4 shadow-sm' : 'translate-x-0'
                   }`}
                 />
               </button>
@@ -110,12 +110,12 @@ export const SettingsPage: React.FC = () => {
               <RefreshCw
                 className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-spin' : ''}`}
               />
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col items-start flex-1 min-w-0">
                 <span className="text-sm text-neutral-200">
                   {checkingForUpdates ? 'Buscando...' : 'Buscar nueva versión'}
                 </span>
                 {lastCheckError && (
-                  <span className="text-[11px] text-neutral-500 mt-0.5">{lastCheckError}</span>
+                  <span className="text-[11px] text-red-400/70 mt-0.5">{lastCheckError}</span>
                 )}
                 {!checkingForUpdates && !lastCheckError && updateAvailable && (
                   <span className="text-[11px] text-purple-400 mt-0.5">
@@ -147,7 +147,7 @@ export const SettingsPage: React.FC = () => {
             <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
             <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Información</h2>
           </div>
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden divide-y divide-neutral-800/60">
+          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3.5">
               <Database className="w-4 h-4 text-neutral-500" />
               <div className="flex flex-col items-start">
