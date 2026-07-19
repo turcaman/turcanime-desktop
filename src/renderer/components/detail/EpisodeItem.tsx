@@ -13,7 +13,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress }) =>
       onClick={() => onPress(episode)}
       className="group flex items-center gap-3 w-full px-6 py-3 hover:bg-neutral-900/50 transition-colors text-left"
     >
-      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-800 text-[11px] text-neutral-500 font-semibold group-hover:bg-neutral-700/60 group-hover:text-neutral-400 transition-colors flex-shrink-0">
+      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-700 text-[11px] text-neutral-300 font-semibold group-hover:bg-neutral-600 group-hover:text-neutral-200 transition-colors flex-shrink-0">
         {episode.number}
       </span>
       <span className="text-sm text-neutral-300 truncate flex-1 group-hover:text-neutral-100 transition-colors">

@@ -41,7 +41,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/0" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/0" />
                 <div className="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-6">
                   <p className="text-[11px] font-medium text-neutral-400 mb-0.5 leading-tight">
                     Ep. {item.number}

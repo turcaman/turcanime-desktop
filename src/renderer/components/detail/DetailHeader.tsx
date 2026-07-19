@@ -65,7 +65,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
               {anime.genres.slice(0, 4).map((g) => (
                 <span
                   key={g}
-                  className="text-[10px] text-neutral-300 bg-black/40 px-2 py-0.5 rounded-full border border-white/5"
+                  className="text-[10px] text-neutral-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10"
                 >
                   {g}
                 </span>
