@@ -8,8 +8,6 @@ import {
   Play,
   Pause,
   Loader2,
-  Maximize,
-  Minimize,
 } from 'lucide-react';
 import { useAutoHide } from '../../hooks/useAutoHide';
 
@@ -21,7 +19,6 @@ interface PlayerControlsProps {
   loading: boolean;
   hasPrev: boolean;
   hasNext: boolean;
-  isFullscreen: boolean;
   animeTitle?: string;
   episodeNumber?: number;
   onPlayPause: () => void;
@@ -51,7 +48,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   loading,
   hasPrev,
   hasNext,
-  isFullscreen,
   animeTitle,
   episodeNumber,
   onPlayPause,
@@ -78,11 +74,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   }, [visible]);
 
 
-  useEffect(() => {
-    document.documentElement.style.cursor =
-      isFullscreen && !visible ? 'none' : '';
-    return () => { document.documentElement.style.cursor = ''; };
-  }, [isFullscreen, visible]);
+
 
   const displayTime = slidingValue ?? pendingSeek ?? currentTime;
   const isSliding = slidingValue != null;
@@ -172,7 +164,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               className="flex items-center justify-center w-14 h-14 rounded-full bg-white/15 hover:bg-white/25 transition-colors disabled:opacity-70"
             >
               {showLoader ? (
-                <Loader2 className="w-5 h-5 text-white drop-shadow-sm" />
+                <Loader2 className="w-5 h-5 text-white drop-shadow-sm animate-spin" />
               ) : playing ? (
                 <Pause className="w-5 h-5 text-white drop-shadow-sm ml-0.5" />
               ) : (
@@ -225,12 +217,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <span className="text-xs text-white/70 w-10 tabular-nums drop-shadow-sm">
               {formatTime(duration)}
             </span>
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleFullscreen(); }}
-              className="p-1.5 rounded-md hover:bg-white/10 transition-colors text-white/70 hover:text-white"
-            >
-              {isFullscreen ? <Minimize className="w-4 h-4 drop-shadow-sm" /> : <Maximize className="w-4 h-4 drop-shadow-sm" />}
-            </button>
           </div>
         </div>
       </div>

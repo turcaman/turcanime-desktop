@@ -51,12 +51,17 @@ export function usePlayer(
         }
       }
 
+      let progress = videoRef.current.currentTime;
+      if (duration > 0 && progress / duration >= 0.9) {
+        progress = duration;
+      }
+
       addToHistory({
         title: animeInfoRef.current.title,
         image: animeInfoRef.current.image,
         url: slug,
         number: lastSavedEp.current,
-        progress: videoRef.current.currentTime,
+        progress,
         duration,
         timestamp: Date.now(),
       });

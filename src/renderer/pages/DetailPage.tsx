@@ -7,6 +7,7 @@ import { EpisodeItem } from '../components/detail/EpisodeItem';
 import { ServerModal } from '../components/detail/ServerModal';
 import { DetailSkeleton } from '../components/skeletons/DetailSkeleton';
 import { ErrorState } from '../components/ui/ErrorState';
+import { useHistoryStore } from '../stores/historyStore';
 
 interface DetailPageProps {
   slug: string;
@@ -22,6 +23,16 @@ export const DetailPage: React.FC<DetailPageProps> = ({
   onRelatedPress,
 }) => {
   const setLastLanguage = usePlayerStore((s) => s.setLastLanguage);
+  const lastViewed = useHistoryStore((s) => s.lastViewed);
+  const progressMap = React.useMemo(() => {
+    const map = new Map<number, { progress: number; duration: number }>();
+    for (const item of lastViewed) {
+      if (item.url === slug) {
+        map.set(item.number, { progress: item.progress, duration: item.duration });
+      }
+    }
+    return map;
+  }, [slug, lastViewed]);
   const {
     anime,
     isLoading,
@@ -89,6 +100,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
             key={ep.id}
             episode={ep}
             onPress={handleEpisodePress}
+            {...progressMap.get(ep.number)}
           />
         ))}
       </div>
