@@ -22,6 +22,7 @@ const INITIAL_STACK: NavEntry[] = [{ screen: 'home' }];
 const App: React.FC = () => {
   const initialize = useUserInitializationStore((s) => s.initialize);
   const isInitialized = useUserInitializationStore((s) => s.isInitialized);
+  const updateAvailable = useUpdateStore((s) => s.updateAvailable);
   const [ready, setReady] = useState(false);
   const [navStack, setNavStack] = useState<NavEntry[]>(INITIAL_STACK);
 
@@ -117,7 +118,16 @@ const App: React.FC = () => {
                     : 'text-neutral-500 hover:text-neutral-200'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {screen === 'settings' ? (
+                  <span className="relative inline-flex">
+                    <Icon className="w-4 h-4" />
+                    {updateAvailable && (
+                      <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-purple-400" />
+                    )}
+                  </span>
+                ) : (
+                  <Icon className="w-4 h-4" />
+                )}
                 <span className={isActive ? 'font-medium' : ''}>{label}</span>
                 {isActive && (
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-purple-400 rounded-full" />
