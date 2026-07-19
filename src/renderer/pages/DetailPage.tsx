@@ -87,14 +87,13 @@ export const DetailPage: React.FC<DetailPageProps> = ({
         onBack={onBack}
       />
 
-      <EpisodeRangeSelector
-        ranges={ranges}
-        activeRangeIdx={activeRangeIdx}
-        onSelect={setActiveRangeIdx}
-        isRestoring={isRestoring}
-      />
-
-      <div className="pb-8">
+      <div className="px-6 pt-3 pb-8 flex flex-col gap-1.5">
+        <EpisodeRangeSelector
+          ranges={ranges}
+          activeRangeIdx={activeRangeIdx}
+          onSelect={setActiveRangeIdx}
+          isRestoring={isRestoring}
+        />
         {episodes.map((ep) => (
           <EpisodeItem
             key={ep.id}

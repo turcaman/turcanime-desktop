@@ -31,7 +31,7 @@ export const EpisodeRangeSelector: React.FC<EpisodeRangeSelectorProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex gap-2 px-6 py-3 overflow-x-auto scrollbar-none"
+      className="flex gap-2 overflow-x-auto scrollbar-none"
     >
       {ranges.map((range, idx) => (
         <button
