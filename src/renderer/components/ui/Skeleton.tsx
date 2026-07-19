@@ -8,8 +8,10 @@ interface SkeletonProps {
 export const Skeleton: React.FC<SkeletonProps> = ({ className = '', style }) => {
   return (
     <div
-      className={`animate-pulse bg-neutral-800 rounded ${className}`}
+      className={`bg-neutral-800 rounded overflow-hidden ${className}`}
       style={style}
-    />
+    >
+      <div className="w-full h-full animate-shimmer" />
+    </div>
   );
 };

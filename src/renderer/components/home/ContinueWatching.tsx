@@ -31,7 +31,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
             <button
               key={item.url}
               onClick={() => onItemPress?.(item)}
-              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200"
+              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 border border-transparent hover:border-neutral-800"
               style={{ width: itemWidth }}
             >
               <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>
@@ -41,16 +41,17 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-neutral-950/80 px-2 pb-2 pt-1.5">
-                  <p className="text-[11px] font-semibold text-neutral-400 mb-0.5 leading-tight">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/0" />
+                <div className="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-6">
+                  <p className="text-[11px] font-medium text-neutral-400 mb-0.5 leading-tight">
                     Ep. {item.number}
                   </p>
-                  <p className="text-sm font-bold text-white leading-tight truncate">
+                  <p className="text-sm font-semibold text-white leading-tight truncate">
                     {item.title}
                   </p>
-                  <div className="h-0.5 bg-neutral-800 mt-1 rounded-full overflow-hidden">
+                  <div className="h-1 bg-neutral-800/60 mt-1.5 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 rounded-full transition-all"
+                      className="h-full bg-purple-500 rounded-full transition-all duration-300"
                       style={{ width: `${progress * 100}%` }}
                     />
                   </div>

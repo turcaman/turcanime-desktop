@@ -27,7 +27,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
       style={{ width }}
     >
       <div
-        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-2.5 shadow-lg shadow-black/20 group-hover:shadow-purple-500/10 group-hover:shadow-xl transition-all duration-300"
+        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-2.5 border border-transparent group-hover:border-neutral-700/60 transition-all duration-300"
         style={{ height }}
       >
         <img
@@ -36,14 +36,14 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-black/0 group-hover:from-black/10 transition-colors duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/0" />
         {episodeNumber !== undefined && (
-          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 rounded text-[11px] text-purple-400 font-bold tracking-wide shadow-sm">
+          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/70 rounded-md text-[11px] text-purple-400 font-semibold tracking-wide">
             Ep. {episodeNumber}
           </div>
         )}
       </div>
-      <p className="text-sm text-neutral-300 group-hover:text-neutral-100 line-clamp-2 leading-snug h-10 transition-colors duration-200">
+      <p className="text-sm text-neutral-400 group-hover:text-neutral-200 line-clamp-2 leading-snug h-10 transition-colors duration-200">
         {title}
       </p>
     </button>

@@ -24,7 +24,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
               style={{ width: itemWidth }}
             >
               <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>
-                <Skeleton className="absolute inset-0 rounded-none" />
+                <Skeleton className="absolute inset-0 rounded-none animate-shimmer" />
                 <div className="absolute bottom-0 left-0 right-0 bg-neutral-950/80 px-2 pb-2 pt-1.5">
                   <Skeleton className="h-[14px] w-12 rounded mb-0.5" />
                   <Skeleton className="h-[18px] w-full rounded" />
@@ -48,7 +48,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
           {Array.from({ length: columns * 3 }).map((_, idx) => (
             <div key={idx} className="flex flex-col">
               <Skeleton
-                className="rounded-xl mb-2.5"
+                className="rounded-xl mb-2.5 animate-shimmer"
                 style={{ width: cardWidth, height: cardWidth * 1.4 }}
               />
               <div className="flex flex-col gap-0.5">

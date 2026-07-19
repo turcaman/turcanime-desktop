@@ -64,6 +64,11 @@
     background: rgba(128, 128, 128, 0.45);
   }
 
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }
@@ -80,6 +85,12 @@
 
   .animate-scale-in {
     animation: scaleIn 200ms ease-out both;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, rgba(38,38,38,0) 0%, rgba(38,38,38,0.5) 50%, rgba(38,38,38,0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 
 }
