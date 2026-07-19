@@ -19,6 +19,7 @@ interface PlayerControlsProps {
   loading: boolean;
   hasPrev: boolean;
   hasNext: boolean;
+  isFullscreen: boolean;
   animeTitle?: string;
   episodeNumber?: number;
   onPlayPause: () => void;
@@ -28,6 +29,7 @@ interface PlayerControlsProps {
   onPrev: () => void;
   onNext: () => void;
   onBack: () => void;
+  onToggleFullscreen: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -47,6 +49,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   loading,
   hasPrev,
   hasNext,
+  isFullscreen,
   animeTitle,
   episodeNumber,
   onPlayPause,
@@ -56,6 +59,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onPrev,
   onNext,
   onBack,
+  onToggleFullscreen,
 }) => {
   const [visible, setVisible] = useState(true);
   const showLoader = loading || buffering;
@@ -70,6 +74,12 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       fadeRef.current.style.opacity = visible ? '1' : '0';
     }
   }, [visible]);
+
+  useEffect(() => {
+    document.documentElement.style.cursor =
+      isFullscreen && !visible ? 'none' : '';
+    return () => { document.documentElement.style.cursor = ''; };
+  }, [isFullscreen, visible]);
 
   const displayTime = slidingValue ?? pendingSeek ?? currentTime;
   const isSliding = slidingValue != null;
@@ -110,6 +120,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     <div
       className="absolute inset-0 z-40"
       onClick={toggle}
+      onDoubleClick={onToggleFullscreen}
       onMouseMove={handleMouseMove}
     >
       <div
