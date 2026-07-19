@@ -1,6 +1,5 @@
 import React from 'react';
 import { Skeleton } from '../ui/Skeleton';
-import { SectionTitle } from '../ui/SectionTitle';
 import { calcColumns, LAYOUT_CONFIG } from '../../config/layout';
 
 interface HomeSkeletonProps {
@@ -13,7 +12,10 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
 
   return (
     <div className="select-none">
-      <SectionTitle label="&nbsp;" />
+      <div className="flex items-center gap-3 px-6 pt-6 pb-3 select-none">
+        <span className="w-0.5 h-4 bg-purple-500 rounded-full flex-shrink-0" />
+        <Skeleton className="h-5 w-32 rounded" />
+      </div>
       <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
         {[0, 1, 2].map((i) => {
           const itemWidth = Math.round(cardWidth * 0.6);
@@ -24,11 +26,14 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
               style={{ width: itemWidth }}
             >
               <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>
-                <Skeleton className="absolute inset-0 rounded-none animate-shimmer" />
-                <div className="absolute bottom-0 left-0 right-0 bg-neutral-950/80 px-2 pb-2 pt-1.5">
+                <Skeleton className="absolute inset-0 rounded-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/0" />
+                <div className="absolute bottom-0 left-0 right-0 px-2 pb-2 pt-6">
                   <Skeleton className="h-[14px] w-12 rounded mb-0.5" />
                   <Skeleton className="h-[18px] w-full rounded" />
-                  <Skeleton className="h-0.5 w-full rounded mt-1" />
+                  <div className="h-1 bg-neutral-800/60 mt-1.5 rounded-full overflow-hidden">
+                    <Skeleton className="h-full rounded-full" style={{ width: `${40 + i * 15}%` }} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -36,7 +41,10 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
         })}
       </div>
 
-      <SectionTitle label="&nbsp;" />
+      <div className="flex items-center gap-3 px-6 pt-6 pb-3 select-none">
+        <span className="w-0.5 h-4 bg-purple-500 rounded-full flex-shrink-0" />
+        <Skeleton className="h-5 w-32 rounded" />
+      </div>
       <div className="px-5">
         <div
           className="grid"
@@ -46,12 +54,17 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
           }}
         >
           {Array.from({ length: columns * 3 }).map((_, idx) => (
-            <div key={idx} className="flex flex-col">
-              <Skeleton
-                className="rounded-xl mb-2.5 animate-shimmer"
-                style={{ width: cardWidth, height: cardWidth * 1.4 }}
-              />
-              <div className="flex flex-col gap-0.5">
+            <div key={idx} className="flex-shrink-0 text-left rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150 animate-scale-in"
+              style={{ width: cardWidth, animationDelay: `${idx * 50}ms` }}
+            >
+              <div
+                className="relative bg-neutral-800 rounded-xl overflow-hidden mb-2.5 border border-transparent"
+                style={{ height: cardWidth * 1.4 }}
+              >
+                <Skeleton className="absolute inset-0 rounded-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/0" />
+              </div>
+              <div className="flex flex-col gap-0.5 px-0.5">
                 <Skeleton className="h-[19px] w-full rounded" />
                 <Skeleton className="h-[19px] w-3/5 rounded" />
               </div>

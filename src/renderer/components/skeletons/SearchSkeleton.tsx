@@ -26,14 +26,19 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
         }}
       >
         {Array.from({ length: rows * columns }).map((_, idx) => (
-          <div key={idx} className="flex flex-col">
-            <Skeleton
-              className="rounded-xl mb-2.5 animate-shimmer"
-              style={{ width: cardWidth, height: cardWidth * 1.4 }}
-            />
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-4 w-full rounded" />
-              <Skeleton className="h-4 w-3/5 rounded" />
+          <div key={idx} className="flex-shrink-0 text-left rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150 animate-scale-in"
+            style={{ width: cardWidth, animationDelay: `${idx * 50}ms` }}
+          >
+            <div
+              className="relative bg-neutral-800 rounded-xl overflow-hidden mb-2.5 border border-transparent"
+              style={{ height: cardWidth * 1.4 }}
+            >
+              <Skeleton className="absolute inset-0 rounded-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/0" />
+            </div>
+            <div className="flex flex-col gap-1.5 px-0.5">
+              <Skeleton className="h-[19px] w-full rounded" />
+              <Skeleton className="h-[19px] w-3/5 rounded" />
             </div>
           </div>
         ))}
