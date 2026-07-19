@@ -64,7 +64,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
               Episodio {episodeNumber}
             </h3>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Selecciona un servidor
+              Selecciona un idioma
             </p>
           </div>
           <button
