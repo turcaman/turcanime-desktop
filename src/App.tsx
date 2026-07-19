@@ -95,40 +95,31 @@ const App: React.FC = () => {
   return (
     <div className="h-screen w-screen bg-[#0f0f11] flex flex-col">
       {showNavbar && (
-        <nav className="flex items-center gap-1 px-6 pt-3 pb-2 bg-[#0f0f11] border-b border-neutral-800/40">
-          <button
-            onClick={() => navigate('home')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl transition-all duration-200 ${
-              currentScreen === 'home'
-                ? 'bg-purple-500/10 text-purple-400 font-medium'
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
-            }`}
-          >
-            <Home className="w-4 h-4" />
-            <span>Inicio</span>
-          </button>
-          <button
-            onClick={() => navigate('search')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl transition-all duration-200 ${
-              currentScreen === 'search'
-                ? 'bg-purple-500/10 text-purple-400 font-medium'
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
-            }`}
-          >
-            <Search className="w-4 h-4" />
-            <span>Buscar</span>
-          </button>
-          <button
-            onClick={() => navigate('settings')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-xl transition-all duration-200 ${
-              currentScreen === 'settings'
-                ? 'bg-purple-500/10 text-purple-400 font-medium'
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/50'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span>Ajustes</span>
-          </button>
+        <nav className="flex items-center gap-1 px-6 bg-[#0f0f11] border-b border-neutral-800/40">
+          {[
+            { screen: 'home' as const, icon: Home, label: 'Inicio' },
+            { screen: 'search' as const, icon: Search, label: 'Buscar' },
+            { screen: 'settings' as const, icon: Settings, label: 'Ajustes' },
+          ].map(({ screen, icon: Icon, label }) => {
+            const isActive = currentScreen === screen;
+            return (
+              <button
+                key={screen}
+                onClick={() => navigate(screen)}
+                className={`relative flex items-center gap-2 px-3 py-2.5 text-sm transition-colors duration-200 ${
+                  isActive
+                    ? 'text-purple-400'
+                    : 'text-neutral-500 hover:text-neutral-200'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className={isActive ? 'font-medium' : ''}>{label}</span>
+                {isActive && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-purple-400 rounded-full" />
+                )}
+              </button>
+            );
+          })}
         </nav>
       )}
 
