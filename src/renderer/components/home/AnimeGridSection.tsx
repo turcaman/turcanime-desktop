@@ -34,13 +34,14 @@ export const AnimeGridSection: React.FC<AnimeGridSectionProps> = ({
             gap: `${LAYOUT_CONFIG.cardGap}px`,
           }}
         >
-          {items.map((anime) => (
+          {items.map((anime, idx) => (
             <AnimeCard
               key={anime.url}
               title={anime.title}
               image={anime.image}
               url={anime.url}
               width={cardWidth}
+              index={idx}
               onPress={() => onItemPress?.(anime)}
             />
           ))}

@@ -56,23 +56,25 @@ export const HomePage: React.FC<HomePageProps> = ({
           {sections.map((section, idx) => {
             if (section.type === 'CONTINUE') {
               return (
-                <ContinueWatching
-                  key="continue"
-                  items={section.data}
-                  cardWidth={cardWidth}
-                  onItemPress={handleHistoryPress}
-                />
+                <div key="continue" className="animate-scale-in" style={{ animationDelay: '0ms' }}>
+                  <ContinueWatching
+                    items={section.data}
+                    cardWidth={cardWidth}
+                    onItemPress={handleHistoryPress}
+                  />
+                </div>
               );
             }
             return (
-              <AnimeGridSection
-                key={`section-${idx}`}
-                label={section.title}
-                items={section.data}
-                cardWidth={cardWidth}
-                containerWidth={containerRef.current?.offsetWidth ?? 0}
-                onItemPress={handleAnimePress}
-              />
+              <div key={`section-${idx}`} className="animate-scale-in" style={{ animationDelay: `${(idx + 1) * 80}ms` }}>
+                <AnimeGridSection
+                  label={section.title}
+                  items={section.data}
+                  cardWidth={cardWidth}
+                  containerWidth={containerRef.current?.offsetWidth ?? 0}
+                  onItemPress={handleAnimePress}
+                />
+              </div>
             );
           })}
 

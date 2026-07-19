@@ -7,6 +7,7 @@ interface AnimeCardProps {
   width: number;
   episodeNumber?: number;
   variant?: 'default' | 'continue';
+  index?: number;
   onPress?: () => void;
 }
 
@@ -16,6 +17,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
   width,
   episodeNumber,
   variant = 'default',
+  index,
   onPress,
 }) => {
   const height = variant === 'continue' ? width * 0.75 : width * 1.4;
@@ -23,8 +25,8 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
   return (
     <button
       onClick={onPress}
-      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150"
-      style={{ width }}
+      className="group flex-shrink-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150 animate-scale-in"
+      style={{ width, animationDelay: index != null ? `${index * 50}ms` : '0ms' }}
     >
       <div
         className="relative bg-neutral-800 rounded-xl overflow-hidden mb-2.5 border border-transparent group-hover:border-neutral-700/60 transition-all duration-300"
