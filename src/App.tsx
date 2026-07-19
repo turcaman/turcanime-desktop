@@ -5,7 +5,7 @@ import { SearchPage } from './renderer/pages/SearchPage';
 import { DetailPage } from './renderer/pages/DetailPage';
 import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
-import { useUserInitializationStore } from './renderer/stores/userIndex';
+import { useUserInitializationStore, useUpdateStore } from './renderer/stores/userIndex';
 import { sessionManager } from './renderer/services/session';
 import type { Anime } from './types';
 
@@ -33,6 +33,11 @@ const App: React.FC = () => {
       await initialize();
       sessionManager.refreshSession().catch((): void => undefined);
       setReady(true);
+
+      const { updateCheckEnabled, checkForUpdates } = useUpdateStore.getState();
+      if (updateCheckEnabled) {
+        checkForUpdates().catch((): void => undefined);
+      }
     };
     init();
   }, [initialize]);

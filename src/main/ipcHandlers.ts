@@ -1,4 +1,4 @@
-import { ipcMain, net, type BrowserWindow } from 'electron';
+import { ipcMain, net, shell, app, type BrowserWindow } from 'electron';
 import { hiddenSession } from './sessionHidden';
 import { store } from './store';
 import { logger } from './logger';
@@ -111,5 +111,31 @@ export function registerIpcHandlers(): void {
     logger.debug('IPC', `player:setFullScreen ${flag}`);
     mainWindow?.setFullScreen(flag);
     return true;
+  });
+
+  ipcMain.handle('app:getVersion', () => {
+    return app.getVersion();
+  });
+
+  ipcMain.handle('app:openExternal', async (_event, url: string) => {
+    await shell.openExternal(url);
+  });
+
+  ipcMain.handle('updates:check', async () => {
+    try {
+      const current = app.getVersion();
+      const response = await net.fetch(
+        'https://api.github.com/repos/turcaman/turcanime-desktop/releases/latest',
+        { headers: { Accept: 'application/vnd.github+json' } },
+      );
+      if (!response.ok) {
+        return { latest: null, current, error: `Error al consultar GitHub (${response.status})` };
+      }
+      const data = await response.json();
+      const latest = (data.tag_name as string)?.replace(/^v/, '') || null;
+      return { latest, current };
+    } catch (err) {
+      return { latest: null, current: app.getVersion(), error: String(err) };
+    }
   });
 }

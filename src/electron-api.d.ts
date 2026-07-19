@@ -40,6 +40,13 @@ interface ElectronAPI {
     set: (flag: boolean) => Promise<void>;
     onChanged: (cb: (flag: boolean) => void) => () => void;
   };
+  app: {
+    getVersion: () => Promise<string>;
+    openExternal: (url: string) => Promise<void>;
+  };
+  updates: {
+    check: () => Promise<{ latest: string | null; current: string; error?: string }>;
+  };
 }
 
 interface Window {

@@ -52,4 +52,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return () => ipcRenderer.removeListener('player:fullscreen', handler);
     },
   },
+  app: {
+    getVersion: () => {
+      return ipcRenderer.invoke('app:getVersion');
+    },
+    openExternal: (url: string) => {
+      return ipcRenderer.invoke('app:openExternal', url);
+    },
+  },
+  updates: {
+    check: () => {
+      return ipcRenderer.invoke('updates:check');
+    },
+  },
 });
