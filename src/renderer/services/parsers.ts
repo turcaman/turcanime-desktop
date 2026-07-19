@@ -165,15 +165,17 @@ export class HtmlParser {
   }
 
   extractStatusFromHtml(html: string): string {
-    const patterns = [
-      /<span[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]*)<\/span>/i,
-      /<span[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([\s\S]*?)<\/span>/i,
-      /<div[^>]*class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]*)<\/div>/i,
-      /<[^>]+class="[^"]*(?:status|state)[^"]*"[^>]*>([^<]+)<\/[^>]+>/i,
-    ];
-    for (const pattern of patterns) {
-      const match = html.match(pattern);
-      if (match) return match[1].trim();
+    const statusRegex = /<span[^>]*class="[^"]*\b(?:text-primary|text-muted-foreground)\b[^"]*"[^>]*>([^<]+)<\/span>/gi;
+    const statusMatch = html.match(statusRegex);
+    if (statusMatch) {
+      for (const match of statusMatch) {
+        const textMatch = match.match(/>([^<]+)<\//);
+        if (textMatch) {
+          const text = textMatch[1].trim();
+          if (/^en\s*emisi[oó]n$/i.test(text)) return 'En emisión';
+          if (/^finalizado$/i.test(text)) return 'Finalizado';
+        }
+      }
     }
     return '';
   }
