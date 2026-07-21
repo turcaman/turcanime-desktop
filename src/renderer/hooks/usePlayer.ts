@@ -21,7 +21,6 @@ export function usePlayer(
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const [offline, setOffline] = useState(!navigator.onLine);
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
   const lastSavedEp = useRef(episodeNumber);
@@ -83,23 +82,21 @@ export function usePlayer(
   }, [hasNext, episodeNumber, onNavigateEpisode, saveProgress]);
 
   useEffect(() => {
-    const goOnline = () => {
-      setOffline(false);
-      if (wasPlayingBeforeOffline.current && videoRef.current) {
-        videoRef.current.play().then(() => setPlaying(true)).catch((): void => undefined);
-      }
-    };
     const goOffline = () => {
       wasPlayingBeforeOffline.current = playing;
       videoRef.current?.pause();
       setPlaying(false);
-      setOffline(true);
     };
-    window.addEventListener('online', goOnline);
+    const goOnline = () => {
+      if (wasPlayingBeforeOffline.current && videoRef.current) {
+        videoRef.current.play().then(() => setPlaying(true)).catch((): void => undefined);
+      }
+    };
     window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
     return () => {
-      window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
     };
   }, [playing, videoRef]);
 
@@ -246,7 +243,6 @@ export function usePlayer(
     isLoading,
     streamUrl,
     error,
-    offline,
     hasPrev,
     hasNext,
     animeTitle: anime?.title,

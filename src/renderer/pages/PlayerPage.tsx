@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { AlertTriangle, WifiOff } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { usePlayer } from '../hooks/usePlayer';
 import { useDetailsStore } from '../stores/detailsStore';
 import { usePlayerStore } from '../stores/playerStore';
@@ -62,7 +62,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     duration,
     isLoading,
     error,
-    offline,
     hasPrev,
     hasNext,
     animeTitle,
@@ -132,15 +131,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
               >
                 Volver
               </button>
-            </div>
-          </div>
-        )}
-
-        {offline && (
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-yellow-500/15 backdrop-blur-sm border border-yellow-500/20 rounded-lg">
-              <WifiOff className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-              <span className="text-sm text-yellow-200">Sin conexión — el video se reanudará cuando haya red</span>
             </div>
           </div>
         )}
