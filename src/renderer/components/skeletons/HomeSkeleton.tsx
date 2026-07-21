@@ -60,7 +60,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
                 style={{ height: cardWidth * 1.4 }}
               >
                 <Skeleton className="absolute inset-0 rounded-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/0" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/0" />
               </div>
               <div className="flex flex-col gap-0.5 px-0.5">
                 <Skeleton className="h-[19px] w-full rounded" />

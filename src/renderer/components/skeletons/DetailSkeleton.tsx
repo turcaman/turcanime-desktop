@@ -14,8 +14,11 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
         style={{ height: '38vh', minHeight: 260 }}
       >
         <Skeleton className="absolute inset-0 rounded-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/50 to-60%" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30" />
+
+        <div className="absolute top-4 right-4 z-10 rounded-lg bg-neutral-950/80 px-2.5 py-1">
+          <Skeleton className="h-[11px] w-16 rounded" />
+        </div>
 
         {onBack && (
           <button
@@ -27,15 +30,11 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
         )}
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-500" />
-            <Skeleton className="h-3 w-16 rounded-full" />
-          </div>
           <Skeleton className="h-6 w-48 rounded mb-2" />
           <div className="flex flex-wrap gap-1.5 mt-2">
-            <Skeleton className="h-4 w-16 rounded-full" />
-            <Skeleton className="h-4 w-20 rounded-full" />
-            <Skeleton className="h-4 w-14 rounded-full" />
+            <Skeleton className="h-4 w-16 rounded-md" />
+            <Skeleton className="h-4 w-20 rounded-md" />
+            <Skeleton className="h-4 w-14 rounded-md" />
           </div>
         </div>
       </div>
@@ -86,7 +85,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
               <Skeleton className="h-3 w-3 rounded-full" />
             </span>
             <div className="flex-1 min-w-0">
-              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="h-[14px] w-24 rounded" />
             </div>
           </div>
         ))}

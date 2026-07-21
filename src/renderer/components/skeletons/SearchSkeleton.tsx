@@ -36,7 +36,7 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
               <Skeleton className="absolute inset-0 rounded-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/0" />
             </div>
-            <div className="flex flex-col gap-1.5 px-0.5">
+            <div className="flex flex-col gap-0.5 px-0.5">
               <Skeleton className="h-[19px] w-full rounded" />
               <Skeleton className="h-[19px] w-3/5 rounded" />
             </div>
