@@ -55,7 +55,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
         <div className="absolute top-4 right-4 z-10 rounded-lg bg-neutral-950/80 px-2.5 py-1">
           <span className={`text-[11px] font-semibold tracking-wider ${isAiring ? 'text-purple-400' : 'text-neutral-400'}`}>
-            {(isAiring ? 'En emisión' : 'Finalizado').toUpperCase()}
+            {statusLabel.toUpperCase()}
           </span>
         </div>
 
