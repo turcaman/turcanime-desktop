@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw, Database, Bell, ExternalLink, CheckCircle2, Radio } from 'lucide-react';
+import { RefreshCw, Bell, ExternalLink, CheckCircle2, Download, Info } from 'lucide-react';
 import { sessionManager } from '../services/session';
 import { useUIStore } from '../stores/uiStore';
 import { useUpdateStore } from '../stores/updateStore';
@@ -47,38 +47,34 @@ export const SettingsPage: React.FC = () => {
       <div className="p-6 pt-4 space-y-8">
 
         <div>
-          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Datos</h2>
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshingSession}
-              className="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
-            >
-              <Radio
-                className={`w-4 h-4 text-purple-400 ${isRefreshingSession ? 'animate-pulse' : ''}`}
-              />
-              <div className="flex flex-col items-start">
-                <span className="text-sm text-neutral-200">
-                  {refreshed ? 'Conexión renovada' : 'Renovar conexión'}
-                </span>
-                <span className="text-[11px] text-neutral-500 mt-0.5">
-                  Renueva la sesión con el servidor
-                </span>
-              </div>
-            </button>
-          </div>
+          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Conexión</h2>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshingSession}
+            className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`w-4 h-4 text-purple-400 flex-shrink-0 ${isRefreshingSession ? 'animate-spin' : ''}`}
+            />
+            <div className="flex flex-col items-start">
+              <span className="text-sm text-neutral-200">
+                {refreshed ? 'Conexión renovada' : 'Renovar conexión'}
+              </span>
+              <span className="text-[11px] text-neutral-500 mt-0.5">
+                Refresca sesión y cache
+              </span>
+            </div>
+          </button>
         </div>
 
         <div>
           <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Actualizaciones</h2>
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden divide-y divide-neutral-800/60">
-            <label className="flex items-center gap-3 w-full px-4 py-3.5 cursor-pointer hover:bg-neutral-800/60 transition-colors">
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors cursor-pointer">
               <Bell className="w-4 h-4 text-neutral-500 flex-shrink-0" />
               <div className="flex flex-col items-start flex-1 min-w-0">
-                <span className="text-sm text-neutral-200">Buscar nueva versión al iniciar</span>
-                <span className="text-[11px] text-neutral-500 mt-0.5">
-                  Al iniciar la aplicación
-                </span>
+                <span className="text-sm text-neutral-200">Buscar actualizaciones</span>
+                <span className="text-[11px] text-neutral-500 mt-0.5">Al iniciar la app</span>
               </div>
               <button
                 role="switch"
@@ -98,29 +94,32 @@ export const SettingsPage: React.FC = () => {
             <button
               onClick={handleManualCheck}
               disabled={checkingForUpdates}
-              className="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+              className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
             >
-              <RefreshCw
-                className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-spin' : ''}`}
+              <Download
+                className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-pulse' : ''}`}
               />
               <div className="flex flex-col items-start flex-1 min-w-0">
                 <span className="text-sm text-neutral-200">
-                  {checkingForUpdates ? 'Buscando...' : 'Buscar nueva versión'}
+                  {checkingForUpdates ? 'Buscando...' : 'Buscar actualización'}
                 </span>
-                {lastCheckError && (
-                  <span className="text-[11px] text-red-400/70 mt-0.5">{lastCheckError}</span>
-                )}
-                {!checkingForUpdates && !lastCheckError && updateAvailable && (
-                  <span className="text-[11px] text-purple-400 mt-0.5">
-                    v{updateAvailable} disponible
-                  </span>
-                )}
-                {!checkingForUpdates && !lastCheckError && !updateAvailable && currentVersion && (
-                  <span className="text-[11px] text-emerald-400 mt-0.5 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Estás al día
-                  </span>
-                )}
+                <div className="h-[18px] flex items-center mt-0.5">
+                  {checkingForUpdates && (
+                    <span className="text-[11px] text-neutral-500">Buscando...</span>
+                  )}
+                  {!checkingForUpdates && lastCheckError && (
+                    <span className="text-[11px] text-red-400/70">{lastCheckError}</span>
+                  )}
+                  {!checkingForUpdates && !lastCheckError && updateAvailable && (
+                    <span className="text-[11px] text-purple-400">v{updateAvailable} disponible</span>
+                  )}
+                  {!checkingForUpdates && !lastCheckError && !updateAvailable && currentVersion && (
+                    <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Estás al día
+                    </span>
+                  )}
+                </div>
               </div>
               {!checkingForUpdates && !lastCheckError && updateAvailable && (
                 <span
@@ -136,13 +135,13 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div>
-          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Información</h2>
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Acerca de</h2>
+          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50">
             <div className="flex items-center gap-3 px-4 py-3.5">
-              <Database className="w-4 h-4 text-neutral-500" />
+              <Info className="w-4 h-4 text-neutral-500 flex-shrink-0" />
               <div className="flex flex-col items-start">
-                <span className="text-sm text-neutral-300">Versión</span>
-                <span className="text-[11px] text-neutral-500 mt-0.5">{currentVersion ?? '—'}</span>
+                <span className="text-sm text-neutral-300">Versión {currentVersion ?? '—'}</span>
+                <span className="text-[11px] text-neutral-500 mt-0.5">Turcanime Desktop</span>
               </div>
             </div>
           </div>
