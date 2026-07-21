@@ -28,6 +28,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       console.log('[Preload] store:clear');
       return ipcRenderer.invoke('store:clear');
     },
+    getAllKeys: () => {
+      console.log('[Preload] store:getAllKeys');
+      return ipcRenderer.invoke('store:getAllKeys');
+    },
   },
   fetch: (url: string, options?: RequestInit) => {
     console.log(`[Preload] fetch: ${url.slice(0, 60)}...`);

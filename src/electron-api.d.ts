@@ -8,6 +8,7 @@ interface ElectronAPI {
     set: (key: string, value: unknown) => Promise<boolean>;
     delete: (key: string) => Promise<boolean>;
     clear: () => Promise<boolean>;
+    getAllKeys: () => Promise<string[]>;
   };
   fetch: (
     url: string,

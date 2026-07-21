@@ -63,6 +63,12 @@ export function registerIpcHandlers(): void {
     return true;
   });
 
+  ipcMain.handle('store:getAllKeys', async () => {
+    const keys = Object.keys(electronStore.store);
+    logger.debug('IPC', `store:getAllKeys -> ${keys.length} keys`);
+    return keys;
+  });
+
   ipcMain.handle('fetch:request', async (_event, url: string, options?: Record<string, unknown>) => {
     logger.debug('IPC', `fetch:request ${url.slice(0, 80)}`);
     const result = await hiddenSession.fetchInPage(url, options);
