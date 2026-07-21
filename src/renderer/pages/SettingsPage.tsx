@@ -48,10 +48,7 @@ export const SettingsPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-neutral-100">Ajustes</h1>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-            <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Datos</h2>
-          </div>
+          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Datos</h2>
           <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden">
             <button
               onClick={handleRefresh}
@@ -74,10 +71,7 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-            <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Actualizaciones</h2>
-          </div>
+          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Actualizaciones</h2>
           <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden divide-y divide-neutral-800/60">
             <label className="flex items-center gap-3 w-full px-4 py-3.5 cursor-pointer hover:bg-neutral-800/60 transition-colors">
               <Bell className="w-4 h-4 text-neutral-500 flex-shrink-0" />
@@ -143,10 +137,7 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-            <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Información</h2>
-          </div>
+          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Información</h2>
           <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3.5">
               <Database className="w-4 h-4 text-neutral-500" />

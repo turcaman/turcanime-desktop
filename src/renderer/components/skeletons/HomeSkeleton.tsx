@@ -12,8 +12,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
 
   return (
     <div className="select-none">
-      <div className="flex items-center gap-3 px-6 pt-6 pb-3 select-none">
-        <span className="w-0.5 h-4 bg-purple-500 rounded-full flex-shrink-0" />
+      <div className="px-6 pt-6 pb-3 select-none">
         <Skeleton className="h-5 w-32 rounded" />
       </div>
       <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
@@ -41,8 +40,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
         })}
       </div>
 
-      <div className="flex items-center gap-3 px-6 pt-6 pb-3 select-none">
-        <span className="w-0.5 h-4 bg-purple-500 rounded-full flex-shrink-0" />
+      <div className="px-6 pt-6 pb-3 select-none">
         <Skeleton className="h-5 w-32 rounded" />
       </div>
       <div className="px-5">

@@ -78,10 +78,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
       <div className="px-6 pt-4">
         {anime.synopsis && (
           <div className="mb-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-              <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Sinopsis</h3>
-            </div>
+            <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Sinopsis</h3>
             <button
               onClick={() => setExpanded(!expanded)}
               className="text-left w-full"
@@ -104,10 +101,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 
         {anime.relations && (anime.relations.prequel.length > 0 || anime.relations.sequel.length > 0 || anime.relations.related.length > 0) && (
           <div className="mb-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-              <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Relacionados</h3>
-            </div>
+            <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Relacionados</h3>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
               {[
                 ...anime.relations.prequel.map((r) => ({ ...r, _label: 'Precuela' as const })),
@@ -145,12 +139,9 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
       </div>
 
       <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-800/60">
-        <div className="flex items-center gap-2">
-          <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-          <span className="text-sm font-semibold text-neutral-300">
-            Episodios ({anime.episodes.length})
-          </span>
-        </div>
+        <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+          Episodios ({anime.episodes.length})
+        </h3>
         <button
           onClick={onToggleSort}
           className="p-1.5 rounded-md text-purple-400 hover:text-purple-300 hover:bg-neutral-800/50 active:scale-95 transition-all"

@@ -42,10 +42,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
 
       <div className="px-6 pt-4">
         <div className="mb-5">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-            <Skeleton className="h-3 w-16 rounded" />
-          </div>
+          <Skeleton className="h-5 w-16 rounded mb-3" />
           <div className="space-y-0.5">
             <Skeleton className="h-[20px] w-full rounded" />
             <Skeleton className="h-[20px] w-full rounded" />
@@ -54,10 +51,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
         </div>
 
         <div className="mb-5">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-            <Skeleton className="h-3 w-20 rounded" />
-          </div>
+          <Skeleton className="h-5 w-24 rounded mb-3" />
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex-shrink-0 w-24">
@@ -75,10 +69,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
       </div>
 
       <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-800/60">
-        <div className="flex items-center gap-2">
-          <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-          <Skeleton className="h-4 w-28 rounded" />
-        </div>
+        <Skeleton className="h-5 w-32 rounded" />
         <Skeleton className="w-4 h-4 rounded" />
       </div>
 

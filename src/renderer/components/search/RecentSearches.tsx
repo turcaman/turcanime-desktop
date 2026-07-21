@@ -19,12 +19,9 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
   return (
     <div className="px-6 pt-4">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="w-0.5 h-3 bg-purple-500 rounded-full flex-shrink-0" />
-          <h2 className="text-sm font-semibold text-neutral-300">
-            Búsquedas recientes
-          </h2>
-        </div>
+        <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+          Búsquedas recientes
+        </h2>
         {onClearAll && (
           <button
             onClick={onClearAll}
