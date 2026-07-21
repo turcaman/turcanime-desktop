@@ -44,8 +44,7 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="h-full w-full bg-[#0f0f11] overflow-y-auto">
-      <div className="p-6 space-y-8">
-        <h1 className="text-2xl font-bold text-neutral-100">Ajustes</h1>
+      <div className="p-6 pt-4 space-y-8">
 
         <div>
           <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Datos</h2>

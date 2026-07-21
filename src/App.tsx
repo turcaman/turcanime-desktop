@@ -129,9 +129,7 @@ const App: React.FC = () => {
                   <Icon className="w-4 h-4" />
                 )}
                 <span className={isActive ? 'font-medium' : ''}>{label}</span>
-                {isActive && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-purple-400 rounded-full" />
-                )}
+
               </button>
             );
           })}
