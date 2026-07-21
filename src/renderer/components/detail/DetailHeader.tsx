@@ -36,9 +36,12 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
             src={banner}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+            }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f11] via-[#0f0f11]/50 to-60%" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30" />
 
         {onBack && (
