@@ -123,14 +123,13 @@ export const SearchPage: React.FC<SearchPageProps> = ({
               justifyContent: 'center',
             }}
           >
-            {searchAnimes.map((anime, idx) => (
+            {searchAnimes.map((anime) => (
               <AnimeCard
                 key={anime.url}
                 title={anime.title}
                 image={anime.image}
                 url={anime.url}
                 width={cardWidth}
-                index={idx}
                 onPress={() => handleAnimePress(anime)}
               />
             ))}

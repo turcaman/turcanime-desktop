@@ -121,7 +121,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                       <img
                         src={r.poster}
                         alt={r.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                         loading="lazy"
                       />
                     )}

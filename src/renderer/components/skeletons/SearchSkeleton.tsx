@@ -26,8 +26,8 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
         }}
       >
         {Array.from({ length: rows * columns }).map((_, idx) => (
-          <div key={idx} className="flex-shrink-0 text-left rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150 animate-scale-in"
-            style={{ width: cardWidth, animationDelay: `${idx * 50}ms` }}
+          <div key={idx} className="flex-shrink-0 text-left rounded-xl overflow-hidden active:scale-[0.97] transition-transform duration-150"
+            style={{ width: cardWidth }}
           >
             <div
               className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-neutral-800/50"

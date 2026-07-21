@@ -52,11 +52,11 @@ export const HomePage: React.FC<HomePageProps> = ({
       {showSkeleton && <HomeSkeleton cardWidth={cardWidth} containerWidth={containerRef.current?.offsetWidth ?? 0} />}
 
       {showContent && (
-        <div className="animate-fade-in">
+        <div>
           {sections.map((section, idx) => {
             if (section.type === 'CONTINUE') {
               return (
-                <div key="continue" className="animate-scale-in" style={{ animationDelay: '0ms' }}>
+                <div key="continue">
                   <ContinueWatching
                     items={section.data}
                     cardWidth={cardWidth}
@@ -66,7 +66,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               );
             }
             return (
-              <div key={`section-${idx}`} className="animate-scale-in" style={{ animationDelay: `${(idx + 1) * 80}ms` }}>
+              <div key={`section-${idx}`}>
                 <AnimeGridSection
                   label={section.title}
                   items={section.data}

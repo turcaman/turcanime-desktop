@@ -35,7 +35,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
           </div>
         )}
       </div>
-      <Play className="w-4 h-4 text-purple-500 flex-shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
+      <Play className="w-4 h-4 text-neutral-600 flex-shrink-0" />
     </button>
   );
 };
