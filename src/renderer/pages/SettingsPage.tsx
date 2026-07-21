@@ -51,7 +51,7 @@ export const SettingsPage: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshingSession}
-            className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
           >
             <RefreshCw
               className={`w-4 h-4 text-purple-400 flex-shrink-0 ${isRefreshingSession ? 'animate-spin' : ''}`}
@@ -70,7 +70,7 @@ export const SettingsPage: React.FC = () => {
         <div>
           <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Actualizaciones</h2>
           <div className="space-y-1.5">
-            <label className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors cursor-pointer">
+            <label className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors cursor-pointer">
               <Bell className="w-4 h-4 text-neutral-500 flex-shrink-0" />
               <div className="flex flex-col items-start flex-1 min-w-0">
                 <span className="text-sm text-neutral-200">Buscar actualizaciones</span>
@@ -94,7 +94,7 @@ export const SettingsPage: React.FC = () => {
             <button
               onClick={handleManualCheck}
               disabled={checkingForUpdates}
-              className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
             >
               <Download
                 className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-pulse' : ''}`}

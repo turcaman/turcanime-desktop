@@ -87,7 +87,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
         onBack={onBack}
       />
 
-      <div className="px-6 pt-3 pb-8 flex flex-col gap-1.5">
+      <div className="px-6 pt-3 pb-6 flex flex-col gap-3">
         <EpisodeRangeSelector
           ranges={ranges}
           activeRangeIdx={activeRangeIdx}

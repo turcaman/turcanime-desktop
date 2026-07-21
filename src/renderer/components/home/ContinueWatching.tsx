@@ -20,7 +20,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
   return (
     <div className="select-none">
       <SectionTitle label="Continuar viendo" />
-      <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
+      <div className="flex gap-3 px-6 overflow-x-auto pb-4 scrollbar-none">
         {items.map((item) => {
           const progress =
             item.duration && item.duration > 0

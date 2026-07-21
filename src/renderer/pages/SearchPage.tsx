@@ -114,7 +114,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       }
 
       return (
-        <div className="px-6 pt-4">
+        <div className="px-6 pt-3">
           <div
             className="grid"
             style={{

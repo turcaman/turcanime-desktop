@@ -17,7 +17,7 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
   if (searches.length === 0) return null;
 
   return (
-    <div className="px-6 pt-4">
+    <div className="px-6 pt-3">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
           Búsquedas recientes
@@ -35,7 +35,7 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
       {searches.map((term) => (
         <div
           key={term}
-          className="flex items-center gap-3 py-2.5 group -mx-2 px-2 rounded-lg hover:bg-neutral-900/50 transition-colors"
+          className="flex items-center gap-3 py-3 group -mx-2 px-2 rounded-lg hover:bg-neutral-900/50 transition-colors"
         >
           <button
             onClick={() => onSelect(term)}

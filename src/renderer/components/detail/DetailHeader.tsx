@@ -75,7 +75,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         </div>
       </div>
 
-      <div className="px-6 pt-4">
+      <div className="px-6 pt-5">
         {anime.synopsis && (
           <div className="mb-5">
             <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Sinopsis</h3>

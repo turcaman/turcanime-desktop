@@ -24,12 +24,12 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="px-6 pt-2">
+    <div className="px-6 pt-1">
       {suggestions.map((item) => (
         <button
           key={item.slug}
           onClick={() => onSelect(item)}
-          className="flex items-center gap-3 py-2.5 w-full text-left hover:bg-neutral-900/50 rounded-lg px-2 -mx-2 transition-colors"
+          className="flex items-center gap-3 py-3 w-full text-left hover:bg-neutral-900/50 rounded-lg px-2 -mx-2 transition-colors"
         >
           <div className="w-9 h-12 rounded-md bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-800/60">
             {item.poster ? (

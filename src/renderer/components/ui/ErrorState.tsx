@@ -12,7 +12,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   title = 'Error al cargar',
 }) => {
   return (
-    <div className="flex-1 flex items-center justify-center p-8 select-none">
+    <div className="flex-1 flex items-center justify-center p-6 select-none">
       <div className="flex flex-col items-center gap-5 text-center">
         <div className="w-14 h-14 rounded-full bg-neutral-800/80 flex items-center justify-center">
           <svg

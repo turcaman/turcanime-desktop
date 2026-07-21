@@ -15,7 +15,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
       <div className="px-6 pt-6 pb-3 select-none">
         <Skeleton className="h-5 w-32 rounded" />
       </div>
-      <div className="flex gap-3 px-5 overflow-x-auto pb-4 scrollbar-none">
+      <div className="flex gap-3 px-6 overflow-x-auto pb-4 scrollbar-none">
         {[0, 1, 2].map((i) => {
           const itemWidth = Math.round(cardWidth * 0.6);
           return (
@@ -43,7 +43,7 @@ export const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ cardWidth, container
       <div className="px-6 pt-6 pb-3 select-none">
         <Skeleton className="h-5 w-32 rounded" />
       </div>
-      <div className="px-5">
+      <div className="px-6">
         <div
           className="grid"
           style={{

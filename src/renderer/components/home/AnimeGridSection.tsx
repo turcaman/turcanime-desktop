@@ -26,7 +26,7 @@ export const AnimeGridSection: React.FC<AnimeGridSectionProps> = ({
   return (
     <div className="select-none">
       <SectionTitle label={label} />
-      <div className="px-5">
+      <div className="px-6">
         <div
           className="grid"
           style={{

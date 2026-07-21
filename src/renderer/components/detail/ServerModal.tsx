@@ -58,7 +58,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
         onClick={onClose}
       />
       <div className="relative w-full max-w-sm bg-[#141416] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden animate-scale-in">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800/60">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800/60">
           <div>
             <h3 className="text-sm font-semibold text-neutral-200">
               Episodio {episodeNumber}
