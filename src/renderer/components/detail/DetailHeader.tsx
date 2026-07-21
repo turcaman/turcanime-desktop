@@ -53,14 +53,14 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
           </button>
         )}
 
+        <div className="absolute top-4 right-4 z-10 rounded-lg bg-neutral-950/80 px-2.5 py-1">
+          <span className={`text-[11px] font-semibold tracking-wider ${isAiring ? 'text-purple-400' : 'text-neutral-400'}`}>
+            {(isAiring ? 'En emisión' : 'Finalizado').toUpperCase()}
+          </span>
+        </div>
+
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-neutral-300 uppercase">
-              <span className={`w-1.5 h-1.5 rounded-full ${isAiring ? 'bg-green-500' : 'bg-neutral-500'}`} />
-              {statusLabel}
-            </span>
-          </div>
-          <h1 className="text-xl font-bold text-white leading-tight line-clamp-2 drop-shadow-sm">
+          <h1 className="text-xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
             {anime.title}
           </h1>
           {anime.genres.length > 0 && (
@@ -68,9 +68,9 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
               {anime.genres.slice(0, 4).map((g) => (
                 <span
                   key={g}
-                  className="text-[10px] text-neutral-300 bg-black/60 px-2 py-0.5 rounded-full border border-white/10"
+                  className="text-[10px] font-semibold text-white/80 bg-white/10 rounded-md px-2.5 py-1"
                 >
-                  {g}
+                  {g.toUpperCase()}
                 </span>
               ))}
             </div>
