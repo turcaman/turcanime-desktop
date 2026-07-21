@@ -100,7 +100,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         )}
 
         {anime.relations && (anime.relations.prequel.length > 0 || anime.relations.sequel.length > 0 || anime.relations.related.length > 0) && (
-          <div className="mb-5">
+          <div className="mb-3">
             <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Relacionados</h3>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
               {[
