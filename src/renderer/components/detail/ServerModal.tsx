@@ -57,7 +57,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-sm bg-[#141416] rounded-xl border border-neutral-800 shadow-2xl overflow-hidden animate-scale-in">
+      <div className="relative w-full max-w-sm bg-[#141416] rounded-xl border border-neutral-800/50 shadow-2xl overflow-hidden animate-scale-in">
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800/60">
           <div>
             <h3 className="text-sm font-semibold text-neutral-200">
@@ -97,7 +97,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
                 <button
                   key={server.id}
                   onClick={() => onServerSelect(server)}
-                  className="flex items-center gap-3 w-full px-4 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors border border-transparent hover:border-neutral-700/60"
+                  className="flex items-center gap-3 w-full px-4 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800/50 hover:border-neutral-700/60"
                 >
                   <span className="w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-[11px] text-neutral-500 font-semibold">
                     {idx + 1}

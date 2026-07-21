@@ -113,7 +113,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                   onClick={() => onRelatedPress?.(r.slug)}
                   className="flex-shrink-0 w-24 text-left group"
                 >
-                  <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1 border border-transparent group-hover:border-neutral-700/60 transition-colors">
+                  <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1 border border-neutral-800/50 group-hover:border-neutral-700/60 transition-colors">
                     {r.poster && (
                       <img
                         src={r.poster}

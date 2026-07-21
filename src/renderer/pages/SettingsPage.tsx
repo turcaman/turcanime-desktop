@@ -51,7 +51,7 @@ export const SettingsPage: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshingSession}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
           >
             <RefreshCw
               className={`w-4 h-4 text-purple-400 flex-shrink-0 ${isRefreshingSession ? 'animate-spin' : ''}`}
@@ -94,7 +94,7 @@ export const SettingsPage: React.FC = () => {
             <button
               onClick={handleManualCheck}
               disabled={checkingForUpdates}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
             >
               <Download
                 className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-pulse' : ''}`}
@@ -136,7 +136,7 @@ export const SettingsPage: React.FC = () => {
 
         <div>
           <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Acerca de</h2>
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900/50">
+          <div className="rounded-lg border border-neutral-800/50 bg-neutral-900/50">
             <div className="flex items-center gap-3 px-4 py-3.5">
               <Info className="w-4 h-4 text-neutral-500 flex-shrink-0" />
               <div className="flex flex-col items-start">

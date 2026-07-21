@@ -30,7 +30,7 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
             style={{ width: cardWidth, animationDelay: `${idx * 50}ms` }}
           >
             <div
-              className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-transparent"
+              className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-neutral-800/50"
               style={{ height: cardWidth * 1.4 }}
             >
               <Skeleton className="absolute inset-0 rounded-none" />

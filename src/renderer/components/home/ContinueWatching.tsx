@@ -31,7 +31,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
             <button
               key={item.url}
               onClick={() => onItemPress?.(item)}
-              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 border border-transparent hover:border-neutral-800"
+              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200 border border-neutral-800/50 hover:border-neutral-700/60"
               style={{ width: itemWidth }}
             >
               <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>

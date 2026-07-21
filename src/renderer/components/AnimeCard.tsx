@@ -29,7 +29,7 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
       style={{ width, animationDelay: index != null ? `${index * 50}ms` : '0ms' }}
     >
       <div
-        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-transparent group-hover:border-neutral-700/60 transition-all duration-300"
+        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-neutral-800/50 group-hover:border-neutral-700/60 transition-all duration-300"
         style={{ height }}
       >
         <img

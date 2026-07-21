@@ -81,7 +81,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
 
       <div className="px-6 pt-3 pb-6 flex flex-col gap-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border border-neutral-800/30 bg-neutral-900/40">
+          <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/40">
             <span className="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-700 flex-shrink-0">
               <Skeleton className="h-3 w-3 rounded-full" />
             </span>
