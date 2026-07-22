@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Skeleton } from '../ui/Skeleton';
 import { X } from 'lucide-react';
 import type { VideoServer } from '../../../types';
@@ -32,23 +32,6 @@ export const ServerModal: React.FC<ServerModalProps> = ({
     s.title.toLowerCase().includes('delta'),
   );
   const displayServers = deltaServers.length > 0 ? deltaServers : servers;
-
-  useEffect(() => {
-    if (!visible) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      const num = parseInt(e.key);
-      if (num >= 1 && num <= 9) {
-        const idx = num - 1;
-        if (idx < displayServers.length) {
-          onServerSelect(displayServers[idx]);
-        }
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [visible, onClose, onServerSelect, displayServers]);
-
   if (!visible) return null;
 
   return (
@@ -93,15 +76,12 @@ export const ServerModal: React.FC<ServerModalProps> = ({
 
           {!isLoading && displayServers.length > 0 && (
             <div className="space-y-1.5 max-h-72 overflow-y-auto">
-              {displayServers.map((server, idx) => (
+              {displayServers.map((server) => (
                 <button
                   key={server.id}
                   onClick={() => onServerSelect(server)}
-                  className="flex items-center gap-3 w-full px-4 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800/50 hover:border-neutral-700/60"
+                  className="flex items-center w-full px-4 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800/50 hover:border-neutral-700/60"
                 >
-                  <span className="w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-[11px] text-neutral-500 font-semibold">
-                    {idx + 1}
-                  </span>
                   <span className="text-sm text-neutral-200">
                     {mapLanguage(server.language)}
                   </span>

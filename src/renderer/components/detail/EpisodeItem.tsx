@@ -19,9 +19,6 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
       onClick={() => onPress(episode)}
       className="group flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/40 hover:bg-neutral-800/60 transition-colors text-left"
     >
-      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-700 text-[11px] text-neutral-300 font-semibold group-hover:bg-neutral-600 group-hover:text-neutral-200 transition-colors flex-shrink-0">
-        {episode.number}
-      </span>
       <div className="flex-1 min-w-0">
         <span className="text-sm text-neutral-300 truncate group-hover:text-neutral-100 transition-colors">
           Episodio {episode.number}
