@@ -171,7 +171,8 @@ export const source = {
 
     if (!res.ok) {
       logger.error('Source', `resolveStreamUrl: bridge fetch failed: ${res.error ?? 'unknown error'}`);
-      throw new SourceError(`Bridge page HTTP ${res.status}`, 'NETWORK_ERROR');
+      const isAuth = res.status === 401 || res.status === 403;
+      throw new SourceError(`Bridge page HTTP ${res.status}`, isAuth ? 'AUTH_ERROR' : 'NETWORK_ERROR');
     }
 
     if (!res.data || res.data.length < 10) {

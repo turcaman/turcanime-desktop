@@ -49,6 +49,7 @@ export async function withCache<T>(
     if (err instanceof DOMException && err.name === 'AbortError') {
       return { data: null, error: null, fromCache: false };
     }
+    try { await storage.remove(cacheKey); } catch { /* ignore */ }
     const thrown = err as { type?: AppErrorType; message?: unknown };
     const rawMessage = thrown?.message;
     const message = typeof rawMessage === 'string'

@@ -35,7 +35,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const result = await withCache(
       `${CACHE_PREFIXES.SERVERS}_${slug}_${number}`,
       async () => source.getEpisodeServers(slug, number),
-      { ttl: CACHE_TTL.SERVERS, signal },
+      { ttl: CACHE_TTL.SERVERS, signal, force: retryCount > 0 },
     );
 
     if (result.error) {
@@ -75,7 +75,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         const resolved = await source.resolveStreamUrl(server.url);
         return resolved;
       },
-      { ttl: CACHE_TTL.STREAM },
+      { ttl: CACHE_TTL.STREAM, force: retryCount > 0 },
     );
 
     if (result.error) {
