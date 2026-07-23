@@ -114,7 +114,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
       <div className="relative bg-black flex-1 flex items-center justify-center">
         <video
           ref={videoRef}
-          className="w-full h-full"
+          className="w-full h-full bg-black"
           style={{ maxHeight: '100vh', objectFit: 'contain' }}
           preload="auto"
           playsInline

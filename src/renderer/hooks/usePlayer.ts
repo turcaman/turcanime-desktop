@@ -156,7 +156,13 @@ export function usePlayer(
   }, [togglePlay, seekBack10, seekForward10]);
 
   useEffect(() => {
-    if (!streamUrl || !videoRef.current) return;
+    if (!streamUrl || !videoRef.current) {
+      if (videoRef.current && videoRef.current.src) {
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load();
+      }
+      return;
+    }
 
     if (streamUrl !== lastRecoveredStreamUrl.current) {
       refreshRetryCount.current = 0;
