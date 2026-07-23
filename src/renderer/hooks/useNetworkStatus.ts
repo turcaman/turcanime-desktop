@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
-export function useNetworkStatus(): { isConnected: boolean } {
-  const [isConnected, setIsConnected] = useState<boolean>(true);
+export function useNetworkStatus(): { isConnected: boolean | null } {
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
     const off = window.electronAPI.network.onChanged((isOnline: boolean) => {
@@ -9,7 +9,7 @@ export function useNetworkStatus(): { isConnected: boolean } {
     });
     window.electronAPI.network.check().then((isOnline: boolean) => {
       setIsConnected(isOnline);
-    });
+    }).catch((): void => undefined);
     return off;
   }, []);
 

@@ -5,10 +5,10 @@ const REACHABILITY_URL = 'https://clients3.google.com/generate_204';
 const REACHABILITY_TIMEOUT = 5000;
 const POLL_INTERVAL = 10_000;
 
-let lastIsReachable: boolean | null = null;
+let lastIsReachable = true;
 let mainWindow: BrowserWindow | undefined;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
-let pendingCheck = false;
+let pendingPromise: Promise<boolean> | null = null;
 
 async function checkReachable(): Promise<boolean> {
   try {
@@ -23,16 +23,21 @@ async function checkReachable(): Promise<boolean> {
 }
 
 async function refreshAndNotify(): Promise<boolean> {
-  if (pendingCheck) return lastIsReachable ?? false;
-  pendingCheck = true;
-  const reachable = await checkReachable();
-  pendingCheck = false;
-  if (reachable !== lastIsReachable) {
-    logger.info('Network', `Reachability changed: ${reachable ? 'online' : 'offline'}`);
-    lastIsReachable = reachable;
-    mainWindow?.webContents.send('network:status-changed', reachable);
+  if (pendingPromise) return pendingPromise;
+  pendingPromise = (async () => {
+    const reachable = await checkReachable();
+    if (reachable !== lastIsReachable) {
+      logger.info('Network', `Reachability changed: ${reachable ? 'online' : 'offline'}`);
+      lastIsReachable = reachable;
+      mainWindow?.webContents.send('network:status-changed', reachable);
+    }
+    return reachable;
+  })();
+  try {
+    return await pendingPromise;
+  } finally {
+    pendingPromise = null;
   }
-  return reachable;
 }
 
 export const networkMonitor = {
@@ -42,7 +47,7 @@ export const networkMonitor = {
 
   start(): void {
     if (pollTimer) return;
-    lastIsReachable = null;
+    lastIsReachable = true;
     void refreshAndNotify();
     pollTimer = setInterval(() => {
       const onlineFlag = net.online;

@@ -149,9 +149,9 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen w-screen bg-[#0f0f11] flex flex-col">
-      <NoConnectionOverlay visible={!isConnected} />
+      <NoConnectionOverlay visible={isConnected === false} />
 
-      {!isConnected ? null : (
+      {isConnected === false ? null : (
         <>
         {showNavbar && (
           <nav className="flex items-center gap-1 px-6 bg-[#0f0f11] border-b border-neutral-800/40">
