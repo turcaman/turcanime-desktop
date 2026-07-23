@@ -216,7 +216,7 @@ export class HiddenSessionWindow {
         "  });",
         "})",
         ".catch(function(err) {",
-        "  return JSON.stringify({ ok: false, status: 0, data: null, error: err.message });",
+        "  return JSON.stringify({ ok: false, status: 0, data: null, error: (err && typeof err.message === 'string') ? err.message : String(err) });",
         '})',
       ].join('\n');
     } else {
@@ -233,7 +233,7 @@ export class HiddenSessionWindow {
         "  });",
         "})",
         ".catch(function(err) {",
-        "  return JSON.stringify({ ok: false, status: 0, data: null, error: err.message });",
+        "  return JSON.stringify({ ok: false, status: 0, data: null, error: (err && typeof err.message === 'string') ? err.message : String(err) });",
         '})',
       ].join('\n');
     }

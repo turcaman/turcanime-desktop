@@ -49,9 +49,16 @@ export async function withCache<T>(
     if (err instanceof DOMException && err.name === 'AbortError') {
       return { data: null, error: null, fromCache: false };
     }
+    const thrown = err as { type?: AppErrorType; message?: unknown };
+    const rawMessage = thrown?.message;
+    const message = typeof rawMessage === 'string'
+      ? rawMessage
+      : err instanceof Error
+        ? err.message
+        : String(err);
     const appError: AppError = {
-      type: (err as { type?: AppErrorType })?.type ?? 'UNKNOWN',
-      message: err instanceof Error ? err.message : String(err),
+      type: thrown?.type ?? 'UNKNOWN',
+      message,
     };
     return { data: null, error: appError, fromCache: false };
   }

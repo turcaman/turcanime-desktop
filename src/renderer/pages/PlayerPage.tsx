@@ -124,7 +124,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
             <div className="flex items-center gap-3 px-4 py-2.5 bg-red-500/15 backdrop-blur-sm border border-red-500/20 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <span className="text-sm text-red-200">{error}</span>
+              <span className="text-sm text-red-200">{typeof error === 'string' ? error : 'Error desconocido'}</span>
               <button
                 onClick={onBack}
                 className="text-xs text-red-300 hover:text-red-200 underline ml-2 transition-colors"

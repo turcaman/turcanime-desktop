@@ -53,7 +53,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         await new Promise((r) => setTimeout(r, backoff));
         return get().fetchServers(slug, number, undefined, retryCount + 1);
       }
-      set({ error: result.error?.message ?? 'Error desconocido', isLoading: false });
+      const errMsg = result.error?.message;
+      set({
+        error: typeof errMsg === 'string' && errMsg.length > 0 ? errMsg : 'Error desconocido',
+        isLoading: false,
+      });
       return;
     }
 
@@ -89,7 +93,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         await new Promise((r) => setTimeout(r, backoff));
         return get().resolveStream(server, retryCount + 1);
       }
-      set({ error: result.error?.message ?? 'Error desconocido', isLoading: false });
+      const errMsg = result.error?.message;
+      set({
+        error: typeof errMsg === 'string' && errMsg.length > 0 ? errMsg : 'Error desconocido',
+        isLoading: false,
+      });
       return;
     }
 

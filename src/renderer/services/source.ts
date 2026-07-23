@@ -3,6 +3,7 @@ import { sessionManager } from './session';
 import { HtmlParser, ParserUtils, cleanTitle } from './parsers';
 import { extractBest } from './extractors';
 import { logger } from '../utils/logger';
+import { SourceError } from '../utils/errors';
 import type { Anime, AnimeDetail, AutocompleteAnime, HomeData, VideoServer } from '../../types';
 
 const RETRY_DELAY = 1_000;
@@ -22,18 +23,19 @@ async function fetchWithSession(
 ): Promise<{ ok: boolean; status: number; data: string }> {
   const hasCookies = await sessionManager.waitForCookies();
   if (!hasCookies) {
-    throw { type: 'AUTH_ERROR', message: 'No se pudo obtener sesión después de esperar' };
+    throw new SourceError('No se pudo obtener sesión después de esperar', 'AUTH_ERROR');
   }
 
   const fullUrl = url.startsWith('http') ? url : `${SOURCE_CONFIG.baseUrl}${url}`;
   const res = await window.electronAPI.fetch(fullUrl, options);
 
   if (!res.ok && !res.data) {
-    throw { type: 'NETWORK_ERROR', message: res.error ?? 'Network request failed' };
+    const errMsg = typeof res.error === 'string' && res.error.length > 0 ? res.error : 'Network request failed';
+    throw new SourceError(errMsg, 'NETWORK_ERROR');
   }
 
   if (res.status === 401 || res.status === 403) {
-    throw { type: 'AUTH_ERROR', message: `HTTP ${res.status}` };
+    throw new SourceError(`HTTP ${res.status}`, 'AUTH_ERROR');
   }
 
   if (!res.ok && retryCount < 1) {
@@ -42,7 +44,7 @@ async function fetchWithSession(
   }
 
   if (!res.data) {
-    throw { type: 'SERVER_ERROR', message: `HTTP ${res.status}` };
+    throw new SourceError(`HTTP ${res.status}`, 'SERVER_ERROR');
   }
 
   return { ok: res.ok, status: res.status, data: res.data };
@@ -165,19 +167,19 @@ export const source = {
 
     if (!res.ok) {
       logger.error('Source', `resolveStreamUrl: bridge fetch failed: ${res.error ?? 'unknown error'}`);
-      throw { type: 'NETWORK_ERROR', message: `Bridge page HTTP ${res.status}` };
+      throw new SourceError(`Bridge page HTTP ${res.status}`, 'NETWORK_ERROR');
     }
 
     if (!res.data || res.data.length < 10) {
       logger.error('Source', `resolveStreamUrl: bridge response too short: ${res.data?.length ?? 0} bytes`);
-      throw { type: 'NETWORK_ERROR', message: 'Bridge page response too short' };
+      throw new SourceError('Bridge page response too short', 'NETWORK_ERROR');
     }
 
     const html = res.data;
     const m = html.match(/<iframe[^>]*src="([^"]+)"[^>]*>/);
     if (!m) {
       logger.error('Source', `resolveStreamUrl: no iframe found in bridge HTML (first 300 chars: ${html.slice(0, 300)})`);
-      throw { type: 'NETWORK_ERROR', message: 'No iframe found in bridge page' };
+      throw new SourceError('No iframe found in bridge page', 'NETWORK_ERROR');
     }
 
     const iframeUrl = m[1];
