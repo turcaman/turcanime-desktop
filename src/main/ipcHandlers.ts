@@ -1,6 +1,7 @@
 import { ipcMain, net, shell, app, type BrowserWindow } from 'electron';
 import { hiddenSession } from './sessionHidden';
 import { store } from './store';
+import { networkMonitor } from './networkMonitor';
 import { logger } from './logger';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,5 +144,9 @@ export function registerIpcHandlers(): void {
     } catch (err) {
       return { latest: null, current: app.getVersion(), error: String(err) };
     }
+  });
+
+  ipcMain.handle('network:check', async () => {
+    return networkMonitor.check();
   });
 }

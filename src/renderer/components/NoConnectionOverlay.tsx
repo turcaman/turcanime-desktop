@@ -11,7 +11,7 @@ export const NoConnectionOverlay: React.FC<NoConnectionOverlayProps> = ({
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0f0f11] animate-fade-in select-none">
+    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#0f0f11] animate-fade-in select-none pointer-events-auto">
       <div className="flex flex-col items-center gap-5 px-8 text-center">
         <div className="w-14 h-14 rounded-full bg-neutral-800/80 flex items-center justify-center">
           <WifiOff className="w-7 h-7 text-neutral-500" />

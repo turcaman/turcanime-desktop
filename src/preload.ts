@@ -69,4 +69,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return ipcRenderer.invoke('updates:check');
     },
   },
+  network: {
+    check: () => {
+      return ipcRenderer.invoke('network:check');
+    },
+    onChanged: (cb: (isOnline: boolean) => void) => {
+      const handler = (_event: unknown, isOnline: boolean) => cb(isOnline);
+      ipcRenderer.on('network:status-changed', handler);
+      return () => ipcRenderer.removeListener('network:status-changed', handler);
+    },
+  },
 });

@@ -48,6 +48,10 @@ interface ElectronAPI {
   updates: {
     check: () => Promise<{ latest: string | null; current: string; error?: string }>;
   };
+  network: {
+    check: () => Promise<boolean>;
+    onChanged: (cb: (isOnline: boolean) => void) => () => void;
+  };
 }
 
 interface Window {

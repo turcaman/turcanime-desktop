@@ -1,21 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 export function useNetworkStatus(): { isConnected: boolean } {
-  const [isConnected, setIsConnected] = useState(navigator.onLine);
-
-  const handleChange = useCallback(() => {
-    setIsConnected(navigator.onLine);
-  }, []);
+  const [isConnected, setIsConnected] = useState<boolean>(true);
 
   useEffect(() => {
-    window.addEventListener('online', handleChange);
-    window.addEventListener('offline', handleChange);
-    handleChange();
-    return () => {
-      window.removeEventListener('online', handleChange);
-      window.removeEventListener('offline', handleChange);
-    };
-  }, [handleChange]);
+    const off = window.electronAPI.network.onChanged((isOnline: boolean) => {
+      setIsConnected(isOnline);
+    });
+    window.electronAPI.network.check().then((isOnline: boolean) => {
+      setIsConnected(isOnline);
+    });
+    return off;
+  }, []);
 
   return { isConnected };
 }

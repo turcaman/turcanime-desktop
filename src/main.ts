@@ -4,6 +4,7 @@ import started from 'electron-squirrel-startup';
 import { hiddenSession } from './main/sessionHidden';
 import { registerIpcHandlers, setMainWindow } from './main/ipcHandlers';
 import { loadWindowState, saveWindowState } from './main/windowState';
+import { networkMonitor } from './main/networkMonitor';
 import { logger } from './main/logger';
 
 // On Linux/Wayland, match the WM_CLASS to the .desktop filename
@@ -57,6 +58,8 @@ const createWindow = () => {
   });
 
   setMainWindow(mainWindow);
+  networkMonitor.setMainWindow(mainWindow);
+  networkMonitor.start();
 
 
 
@@ -94,6 +97,7 @@ app.on('ready', () => {
 app.on('window-all-closed', () => {
   logger.info('App', 'Window closed, quitting');
   if (process.platform !== 'darwin') {
+    networkMonitor.stop();
     hiddenSession.destroy();
     app.quit();
   }
