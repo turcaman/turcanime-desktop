@@ -1,3 +1,4 @@
+import { SourceError } from '../utils/errors';
 import type { ISession } from '../../types';
 
 let sessionReadyPromise: Promise<void> | null = null;
@@ -39,7 +40,11 @@ export const sessionManager = {
 
   async refreshSession(): Promise<ISession> {
     const session = await window.electronAPI.session.refresh();
-    readyResolve?.();
+    if (session && session.cookies.length > 0) {
+      readyResolve?.();
+    } else {
+      throw new SourceError('Sesión no válida tras refresco', 'AUTH_ERROR');
+    }
     return session;
   },
 

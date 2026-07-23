@@ -35,6 +35,10 @@ async function fetchWithSession(
   }
 
   if (res.status === 401 || res.status === 403) {
+    sessionManager.invalidateCookies();
+    sessionManager.refreshSession().catch((e: unknown): void => {
+      logger.warn('Source', 'Background session refresh after AUTH_ERROR failed', e);
+    });
     throw new SourceError(`HTTP ${res.status}`, 'AUTH_ERROR');
   }
 

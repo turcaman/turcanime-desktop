@@ -1,9 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { useHistoryStore } from '../stores/historyStore';
+import { sessionManager } from '../services/session';
+import { logger } from '../utils/logger';
 import type { AnimeDetail } from '../../types';
 
 const PROGRESS_INTERVAL = 250;
+const PLAYER_REFRESH_MAX_RETRIES = 2;
+const NETWORK_ERROR_CODES = [2, 3];
 
 export function usePlayer(
   slug: string,
@@ -15,6 +19,7 @@ export function usePlayer(
   const streamUrl = usePlayerStore((s) => s.streamUrl);
   const isLoading = usePlayerStore((s) => s.isLoading);
   const error = usePlayerStore((s) => s.error);
+  const resolveStream = usePlayerStore((s) => s.resolveStream);
   const addToHistory = useHistoryStore((s) => s.addToHistory);
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
@@ -26,6 +31,9 @@ export function usePlayer(
   const lastSavedEp = useRef(episodeNumber);
   const animeInfoRef = useRef({ title: '', image: '' });
   animeInfoRef.current = { title: anime?.title ?? '', image: anime?.image ?? '' };
+
+  const refreshRetryCount = useRef(0);
+  const lastRecoveredStreamUrl = useRef<string>('');
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
@@ -150,6 +158,10 @@ export function usePlayer(
   useEffect(() => {
     if (!streamUrl || !videoRef.current) return;
 
+    if (streamUrl !== lastRecoveredStreamUrl.current) {
+      refreshRetryCount.current = 0;
+    }
+
     setCurrentTime(0);
     setDuration(0);
     setBuffering(false);
@@ -188,12 +200,50 @@ export function usePlayer(
     const handleCanPlay = () => setBuffering(false);
     const handlePlaying = () => setBuffering(false);
 
+    const handleError = () => {
+      const mediaError = video.error;
+      const code = mediaError?.code ?? 0;
+      logger.warn('Player', `video error code=${code} message=${mediaError?.message ?? 'unknown'}`);
+
+      if (!NETWORK_ERROR_CODES.includes(code)) return;
+      if (refreshRetryCount.current >= PLAYER_REFRESH_MAX_RETRIES) {
+        logger.warn('Player', `refresh retries exhausted (${PLAYER_REFRESH_MAX_RETRIES}), giving up`);
+        return;
+      }
+
+      refreshRetryCount.current += 1;
+      logger.info('Player', `network error during playback, refreshing session and re-resolving stream (attempt ${refreshRetryCount.current}/${PLAYER_REFRESH_MAX_RETRIES})`);
+
+      (async () => {
+        try {
+          await sessionManager.refreshSession();
+        } catch (e) {
+          logger.warn('Player', 'session refresh failed before stream re-resolve', e);
+          return;
+        }
+        const state = usePlayerStore.getState();
+        const servers = state.servers;
+        if (servers.length === 0) return;
+        const preferred = state.lastLanguage
+          ? servers.find((sv) => sv.language.toLowerCase() === state.lastLanguage.toLowerCase())
+          : null;
+        const target = preferred ?? servers[0];
+        try {
+          await resolveStream(target);
+          lastRecoveredStreamUrl.current = usePlayerStore.getState().streamUrl;
+        } catch (e) {
+          logger.warn('Player', 'stream re-resolve failed', e);
+        }
+      })();
+    };
+
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('ended', handleEnded);
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('playing', handlePlaying);
+    video.addEventListener('error', handleError);
 
     video.play().then(() => setPlaying(true)).catch((): void => undefined);
 
@@ -204,8 +254,9 @@ export function usePlayer(
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, episodeNumber, hasNext, onNavigateEpisode, saveProgress]);
+  }, [streamUrl, videoRef, episodeNumber, hasNext, onNavigateEpisode, saveProgress, resolveStream]);
   useEffect(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
     lastSavedEp.current = episodeNumber;
