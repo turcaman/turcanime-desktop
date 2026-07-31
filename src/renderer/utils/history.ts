@@ -28,5 +28,5 @@ export function computeContinueWatching(
   for (const item of lastViewed) {
     if (!unique.has(item.url)) unique.set(item.url, item);
   }
-  return Array.from(unique.values()).slice(0, 8);
+  return Array.from(unique.values()).slice(0, 16);
 }
