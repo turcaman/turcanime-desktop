@@ -45,7 +45,7 @@ export function useHomeScreen() {
   }, [continueWatching, homeData]);
 
   const isLoading =
-    isHomeLoading || isRefreshing || (homeData.recent.length === 0 && !isInitialized);
+    !isInitialized || isHomeLoading || isRefreshing;
 
   const hasContent = isInitialized && (
     homeData.recent.length > 0 ||
