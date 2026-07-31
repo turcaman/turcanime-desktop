@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useHomeStore } from '../stores/homeStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useUserInitializationStore } from '../stores/userIndex';
@@ -13,8 +13,10 @@ export function useHomeScreen() {
     useHomeStore();
   const { continueWatching } = useHistoryStore();
   const { isInitialized } = useUserInitializationStore();
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
+    setHasStarted(true);
     fetchHome();
   }, [fetchHome]);
 
@@ -45,7 +47,7 @@ export function useHomeScreen() {
   }, [continueWatching, homeData]);
 
   const isLoading =
-    !isInitialized || isHomeLoading || isRefreshing;
+    !isInitialized || !hasStarted || isHomeLoading || isRefreshing;
 
   const hasContent = isInitialized && (
     homeData.recent.length > 0 ||
