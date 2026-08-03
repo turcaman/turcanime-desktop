@@ -64,8 +64,8 @@ const App: React.FC = () => {
 
             let sessionOk = false;
             try {
-              await sessionManager.refreshSession();
-              sessionOk = true;
+              const session = await sessionManager.refreshSession();
+              sessionOk = session.cookies.length > 0;
             } catch {
               logger.warn('App', 'Session refresh failed, skipping cache clear and using stale cache');
             }

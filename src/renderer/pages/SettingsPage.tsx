@@ -1,14 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { RefreshCw, Bell, ExternalLink, CheckCircle2, Download, Info } from 'lucide-react';
 import { sessionManager } from '../services/session';
+import { useHomeStore } from '../stores/homeStore';
 import { useUIStore } from '../stores/uiStore';
 import { useUpdateStore } from '../stores/updateStore';
 import { clearAllCache } from '../utils/cache';
+import { logger } from '../utils/logger';
 
 export const SettingsPage: React.FC = () => {
   const isRefreshingSession = useUIStore((s) => s.isRefreshingSession);
   const setSessionRefreshing = useUIStore((s) => s.setSessionRefreshing);
   const [refreshed, setRefreshed] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   const updateCheckEnabled = useUpdateStore((s) => s.updateCheckEnabled);
   const setUpdateCheckEnabled = useUpdateStore((s) => s.setUpdateCheckEnabled);
@@ -25,11 +28,24 @@ export const SettingsPage: React.FC = () => {
     if (!ok) return;
 
     setSessionRefreshing(true);
-    await clearAllCache();
-    await sessionManager.refreshSession();
-    setSessionRefreshing(false);
-    setRefreshed(true);
-    setTimeout(() => setRefreshed(false), 2000);
+    setRefreshed(false);
+    setRefreshError(null);
+    try {
+      const session = await sessionManager.refreshSession();
+      if (session.cookies.length === 0) {
+        setRefreshError('No se pudo renovar la conexión. Espera un momento e inténtalo de nuevo.');
+        return;
+      }
+      await clearAllCache();
+      setRefreshed(true);
+      setTimeout(() => setRefreshed(false), 2000);
+      useHomeStore.getState().fetchHome(true).catch((): void => undefined);
+    } catch (err) {
+      logger.error('Settings', 'Session refresh failed', err);
+      setRefreshError('Ocurrió un error inesperado al renovar la conexión.');
+    } finally {
+      setSessionRefreshing(false);
+    }
   }, [setSessionRefreshing]);
 
   const handleManualCheck = useCallback(async () => {
@@ -65,6 +81,9 @@ export const SettingsPage: React.FC = () => {
               </span>
             </div>
           </button>
+          {refreshError && (
+            <p className="text-[11px] text-red-400/80 mt-1.5 px-1">{refreshError}</p>
+          )}
         </div>
 
         <div>

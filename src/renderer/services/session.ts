@@ -1,34 +1,16 @@
-import { SourceError } from '../utils/errors';
 import type { ISession } from '../../types';
 
-let sessionReadyPromise: Promise<void> | null = null;
-let readyResolve: (() => void) | null = null;
-
-const SESSION_TIMEOUT = 60_000;
+// Concurrent refreshes share one in-flight request so a burst of callers
+// (stores, settings, reconnect) doesn't fire a wash per caller.
+let refreshInFlight: Promise<ISession> | null = null;
 
 export const sessionManager = {
   async initialize(): Promise<void> {
-    sessionReadyPromise = new Promise((resolve) => {
-      readyResolve = resolve;
-    });
     try {
-      const existing = await window.electronAPI.session.get();
-      if (existing && existing.cookies.length > 0) {
-        readyResolve?.();
-      }
+      await window.electronAPI.session.get();
     } catch {
-      // will be resolved on first successful refresh
+      // session state is read lazily via getSession()
     }
-  },
-
-  async waitForCookies(): Promise<boolean> {
-    if (!sessionReadyPromise) return false;
-    const timeout = new Promise<boolean>((resolve) => {
-      setTimeout(() => resolve(false), SESSION_TIMEOUT);
-    });
-    await Promise.race([sessionReadyPromise, timeout]);
-    const session = await this.getSession();
-    return session.cookies.length > 0;
   },
 
   async getSession(): Promise<ISession> {
@@ -38,19 +20,33 @@ export const sessionManager = {
     );
   },
 
+  // Never throws: an empty session means the refresh failed, so callers
+  // check cookies.length instead of relying on exceptions.
   async refreshSession(): Promise<ISession> {
-    const session = await window.electronAPI.session.refresh();
-    if (session && session.cookies.length > 0) {
-      readyResolve?.();
-    } else {
-      throw new SourceError('Sesión no válida tras refresco', 'AUTH_ERROR');
+    if (refreshInFlight) return refreshInFlight;
+
+    const run = (async (): Promise<ISession> => {
+      const session = await window.electronAPI.session.refresh();
+      return session ?? { cookies: '', userAgent: '' };
+    })();
+
+    refreshInFlight = run;
+    try {
+      return await run;
+    } finally {
+      refreshInFlight = null;
     }
-    return session;
   },
 
-  invalidateCookies(): void {
-    sessionReadyPromise = new Promise((resolve) => {
-      readyResolve = resolve;
-    });
+  async waitForCookies(): Promise<boolean> {
+    const session = await this.getSession();
+    if (session.cookies.length > 0) return true;
+
+    if (refreshInFlight) {
+      const refreshed = await refreshInFlight;
+      return refreshed.cookies.length > 0;
+    }
+
+    return false;
   },
 };

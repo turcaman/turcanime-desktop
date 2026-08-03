@@ -4,6 +4,13 @@ import { logger } from './logger';
 
 const SESSION_WASH_URL = 'https://www.animelatinohd.com/';
 const POLL_TIMEOUT = 90_000;
+// Backoff between washes so a failed wash doesn't immediately re-navigate
+// and keep hammering the Cloudflare challenge.
+const WASH_BACKOFF_INITIAL_MS = 30_000;
+const WASH_BACKOFF_MAX_MS = 120_000;
+// Skip re-navigating when a wash already succeeded moments ago, so the
+// startup refresh (main + renderer) can't trigger a second wash.
+const RECENT_WASH_MS = 10_000;
 
 const GLOBAL_BOOTSTRAP = [
   '(function() {',
@@ -61,6 +68,8 @@ export class HiddenSessionWindow {
   private currentSession: SessionData | null = null;
   private pendingResolve: ((session: SessionData) => void) | null = null;
   private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+  private nextWashDelayMs = 0;
+  private lastWashAt = 0;
 
   private getWindow(): BrowserWindow {
     if (!this.window) {
@@ -115,14 +124,7 @@ export class HiddenSessionWindow {
 
   destroy(): void {
     logger.info('SessionHidden', 'Destroying hidden BrowserWindow');
-    if (this.pendingTimeout) {
-      clearTimeout(this.pendingTimeout);
-      this.pendingTimeout = null;
-    }
-    if (this.pendingResolve) {
-      this.pendingResolve({ cookies: '', userAgent: '' });
-      this.pendingResolve = null;
-    }
+    this.resolvePending({ cookies: '', userAgent: '' });
     if (this.window) {
       this.window.close();
       this.window = null;
@@ -132,9 +134,32 @@ export class HiddenSessionWindow {
   setSession(cookies: string, userAgent: string): void {
     const hasCookies = cookies.length > 0;
     logger.info('SessionHidden', `Session ${hasCookies ? 'acquired' : 'cleared'} (cookies: ${cookies.length} chars)`);
+
+    // Backoff between washes: a failed wash must not trigger an immediate re-navigation.
+    if (hasCookies) {
+      this.nextWashDelayMs = 0;
+      this.lastWashAt = Date.now();
+    } else {
+      this.nextWashDelayMs = this.nextWashDelayMs === 0
+        ? WASH_BACKOFF_INITIAL_MS
+        : Math.min(this.nextWashDelayMs * 2, WASH_BACKOFF_MAX_MS);
+      logger.warn('SessionHidden', `Wash failed, next wash allowed in ${this.nextWashDelayMs}ms`);
+    }
+
+    // Keep the last good session: a failed wash must not wipe valid cookies.
+    if (!hasCookies && this.currentSession && this.currentSession.cookies.length > 0) {
+      logger.warn('SessionHidden', 'Wash returned empty cookies, keeping previous session');
+      this.resolvePending(this.currentSession);
+      return;
+    }
+
     this.currentSession = { cookies, userAgent };
+    this.resolvePending(this.currentSession);
+  }
+
+  private resolvePending(session: SessionData): void {
     if (this.pendingResolve) {
-      this.pendingResolve(this.currentSession);
+      this.pendingResolve(session);
       this.pendingResolve = null;
     }
     if (this.pendingTimeout) {
@@ -153,10 +178,14 @@ export class HiddenSessionWindow {
       this.create();
     }
 
-    const existing = this.currentSession;
-    if (existing && existing.cookies.length > 0) {
-      logger.debug('SessionHidden', 'Session already valid, returning cached');
-      return existing;
+    if (this.nextWashDelayMs > 0) {
+      logger.warn('SessionHidden', 'Wash backoff active, returning current session without navigating');
+      return this.currentSession ?? { cookies: '', userAgent: '' };
+    }
+
+    if (Date.now() - this.lastWashAt < RECENT_WASH_MS) {
+      logger.debug('SessionHidden', 'Wash completed recently, returning current session');
+      return this.currentSession ?? { cookies: '', userAgent: '' };
     }
 
     // If there's already a pending refresh, wait for it instead of navigating again
@@ -178,11 +207,7 @@ export class HiddenSessionWindow {
 
       this.pendingTimeout = setTimeout(() => {
         logger.warn('SessionHidden', 'Session refresh timed out');
-        if (this.pendingResolve) {
-          const session = this.currentSession ?? { cookies: '', userAgent: '' };
-          this.pendingResolve(session);
-          this.pendingResolve = null;
-        }
+        this.setSession('', this.currentSession?.userAgent ?? '');
       }, POLL_TIMEOUT);
 
       const win = this.getWindow();

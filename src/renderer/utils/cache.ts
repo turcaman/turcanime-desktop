@@ -49,7 +49,6 @@ export async function withCache<T>(
     if (err instanceof DOMException && err.name === 'AbortError') {
       return { data: null, error: null, fromCache: false };
     }
-    try { await storage.remove(cacheKey); } catch { /* ignore */ }
     const thrown = err as { type?: AppErrorType; message?: unknown };
     const rawMessage = thrown?.message;
     const message = typeof rawMessage === 'string'
@@ -61,6 +60,15 @@ export async function withCache<T>(
       type: thrown?.type ?? 'UNKNOWN',
       message,
     };
+    // Serve the previous (possibly expired) cache entry on transient failures
+    // so the UI keeps content; auth errors are surfaced instead.
+    if (appError.type !== 'AUTH_ERROR') {
+      const cached = await storage.get<CacheEntry<T>>(cacheKey);
+      if (cached && cached.payload != null) {
+        logger.warn('Cache', `Serving stale cache for ${cacheKey} after ${appError.type}`);
+        return { data: cached.payload, error: null, fromCache: true };
+      }
+    }
     return { data: null, error: appError, fromCache: false };
   }
 }
@@ -69,7 +77,7 @@ const CACHE_PREFIX_VALUES = Object.values(CACHE_PREFIXES);
 
 export async function clearAllCache(): Promise<void> {
   try {
-    const allKeys = Object.keys(await window.electronAPI.store.get('__all_keys__') ?? {});
+    const allKeys = await window.electronAPI.store.getAllKeys();
     for (const key of allKeys) {
       if (CACHE_PREFIX_VALUES.some((prefix) => key.startsWith(prefix))) {
         await storage.remove(key);
