@@ -114,6 +114,7 @@ export class HiddenSessionWindow {
       const url = this.window?.webContents.getURL() || 'unknown';
       logger.info('SessionHidden', `Page loaded: ${url}, injecting bootstrap`);
       this.window?.webContents.executeJavaScript(GLOBAL_BOOTSTRAP).catch((err) => {
+        if (!this.window) return;
         logger.warn('SessionHidden', 'Bootstrap injection interrupted', err);
       });
     });
@@ -214,6 +215,9 @@ export class HiddenSessionWindow {
 
       const win = this.getWindow();
       win.loadURL(SESSION_WASH_URL).catch((err) => {
+        // Navigation interrupted by shutdown is expected; only report
+        // failures while the window is still alive.
+        if (!this.window) return;
         logger.warn('SessionHidden', 'Wash navigation interrupted', err);
       });
     });
