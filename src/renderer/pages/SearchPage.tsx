@@ -46,7 +46,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   const handleSuggestionSelect = (item: AutocompleteAnime) => {
     handleSelectSuggestion(item);
     if (externalAnimePress) {
-      externalAnimePress({ title: item.name, image: item.poster, url: item.slug, status: '' });
+      externalAnimePress({ title: item.name, image: item.poster, slug: item.slug, status: '' });
     }
   };
 
@@ -109,7 +109,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
           >
             {searchAnimes.map((anime) => (
               <AnimeCard
-                key={anime.url}
+                key={anime.slug}
                 title={anime.title}
                 image={anime.image}
                 width={cardWidth}

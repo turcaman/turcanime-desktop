@@ -8,7 +8,7 @@ export interface AppError {
 export interface Anime {
   title: string;
   image: string;
-  url: string;
+  slug: string;
   status: string;
 }
 
@@ -70,7 +70,7 @@ export interface VideoServer {
 export interface HistoryItem {
   title: string;
   image: string;
-  url: string;
+  slug: string;
   number: number;
   progress: number;
   duration: number;

@@ -28,9 +28,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   addToHistory: async (item) => {
     const newItem = { ...item, timestamp: Date.now() };
     const prev = get().lastViewed;
-    // Dedup by url+number so each anime+episode appears once (like Android)
+    // Dedup by slug+number so each anime+episode appears once (like Android)
     const updated = [newItem, ...prev.filter(
-      (i) => i.url !== newItem.url || i.number !== newItem.number,
+      (i) => i.slug !== newItem.slug || i.number !== newItem.number,
     )].slice(0, MAX_HISTORY);
     set({
       lastViewed: updated,

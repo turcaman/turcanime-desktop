@@ -69,7 +69,7 @@ export const source = {
     return items.map((item) => ({
       title: (item.name as string) ?? '',
       image: posterToUrl(item.poster as string),
-      url: (item.slug as string) ?? '',
+      slug: (item.slug as string) ?? '',
       status: '',
     }));
   },
@@ -116,7 +116,7 @@ export const source = {
     return {
       title,
       image,
-      url: slug,
+      slug,
       status,
       synopsis,
       banner: posterToUrl(banner),

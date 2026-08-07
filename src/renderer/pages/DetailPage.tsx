@@ -28,7 +28,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
   const progressMap = React.useMemo(() => {
     const map = new Map<number, { progress: number; duration: number }>();
     for (const item of lastViewed) {
-      if (item.url === slug) {
+      if (item.slug === slug) {
         map.set(item.number, { progress: item.progress, duration: item.duration });
       }
     }

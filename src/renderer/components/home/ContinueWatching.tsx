@@ -29,7 +29,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
 
           return (
             <button
-              key={item.url}
+              key={item.slug}
               onClick={() => onItemPress?.(item)}
               className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 active:scale-[0.98] transition-transform duration-150 border border-neutral-800/50 hover:border-neutral-700/60"
               style={{ width: itemWidth }}

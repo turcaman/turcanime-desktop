@@ -26,7 +26,7 @@ export function computeContinueWatching(
   // preserve that newest-first order so re-watching moves an item to the front.
   const unique = new Map<string, HistoryItem>();
   for (const item of lastViewed) {
-    if (!unique.has(item.url)) unique.set(item.url, item);
+    if (!unique.has(item.slug)) unique.set(item.slug, item);
   }
   return Array.from(unique.values()).slice(0, 16);
 }

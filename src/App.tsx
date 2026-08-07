@@ -88,12 +88,12 @@ const App: React.FC = () => {
   }, []);
 
   const handleAnimePress = useCallback((anime: Anime) => {
-    push('detail', anime.url);
+    push('detail', anime.slug);
   }, [push]);
 
-  const handleHistoryPress = useCallback((item: { url: string }) => {
-    if (item.url) {
-      push('detail', item.url);
+  const handleHistoryPress = useCallback((item: { slug: string }) => {
+    if (item.slug) {
+      push('detail', item.slug);
     }
   }, [push]);
 

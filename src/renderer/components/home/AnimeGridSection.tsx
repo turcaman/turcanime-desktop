@@ -28,7 +28,7 @@ export const AnimeGridSection: React.FC<AnimeGridSectionProps> = ({
         <div className="grid" style={cardGridStyle(columns, cardWidth)}>
           {items.map((anime) => (
             <AnimeCard
-              key={anime.url}
+              key={anime.slug}
               title={anime.title}
               image={anime.image}
               width={cardWidth}

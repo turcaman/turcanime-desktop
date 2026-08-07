@@ -50,7 +50,7 @@ export function usePlayer(
 
       if (!duration) {
         const prev = useHistoryStore.getState().lastViewed.find(
-          (item) => item.url === slug && item.number === lastSavedEp.current,
+          (item) => item.slug === slug && item.number === lastSavedEp.current,
         );
         if (prev?.duration && isFinite(prev.duration) && prev.duration > 0) {
           duration = prev.duration;
@@ -65,7 +65,7 @@ export function usePlayer(
       addToHistory({
         title: animeInfoRef.current.title,
         image: animeInfoRef.current.image,
-        url: slug,
+        slug,
         number: lastSavedEp.current,
         progress,
         duration,
@@ -178,7 +178,7 @@ export function usePlayer(
 
     const restoredItems = useHistoryStore.getState().lastViewed;
     const historyItem = restoredItems.find(
-      (item) => item.url === slug && item.number === episodeNumber,
+      (item) => item.slug === slug && item.number === episodeNumber,
     );
     if (historyItem && historyItem.progress > 0) {
       video.currentTime = historyItem.progress;

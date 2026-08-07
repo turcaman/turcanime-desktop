@@ -11,11 +11,18 @@ interface UserInitState {
   initialize: () => Promise<void>;
 }
 
+// History persisted by older versions used `url`; map it to `slug` so
+// "continue watching" survives the upgrade.
+function migrateHistoryItem(item: HistoryItem & { url?: string }): HistoryItem {
+  return { ...item, slug: item.slug ?? item.url ?? '' };
+}
+
 export const useUserInitializationStore = create<UserInitState>((set) => ({
   isInitialized: false,
 
   initialize: async () => {
-    const history = (await storage.get<HistoryItem[]>('last_viewed')) ?? [];
+    const storedHistory = (await storage.get<HistoryItem[]>('last_viewed')) ?? [];
+    const history = storedHistory.map(migrateHistoryItem);
     const searches = (await storage.get<string[]>('recent_searches')) ?? [];
     const episodeOrder = (await storage.get<'asc' | 'desc'>('episode_order')) ?? 'asc';
     const updateCheckEnabled = (await storage.get<boolean>('update_check_enabled')) ?? true;

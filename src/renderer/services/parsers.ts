@@ -57,11 +57,11 @@ export class ParserUtils {
   }
 }
 
-function createAnimeCard(url: string, image: string, title: string): Anime {
+function createAnimeCard(slug: string, image: string, title: string): Anime {
   return {
     title: cleanTitle(ParserUtils.sanitizeTitle(title)),
     image: toAbsoluteUrl(image),
-    url: ParserUtils.cleanUrl(url),
+    slug: ParserUtils.cleanUrl(slug),
     status: '',
   };
 }
