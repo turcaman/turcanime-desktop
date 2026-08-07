@@ -62,7 +62,8 @@ export const useHomeStore = create<HomeState>((set) => ({
     if (homeController) {
       homeController.abort();
     }
-    homeController = new AbortController();
+    const controller = new AbortController();
+    homeController = controller;
 
     set({ isLoading: true, error: null });
 
@@ -71,10 +72,18 @@ export const useHomeStore = create<HomeState>((set) => ({
         withCache(
           CACHE_PREFIXES.HOME,
           () => source.getHomeData(),
-          { ttl: CACHE_TTL.HOME, signal: homeController?.signal, force: attempt > 0 || force },
+          { ttl: CACHE_TTL.HOME, signal: controller.signal, force: attempt > 0 || force },
         ),
       'homeStore',
     );
+
+    // A newer fetchHome/reset superseded this one. Aborts resolve as
+    // {data: null, error: null} (treated as success by runWithRetry), so
+    // writing here would wipe homeData and clear the error, briefly flashing
+    // the 'Sin datos' empty state.
+    if (controller.signal.aborted || homeController !== controller) {
+      return;
+    }
 
     if (result.error) {
       set({ error: result.error, isLoading: false, isRefreshing: false });
