@@ -8,6 +8,7 @@ import { ServerModal } from '../components/detail/ServerModal';
 import { DetailSkeleton } from '../components/skeletons/DetailSkeleton';
 import { ErrorState } from '../components/ui/ErrorState';
 import { useHistoryStore } from '../stores/historyStore';
+import type { VideoServer } from '../../types';
 
 interface DetailPageProps {
   slug: string;
@@ -41,13 +42,11 @@ export const DetailPage: React.FC<DetailPageProps> = ({
     ranges,
     activeRangeIdx,
     setActiveRangeIdx,
-    isRestoring,
     ascending,
     selectedEpisode,
     servers,
     serverLoading,
     handleEpisodePress,
-    handleServerSelect,
     closeModal,
     handleToggleSort,
     retry,
@@ -69,7 +68,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
     );
   }
 
-  const handleServerSelectAndNavigate = (server: Parameters<typeof handleServerSelect>[0]) => {
+  const openPlayerForServer = (server: VideoServer) => {
     setLastLanguage(server.language);
     closeModal();
     if (selectedEpisode && anime) {
@@ -92,7 +91,6 @@ export const DetailPage: React.FC<DetailPageProps> = ({
           ranges={ranges}
           activeRangeIdx={activeRangeIdx}
           onSelect={setActiveRangeIdx}
-          isRestoring={isRestoring}
         />
         {episodes.map((ep) => (
           <EpisodeItem
@@ -109,7 +107,7 @@ export const DetailPage: React.FC<DetailPageProps> = ({
         episodeNumber={selectedEpisode?.number ?? 0}
         servers={servers}
         isLoading={serverLoading}
-        onServerSelect={handleServerSelectAndNavigate}
+        onServerSelect={openPlayerForServer}
         onClose={closeModal}
       />
     </div>

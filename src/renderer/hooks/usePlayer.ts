@@ -25,7 +25,6 @@ export function usePlayer(
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [loaded, setLoaded] = useState(false);
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
   const lastSavedEp = useRef(episodeNumber);
@@ -175,7 +174,6 @@ export function usePlayer(
     const video = videoRef.current;
     video.src = streamUrl;
     video.load();
-    setLoaded(true);
     lastSavedEp.current = episodeNumber;
 
     const restoredItems = useHistoryStore.getState().lastViewed;
@@ -296,9 +294,7 @@ export function usePlayer(
     buffering,
     currentTime,
     duration,
-    loaded,
     isLoading,
-    streamUrl,
     error,
     hasPrev,
     hasNext,
@@ -310,6 +306,5 @@ export function usePlayer(
     seekForward10,
     navigatePrev,
     navigateNext,
-    saveProgress,
   };
 }

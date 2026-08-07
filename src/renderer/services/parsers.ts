@@ -264,54 +264,7 @@ export class HtmlParser {
     return '';
   }
 
-  private resolveRscReference(html: string, refId: string): string | null {
-    try {
-      const hexPattern = new RegExp('"' + refId + ':T\\w+,((?:[^"\\\\]|\\\\.)*)"(?:,|$)', '');
-      const hexMatch = html.match(hexPattern);
-      if (hexMatch) return this.unescapeRscValue(hexMatch[1]);
-
-      const refPattern = new RegExp('"' + refId + '":\\s*T\\d+,"((?:[^"\\\\]|\\\\.)*)"', '');
-      const refMatch = html.match(refPattern);
-      if (refMatch) return this.unescapeRscValue(refMatch[1]);
-    } catch {
-      // ignore
-    }
-    return null;
-  }
-
-  private unescapeRscValue(raw: string): string {
-    return raw.replace(/\\\\/g, '\\').replace(/\\"/g, '"').replace(/\\n/g, '\n');
-  }
-
-  extractSynopsisFromRsc(rsc: string, fullHtml: string): string | null {
-    const ovMatch = rsc.match(/page_overview__[^"]*"\s*,\s*"children"\s*:\s*"((?:\\.|[^"\\])*)"/);
-    if (ovMatch) {
-      const val = ovMatch[1];
-      if (val.startsWith('$')) {
-        const rid = val.slice(1);
-        const resolved = this.resolveRscReference(fullHtml, rid);
-        if (resolved != null && resolved.length > 20) return resolved;
-      } else {
-        try {
-          const parsed = JSON.parse('"' + val + '"');
-          if (typeof parsed === 'string' && parsed.length > 20) return parsed;
-        } catch {
-          if (val.length > 20) return val;
-        }
-      }
-    }
-
-    const tMatch = rsc.match(/^\d+:T(?:\w+,)?([\s\S]+)$/);
-    if (tMatch) {
-      const candidate = tMatch[1];
-      if (candidate.length > 30 && !candidate.startsWith('Ver ')) {
-        return candidate;
-      }
-    }
-    return null;
-  }
-
-  parseAllFromScripts(html: string): { poster: string; synopsis: string | null; relations: AnimeRelations | null } {
+  parseAllFromScripts(html: string): { poster: string; relations: AnimeRelations | null } {
     let poster = '';
     let relations: AnimeRelations | null = null;
     let relationsLocked = false;
@@ -345,7 +298,7 @@ export class HtmlParser {
       }
     }
 
-    return { poster, synopsis: null, relations };
+    return { poster, relations };
   }
 
   extractRelations(rsc: string): AnimeRelations | null {

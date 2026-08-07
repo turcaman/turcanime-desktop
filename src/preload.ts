@@ -24,10 +24,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       console.log(`[Preload] store:delete ${key}`);
       return ipcRenderer.invoke('store:delete', key);
     },
-    clear: () => {
-      console.log('[Preload] store:clear');
-      return ipcRenderer.invoke('store:clear');
-    },
     getAllKeys: () => {
       console.log('[Preload] store:getAllKeys');
       return ipcRenderer.invoke('store:getAllKeys');

@@ -58,7 +58,6 @@ export interface EpisodeRange {
 
 export interface HomeData {
   recent: Anime[];
-  sections?: { title: string; animes: Anime[] }[];
 }
 
 export interface VideoServer {
@@ -66,11 +65,6 @@ export interface VideoServer {
   title: string;
   url: string;
   language: string;
-}
-
-export interface StreamUrlResult {
-  url: string;
-  headers?: Record<string, string>;
 }
 
 export interface HistoryItem {

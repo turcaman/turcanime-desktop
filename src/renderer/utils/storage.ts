@@ -33,12 +33,4 @@ export const storage = {
       logger.error('Storage', `Failed to remove ${key}`, err);
     }
   },
-
-  async clear(): Promise<void> {
-    try {
-      await api().store.clear();
-    } catch (err) {
-      logger.error('Storage', 'Failed to clear storage', err);
-    }
-  },
 };

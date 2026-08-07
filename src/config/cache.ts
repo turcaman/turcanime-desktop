@@ -1,7 +1,3 @@
-export const LOG_LIMITS = {
-  MAX_ENTRIES: 1000,
-};
-
 export const CACHE_PREFIXES = {
   HOME: 'ch_home',
   SEARCH: 'search',
@@ -26,6 +22,4 @@ export const LIMITS = {
 
 export const TIMEOUTS = {
   SEARCH: 15_000,
-  SESSION_INIT: 30_000,
-  RETRY_DELAY: 1_000,
 };

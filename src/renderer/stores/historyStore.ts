@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '../utils/storage';
-import { removeBy, computeContinueWatching } from '../utils/history';
+import { computeContinueWatching } from '../utils/history';
 import { logger } from '../utils/logger';
 import type { HistoryItem } from '../../types';
 
@@ -12,8 +12,6 @@ interface HistoryState {
   continueWatching: HistoryItem[];
   initialize: (items: HistoryItem[]) => void;
   addToHistory: (item: HistoryItem) => Promise<void>;
-  removeFromHistory: (url: string) => Promise<void>;
-  clearHistory: () => Promise<void>;
 }
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
@@ -43,30 +41,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     } catch (err) {
       set({ lastViewed: prev, continueWatching: computeContinueWatching(prev) });
       logger.error('historyStore', 'Failed to persist history', err);
-    }
-  },
-
-  removeFromHistory: async (url) => {
-    const prev = get().lastViewed;
-    const updated = removeBy(prev, (item) => item.url === url);
-    set({
-      lastViewed: updated,
-      continueWatching: computeContinueWatching(updated),
-    });
-    try {
-      await storage.set(STORAGE_KEY, updated);
-    } catch (err) {
-      set({ lastViewed: prev, continueWatching: computeContinueWatching(prev) });
-      logger.error('historyStore', 'Failed to remove from history', err);
-    }
-  },
-
-  clearHistory: async () => {
-    set({ lastViewed: [], continueWatching: [] });
-    try {
-      await storage.remove(STORAGE_KEY);
-    } catch (err) {
-      logger.error('historyStore', 'Failed to clear history', err);
     }
   },
 }));

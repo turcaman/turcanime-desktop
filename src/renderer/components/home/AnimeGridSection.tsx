@@ -39,7 +39,6 @@ export const AnimeGridSection: React.FC<AnimeGridSectionProps> = ({
               key={anime.url}
               title={anime.title}
               image={anime.image}
-              url={anime.url}
               width={cardWidth}
               onPress={() => onItemPress?.(anime)}
             />

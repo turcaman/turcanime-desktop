@@ -4,7 +4,7 @@ import { usePlayerStore } from '../stores/playerStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { storage } from '../utils/storage';
 import { logger } from '../utils/logger';
-import type { Episode, EpisodeRange, VideoServer } from '../../types';
+import type { Episode, EpisodeRange } from '../../types';
 
 const EPISODES_PER_PAGE = 50;
 
@@ -27,15 +27,12 @@ export function useAnimeDetail(slug: string) {
     servers,
     isLoading: serverLoading,
     fetchServers,
-    resolveStream,
   } = usePlayerStore();
   const { episodeOrder, setEpisodeOrder } = useSettingsStore();
 
-  const [expanded, setExpanded] = useState(false);
   const [ascending, setAscending] = useState(episodeOrder === 'asc');
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [activeRangeIdx, setActiveRangeIdxState] = useState(0);
-  const [rangeRestored, setRangeRestored] = useState(false);
 
   const setActiveRangeIdx = useCallback((idx: number) => {
     setActiveRangeIdxState(idx);
@@ -46,13 +43,9 @@ export function useAnimeDetail(slug: string) {
 
   useEffect(() => {
     setActiveRangeIdxState(0);
-    setRangeRestored(false);
     useDetailsStore.getState().reset();
     storage.get<number>(`range_${slug}`).then((idx) => {
       if (idx != null) setActiveRangeIdxState(idx);
-      setRangeRestored(true);
-    }).catch(() => {
-      setRangeRestored(true);
     });
   }, [slug]);
 
@@ -86,13 +79,6 @@ export function useAnimeDetail(slug: string) {
     [slug, fetchServers],
   );
 
-  const handleServerSelect = useCallback(
-    async (server: VideoServer) => {
-      await resolveStream(server);
-    },
-    [resolveStream],
-  );
-
   const closeModal = useCallback(() => {
     setSelectedEpisode(null);
   }, []);
@@ -113,15 +99,11 @@ export function useAnimeDetail(slug: string) {
     ranges,
     activeRangeIdx,
     setActiveRangeIdx,
-    isRestoring: !rangeRestored,
     ascending,
-    expanded,
-    setExpanded,
     selectedEpisode,
     servers,
     serverLoading,
     handleEpisodePress,
-    handleServerSelect,
     closeModal,
     handleToggleSort,
     retry,

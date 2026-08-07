@@ -13,7 +13,6 @@ interface SearchState {
   suggestions: AutocompleteAnime[];
   lastSearchTerm: string;
   isSearchLoading: boolean;
-  isSuggestionsLoading: boolean;
   error: AppError | null;
   fetchSearch: (query: string, force?: boolean, retryCount?: number) => Promise<void>;
   fetchSuggestions: (query: string) => Promise<void>;
@@ -27,7 +26,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   suggestions: [],
   lastSearchTerm: '',
   isSearchLoading: false,
-  isSuggestionsLoading: false,
   error: null,
 
   fetchSearch: async (query, force, retryCount = 0) => {
@@ -74,20 +72,15 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     }
     suggestionsController = new AbortController();
 
-    set({ isSuggestionsLoading: true });
-
     const result = await withCache(
       `${CACHE_PREFIXES.SUGGESTIONS}_${query}`,
       async () => source.getSuggestions(query),
       { ttl: CACHE_TTL.SUGGESTIONS, signal: suggestionsController.signal },
     );
 
-    if (result.error) {
-      set({ isSuggestionsLoading: false });
-      return;
-    }
+    if (result.error) return;
 
-    set({ suggestions: result.data ?? [], isSuggestionsLoading: false });
+    set({ suggestions: result.data ?? [] });
   },
 
   cancelSearch: () => {
@@ -103,7 +96,6 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       suggestions: [],
       lastSearchTerm: '',
       isSearchLoading: false,
-      isSuggestionsLoading: false,
       error: null,
     });
   },

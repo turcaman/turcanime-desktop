@@ -58,12 +58,6 @@ export function registerIpcHandlers(): void {
     return true;
   });
 
-  ipcMain.handle('store:clear', async () => {
-    logger.info('IPC', 'store:clear');
-    electronStore.clear();
-    return true;
-  });
-
   ipcMain.handle('store:getAllKeys', async () => {
     const keys = Object.keys(electronStore.store);
     logger.debug('IPC', `store:getAllKeys -> ${keys.length} keys`);

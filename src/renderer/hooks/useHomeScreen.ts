@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useHomeStore } from '../stores/homeStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useUserInitializationStore } from '../stores/userIndex';
@@ -9,14 +9,15 @@ type SectionItem =
   | { type: 'SECTION'; title: string; data: Anime[] };
 
 export function useHomeScreen() {
-  const { homeData, isHomeLoading, isRefreshing, error, fetchHome } =
-    useHomeStore();
-  const { continueWatching } = useHistoryStore();
-  const { isInitialized } = useUserInitializationStore();
-  const [hasStarted, setHasStarted] = useState(false);
+  const homeData = useHomeStore((s) => s.homeData);
+  const isHomeLoading = useHomeStore((s) => s.isHomeLoading);
+  const isRefreshing = useHomeStore((s) => s.isRefreshing);
+  const error = useHomeStore((s) => s.error);
+  const fetchHome = useHomeStore((s) => s.fetchHome);
+  const continueWatching = useHistoryStore((s) => s.continueWatching);
+  const isInitialized = useUserInitializationStore((s) => s.isInitialized);
 
   useEffect(() => {
-    setHasStarted(true);
     fetchHome();
   }, [fetchHome]);
 
@@ -35,24 +36,12 @@ export function useHomeScreen() {
       });
     }
 
-    if (homeData.sections) {
-      for (const section of homeData.sections) {
-        if (section.animes.length > 0) {
-          result.push({ type: 'SECTION', title: section.title, data: section.animes });
-        }
-      }
-    }
-
     return result;
   }, [continueWatching, homeData]);
 
-  const isLoading =
-    !isInitialized || !hasStarted || isHomeLoading || isRefreshing;
+  const isLoading = !isInitialized || isHomeLoading || isRefreshing;
 
-  const hasContent = isInitialized && (
-    homeData.recent.length > 0 ||
-    (homeData.sections && homeData.sections.some(s => s.animes.length > 0))
-  );
+  const hasContent = isInitialized && homeData.recent.length > 0;
 
   return {
     sections,

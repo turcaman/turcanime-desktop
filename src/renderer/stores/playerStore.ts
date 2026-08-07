@@ -9,22 +9,18 @@ import type { VideoServer } from '../../types';
 interface PlayerState {
   servers: VideoServer[];
   streamUrl: string;
-  streamHeaders: Record<string, string>;
   lastLanguage: string;
   isLoading: boolean;
   error: string | null;
   fetchServers: (slug: string, number: number, signal?: AbortSignal, retryCount?: number) => Promise<void>;
   resolveStream: (server: VideoServer, retryCount?: number) => Promise<void>;
-  setStream: (url: string, headers?: Record<string, string>) => void;
   setLastLanguage: (lang: string) => void;
   reset: () => void;
-  clearError: () => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   servers: [],
   streamUrl: '',
-  streamHeaders: {},
   lastLanguage: 'sub',
   isLoading: false,
   error: null,
@@ -104,15 +100,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (result.data) {
       set({
         streamUrl: result.data.url,
-        streamHeaders: result.data.headers ?? {},
         lastLanguage: server.language,
         isLoading: false,
       });
     }
-  },
-
-  setStream: (url, headers) => {
-    set({ streamUrl: url, streamHeaders: headers ?? {} });
   },
 
   setLastLanguage: (lang) => {
@@ -124,14 +115,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set({
       servers: [],
       streamUrl: '',
-      streamHeaders: {},
       lastLanguage: lang,
       isLoading: false,
       error: null,
     });
-  },
-
-  clearError: () => {
-    set({ error: null });
   },
 }));

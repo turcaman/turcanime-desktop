@@ -128,7 +128,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
                 key={anime.url}
                 title={anime.title}
                 image={anime.image}
-                url={anime.url}
                 width={cardWidth}
                 onPress={() => handleAnimePress(anime)}
               />

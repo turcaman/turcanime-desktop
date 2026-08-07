@@ -6,15 +6,12 @@ type EpisodeOrder = 'asc' | 'desc';
 
 interface SettingsState {
   episodeOrder: EpisodeOrder;
-  cacheInvalidationTimestamp: number;
   initialize: (data: { episodeOrder: EpisodeOrder }) => void;
   setEpisodeOrder: (order: EpisodeOrder) => Promise<void>;
-  invalidateCache: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   episodeOrder: 'asc',
-  cacheInvalidationTimestamp: 0,
 
   initialize: (data) => {
     set({ episodeOrder: data.episodeOrder });
@@ -29,9 +26,5 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set({ episodeOrder: prev });
       logger.error('settingsStore', 'Failed to persist episode order', err);
     }
-  },
-
-  invalidateCache: () => {
-    set({ cacheInvalidationTimestamp: Date.now() });
   },
 }));

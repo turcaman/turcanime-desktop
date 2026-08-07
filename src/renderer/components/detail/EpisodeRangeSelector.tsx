@@ -5,7 +5,6 @@ interface EpisodeRangeSelectorProps {
   ranges: EpisodeRange[];
   activeRangeIdx: number;
   onSelect: (idx: number) => void;
-  isRestoring?: boolean;
 }
 
 export const EpisodeRangeSelector: React.FC<EpisodeRangeSelectorProps> = ({

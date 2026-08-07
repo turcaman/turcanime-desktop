@@ -3,10 +3,7 @@ import React from 'react';
 interface AnimeCardProps {
   title: string;
   image: string;
-  url: string;
   width: number;
-  episodeNumber?: number;
-  variant?: 'default' | 'continue';
   onPress?: () => void;
 }
 
@@ -14,11 +11,9 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
   title,
   image,
   width,
-  episodeNumber,
-  variant = 'default',
   onPress,
 }) => {
-  const height = variant === 'continue' ? width * 0.75 : width * 1.4;
+  const height = width * 1.4;
 
   return (
     <button
@@ -37,11 +32,6 @@ export const AnimeCard: React.FC<AnimeCardProps> = ({
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/0" />
-        {episodeNumber !== undefined && (
-          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-sm rounded-md text-[11px] text-purple-400 font-semibold tracking-wide">
-            Ep. {episodeNumber}
-          </div>
-        )}
       </div>
       <p className="text-sm text-neutral-300 group-hover:text-neutral-100 line-clamp-2 leading-snug h-10 transition-colors duration-200">
         {title}
