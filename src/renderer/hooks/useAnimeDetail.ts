@@ -31,8 +31,8 @@ export function useAnimeDetail(slug: string) {
   const fetchServers = usePlayerStore((s) => s.fetchServers);
   const episodeOrder = useSettingsStore((s) => s.episodeOrder);
   const setEpisodeOrder = useSettingsStore((s) => s.setEpisodeOrder);
+  const ascending = episodeOrder === 'asc';
 
-  const [ascending, setAscending] = useState(episodeOrder === 'asc');
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [activeRangeIdx, setActiveRangeIdxState] = useState(0);
 
@@ -86,12 +86,8 @@ export function useAnimeDetail(slug: string) {
   }, []);
 
   const handleToggleSort = useCallback(() => {
-    setAscending((prev) => {
-      const newVal = !prev;
-      setEpisodeOrder(newVal ? 'asc' : 'desc');
-      return newVal;
-    });
-  }, [setEpisodeOrder]);
+    setEpisodeOrder(ascending ? 'desc' : 'asc');
+  }, [ascending, setEpisodeOrder]);
 
   return {
     anime: activeAnime,

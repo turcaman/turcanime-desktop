@@ -8,7 +8,7 @@ type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 const DEBOUNCE_MS = 300;
 
 export function useSearchScreen() {
-  const lastSearchTerm = useSearchStore((s) => s.lastSearchTerm);
+  const term = useSearchStore((s) => s.lastSearchTerm);
   const searchAnimes = useSearchStore((s) => s.searchAnimes);
   const suggestions = useSearchStore((s) => s.suggestions);
   const isSearchLoading = useSearchStore((s) => s.isSearchLoading);
@@ -18,8 +18,7 @@ export function useSearchScreen() {
   const cancelSearch = useSearchStore((s) => s.cancelSearch);
   const resetSearch = useSearchStore((s) => s.resetSearch);
   const setSearchTerm = useSearchStore((s) => s.setSearchTerm);
-  const [term, setTerm] = useState(lastSearchTerm);
-  const [status, setStatus] = useState<SearchStatus>(lastSearchTerm ? 'searched' : 'idle');
+  const [status, setStatus] = useState<SearchStatus>(term ? 'searched' : 'idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const recentSearches = useSearchHistoryStore((s) => s.recentSearches);
@@ -42,14 +41,14 @@ export function useSearchScreen() {
   }, [term, status, fetchSuggestions]);
 
   const handleTextChange = useCallback((text: string) => {
-    setTerm(text);
+    setSearchTerm(text);
     if (text.length > 0) {
       setStatus('typing');
     } else {
       setStatus('idle');
       resetSearch();
     }
-  }, [resetSearch]);
+  }, [setSearchTerm, resetSearch]);
 
   const executeSearch = useCallback(async (searchTerm?: string) => {
     const query = (searchTerm ?? term).trim();
@@ -72,23 +71,21 @@ export function useSearchScreen() {
   }, [term, fetchSearch]);
 
   const handleSelectSuggestion = useCallback((anime: AutocompleteAnime) => {
-    setTerm(anime.name);
     setSearchTerm(anime.name);
     executeSearch(anime.name);
   }, [setSearchTerm, executeSearch]);
 
   const handleSelectRecent = useCallback((recentTerm: string) => {
-    setTerm(recentTerm);
     setSearchTerm(recentTerm);
     executeSearch(recentTerm);
   }, [setSearchTerm, executeSearch]);
 
   const handleClear = useCallback(() => {
-    setTerm('');
+    setSearchTerm('');
     setStatus('idle');
     cancelSearch();
     resetSearch();
-  }, [cancelSearch, resetSearch]);
+  }, [setSearchTerm, cancelSearch, resetSearch]);
 
   useEffect(() => {
     return () => {
