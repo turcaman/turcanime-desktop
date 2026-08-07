@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { sessionManager } from '../services/session';
+import { pickPreferredServer } from '../utils/servers';
 import { logger } from '../utils/logger';
 import type { AnimeDetail } from '../../types';
 
@@ -33,6 +34,13 @@ export function usePlayer(
 
   const refreshRetryCount = useRef(0);
   const lastRecoveredStreamUrl = useRef<string>('');
+  // Bumped after a forced stream re-resolve so the video reloads even when the
+  // resolved URL is identical to the failed one (same URL would not change the
+  // streamUrl state and the effect would never re-run).
+  const [reloadNonce, setReloadNonce] = useState(0);
+  // Last known media position, used by saveProgress during unmount cleanup
+  // when the video ref is already null.
+  const lastMediaState = useRef({ time: 0, duration: 0 });
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
@@ -40,38 +48,39 @@ export function usePlayer(
   const hasNext = currentIdx < episodes.length - 1;
 
   const saveProgress = useCallback(() => {
-    if (videoRef.current) {
-      const rawDuration = videoRef.current.duration;
-      let duration = (
-        typeof rawDuration === 'number' &&
-        isFinite(rawDuration) &&
-        rawDuration > 0
-      ) ? rawDuration : 0;
+    const video = videoRef.current;
+    const rawTime = video ? video.currentTime : lastMediaState.current.time;
+    let duration = video
+      ? (typeof video.duration === 'number' &&
+        isFinite(video.duration) &&
+        video.duration > 0
+        ? video.duration
+        : 0)
+      : lastMediaState.current.duration;
 
-      if (!duration) {
-        const prev = useHistoryStore.getState().lastViewed.find(
-          (item) => item.slug === slug && item.number === lastSavedEp.current,
-        );
-        if (prev?.duration && isFinite(prev.duration) && prev.duration > 0) {
-          duration = prev.duration;
-        }
+    if (!duration) {
+      const prev = useHistoryStore.getState().lastViewed.find(
+        (item) => item.slug === slug && item.number === lastSavedEp.current,
+      );
+      if (prev?.duration && isFinite(prev.duration) && prev.duration > 0) {
+        duration = prev.duration;
       }
-
-      let progress = videoRef.current.currentTime;
-      if (duration > 0 && progress / duration >= 0.9) {
-        progress = duration;
-      }
-
-      addToHistory({
-        title: animeInfoRef.current.title,
-        image: animeInfoRef.current.image,
-        slug,
-        number: lastSavedEp.current,
-        progress,
-        duration,
-        timestamp: Date.now(),
-      });
     }
+
+    let progress = rawTime;
+    if (duration > 0 && progress / duration >= 0.9) {
+      progress = duration;
+    }
+
+    addToHistory({
+      title: animeInfoRef.current.title,
+      image: animeInfoRef.current.image,
+      slug,
+      number: lastSavedEp.current,
+      progress,
+      duration,
+      timestamp: Date.now(),
+    });
   }, [slug, addToHistory, videoRef]);
 
   const navigatePrev = useCallback(() => {
@@ -165,6 +174,7 @@ export function usePlayer(
 
     if (streamUrl !== lastRecoveredStreamUrl.current) {
       refreshRetryCount.current = 0;
+      lastRecoveredStreamUrl.current = streamUrl;
     }
 
     setCurrentTime(0);
@@ -185,15 +195,21 @@ export function usePlayer(
     }
 
     const handleTimeUpdate = () => {
+      lastMediaState.current = { time: video.currentTime, duration: video.duration || 0 };
       setCurrentTime(video.currentTime);
       setDuration(video.duration || 0);
     };
 
     const handleLoadedMetadata = () => {
+      lastMediaState.current = { ...lastMediaState.current, duration: video.duration || 0 };
       setDuration(video.duration || 0);
     };
 
+    const handlePlay = () => setPlaying(true);
+    const handlePause = () => setPlaying(false);
+
     const handleEnded = () => {
+      setPlaying(false);
       if (hasNext) {
         saveProgress();
         onNavigateEpisode?.(episodeNumber + 1);
@@ -209,9 +225,21 @@ export function usePlayer(
       const code = mediaError?.code ?? 0;
       logger.warn('Player', `video error code=${code} message=${mediaError?.message ?? 'unknown'}`);
 
+      // SRC_NOT_SUPPORTED (4) cannot be recovered by re-resolving the same
+      // stream (e.g. an HLS url the engine cannot play); surface it instead.
+      if (code === 4) {
+        usePlayerStore.setState({
+          error: { type: 'SERVER_ERROR', message: 'Este servidor no pudo reproducirse. Probá con otro idioma o servidor.' },
+        });
+        return;
+      }
       if (!NETWORK_ERROR_CODES.includes(code)) return;
+
       if (refreshRetryCount.current >= PLAYER_REFRESH_MAX_RETRIES) {
         logger.warn('Player', `refresh retries exhausted (${PLAYER_REFRESH_MAX_RETRIES}), giving up`);
+        usePlayerStore.setState({
+          error: { type: 'NETWORK_ERROR', message: 'La reproducción se interrumpió y no se pudo recuperar.' },
+        });
         return;
       }
 
@@ -226,15 +254,15 @@ export function usePlayer(
           return;
         }
         const state = usePlayerStore.getState();
-        const servers = state.servers;
-        if (servers.length === 0) return;
-        const preferred = state.lastLanguage
-          ? servers.find((sv) => sv.language.toLowerCase() === state.lastLanguage.toLowerCase())
-          : null;
-        const target = preferred ?? servers[0];
+        const target = pickPreferredServer(state.servers, state.lastLanguage);
+        if (!target) return;
         try {
-          await resolveStream(target);
-          lastRecoveredStreamUrl.current = usePlayerStore.getState().streamUrl;
+          // force bypasses the stream cache: re-resolving a cached URL would
+          // set the same streamUrl, no effect re-run, and a silent dead player.
+          // lastRecoveredStreamUrl is refreshed inside the effect so a fresh
+          // URL resets the retry counter.
+          await resolveStream(target, { force: true });
+          setReloadNonce((n) => n + 1);
         } catch (e) {
           logger.warn('Player', 'stream re-resolve failed', e);
         }
@@ -243,24 +271,28 @@ export function usePlayer(
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
     video.addEventListener('ended', handleEnded);
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('playing', handlePlaying);
     video.addEventListener('error', handleError);
 
-    video.play().then(() => setPlaying(true)).catch((): void => undefined);
+    video.play().catch((): void => undefined);
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleEnded);
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, resolveStream]);
+  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, resolveStream, reloadNonce]);
   useEffect(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
     lastSavedEp.current = episodeNumber;
@@ -268,6 +300,7 @@ export function usePlayer(
       if (videoRef.current && !videoRef.current.paused) {
         const ct = videoRef.current.currentTime;
         const dur = videoRef.current.duration || 0;
+        lastMediaState.current = { time: ct, duration: dur };
         setCurrentTime(ct);
         setDuration(dur);
       }

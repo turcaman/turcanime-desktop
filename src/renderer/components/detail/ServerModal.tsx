@@ -1,6 +1,7 @@
 import React from 'react';
 import { Skeleton } from '../ui/Skeleton';
 import { X } from 'lucide-react';
+import { isPreferredServer } from '../../utils/servers';
 import type { VideoServer } from '../../../types';
 
 interface ServerModalProps {
@@ -28,10 +29,8 @@ export const ServerModal: React.FC<ServerModalProps> = ({
   onServerSelect,
   onClose,
 }) => {
-  const deltaServers = servers.filter((s) =>
-    s.title.toLowerCase().includes('delta'),
-  );
-  const displayServers = deltaServers.length > 0 ? deltaServers : servers;
+  const preferredServers = servers.filter(isPreferredServer);
+  const displayServers = preferredServers.length > 0 ? preferredServers : servers;
   if (!visible) return null;
 
   return (
