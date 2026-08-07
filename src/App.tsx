@@ -11,7 +11,6 @@ import { useNetworkStatus } from './renderer/hooks/useNetworkStatus';
 import { useReconnect } from './renderer/hooks/useReconnect';
 import { NoConnectionOverlay } from './renderer/components/NoConnectionOverlay';
 import { sessionManager } from './renderer/services/session';
-import type { Anime } from './types';
 
 type Screen = 'home' | 'search' | 'detail' | 'player' | 'settings';
 
@@ -36,11 +35,12 @@ const App: React.FC = () => {
   const current = navStack[navStack.length - 1];
 
   useEffect(() => {
+    let cancelled = false;
     const init = async () => {
       await sessionManager.initialize();
       await initialize();
       sessionManager.refreshSession().catch((): void => undefined);
-      setReady(true);
+      if (!cancelled) setReady(true);
 
       const { updateCheckEnabled, checkForUpdates } = useUpdateStore.getState();
       if (updateCheckEnabled) {
@@ -48,10 +48,13 @@ const App: React.FC = () => {
       }
     };
     init();
+    return () => {
+      cancelled = true;
+    };
   }, [initialize]);
 
-  const navigate = useCallback((s: Screen, slug?: string) => {
-    setNavStack([{ screen: s, slug }]);
+  const navigate = useCallback((s: Screen) => {
+    setNavStack([{ screen: s }]);
   }, []);
 
   const push = useCallback((s: Screen, slug?: string, episodeNumber?: number) => {
@@ -88,11 +91,7 @@ const App: React.FC = () => {
     setNavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
   }, []);
 
-  const handleAnimePress = useCallback((anime: Anime) => {
-    push('detail', anime.slug);
-  }, [push]);
-
-  const handleHistoryPress = useCallback((item: { slug: string }) => {
+  const openDetail = useCallback((item: { slug: string }) => {
     if (item.slug) {
       push('detail', item.slug);
     }
@@ -149,9 +148,9 @@ const App: React.FC = () => {
 
         <div className="flex-1 overflow-hidden">
           <div key={`${currentScreen}-${current.slug ?? ''}`} className="h-full animate-fade-in">
-            {currentScreen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
+            {currentScreen === 'home' && <HomePage onAnimePress={openDetail} onHistoryPress={openDetail} />}
             {currentScreen === 'search' && (
-              <SearchPage onAnimePress={handleAnimePress} />
+              <SearchPage onAnimePress={openDetail} />
             )}
             {currentScreen === 'detail' && current.slug && (
               <DetailPage
