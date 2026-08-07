@@ -19,8 +19,11 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
   onNavigateToEpisode,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { activeAnime } = useDetailsStore();
-  const { fetchServers, lastLanguage, resolveStream, reset } = usePlayerStore();
+  const activeAnime = useDetailsStore((s) => s.activeAnime);
+  const fetchServers = usePlayerStore((s) => s.fetchServers);
+  const lastLanguage = usePlayerStore((s) => s.lastLanguage);
+  const resolveStream = usePlayerStore((s) => s.resolveStream);
+  const reset = usePlayerStore((s) => s.reset);
   const [fullscreen, setFullscreen] = useState(false);
   const fullscreenRef = useRef(false);
   fullscreenRef.current = fullscreen;

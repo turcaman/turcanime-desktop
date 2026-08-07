@@ -8,28 +8,24 @@ type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 const DEBOUNCE_MS = 300;
 
 export function useSearchScreen() {
-  const {
-    lastSearchTerm,
-    searchAnimes,
-    suggestions,
-    isSearchLoading,
-    error,
-    fetchSearch,
-    fetchSuggestions,
-    cancelSearch,
-    resetSearch,
-    setSearchTerm,
-  } = useSearchStore();
+  const lastSearchTerm = useSearchStore((s) => s.lastSearchTerm);
+  const searchAnimes = useSearchStore((s) => s.searchAnimes);
+  const suggestions = useSearchStore((s) => s.suggestions);
+  const isSearchLoading = useSearchStore((s) => s.isSearchLoading);
+  const error = useSearchStore((s) => s.error);
+  const fetchSearch = useSearchStore((s) => s.fetchSearch);
+  const fetchSuggestions = useSearchStore((s) => s.fetchSuggestions);
+  const cancelSearch = useSearchStore((s) => s.cancelSearch);
+  const resetSearch = useSearchStore((s) => s.resetSearch);
+  const setSearchTerm = useSearchStore((s) => s.setSearchTerm);
   const [term, setTerm] = useState(lastSearchTerm);
   const [status, setStatus] = useState<SearchStatus>(lastSearchTerm ? 'searched' : 'idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const {
-    recentSearches,
-    saveRecentSearch,
-    removeRecentSearch,
-    clearRecentSearches,
-  } = useSearchHistoryStore();
+  const recentSearches = useSearchHistoryStore((s) => s.recentSearches);
+  const saveRecentSearch = useSearchHistoryStore((s) => s.saveRecentSearch);
+  const removeRecentSearch = useSearchHistoryStore((s) => s.removeRecentSearch);
+  const clearRecentSearches = useSearchHistoryStore((s) => s.clearRecentSearches);
 
   useEffect(() => {
     if (debounceRef.current) {

@@ -22,13 +22,15 @@ function buildRanges(episodes: Episode[]): EpisodeRange[] {
 }
 
 export function useAnimeDetail(slug: string) {
-  const { activeAnime, isDetailsLoading, error, fetchDetails } = useDetailsStore();
-  const {
-    servers,
-    isLoading: serverLoading,
-    fetchServers,
-  } = usePlayerStore();
-  const { episodeOrder, setEpisodeOrder } = useSettingsStore();
+  const activeAnime = useDetailsStore((s) => s.activeAnime);
+  const isDetailsLoading = useDetailsStore((s) => s.isDetailsLoading);
+  const error = useDetailsStore((s) => s.error);
+  const fetchDetails = useDetailsStore((s) => s.fetchDetails);
+  const servers = usePlayerStore((s) => s.servers);
+  const serverLoading = usePlayerStore((s) => s.isLoading);
+  const fetchServers = usePlayerStore((s) => s.fetchServers);
+  const episodeOrder = useSettingsStore((s) => s.episodeOrder);
+  const setEpisodeOrder = useSettingsStore((s) => s.setEpisodeOrder);
 
   const [ascending, setAscending] = useState(episodeOrder === 'asc');
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
