@@ -12,12 +12,10 @@ import type { Anime, AutocompleteAnime } from '../../types';
 
 interface SearchPageProps {
   onAnimePress?: (anime: Anime) => void;
-  onNavigateDetail?: (anime: Anime) => void;
 }
 
 export const SearchPage: React.FC<SearchPageProps> = ({
   onAnimePress: externalAnimePress,
-  onNavigateDetail: externalNavigateDetail,
 }) => {
   const {
     term,
@@ -57,8 +55,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
   const handleSuggestionSelect = (item: AutocompleteAnime) => {
     handleSelectSuggestion(item);
-    if (externalNavigateDetail) {
-      externalNavigateDetail({ title: item.name, image: item.poster, url: item.slug, status: '' });
+    if (externalAnimePress) {
+      externalAnimePress({ title: item.name, image: item.poster, url: item.slug, status: '' });
     }
   };
 

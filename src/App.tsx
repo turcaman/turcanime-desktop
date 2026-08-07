@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Home, Search, Settings } from 'lucide-react';
 import { HomePage } from './renderer/pages/HomePage';
 import { SearchPage } from './renderer/pages/SearchPage';
@@ -6,12 +6,10 @@ import { DetailPage } from './renderer/pages/DetailPage';
 import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
 import { useUserInitializationStore, useUpdateStore } from './renderer/stores/userIndex';
-import { useHomeStore } from './renderer/stores/homeStore';
 import { useNetworkStatus } from './renderer/hooks/useNetworkStatus';
+import { useReconnect } from './renderer/hooks/useReconnect';
 import { NoConnectionOverlay } from './renderer/components/NoConnectionOverlay';
 import { sessionManager } from './renderer/services/session';
-import { storage } from './renderer/utils/storage';
-import { logger } from './renderer/utils/logger';
 import type { Anime } from './types';
 
 type Screen = 'home' | 'search' | 'detail' | 'player' | 'settings';
@@ -24,8 +22,6 @@ interface NavEntry {
 
 const INITIAL_STACK: NavEntry[] = [{ screen: 'home' }];
 
-const CACHE_PREFIXES_TO_CLEAR = ['ch_', 'search_', 'anime_', 'suggestions_', 'stream_', 'servers_'];
-
 const App: React.FC = () => {
   const initialize = useUserInitializationStore((s) => s.initialize);
   const isInitialized = useUserInitializationStore((s) => s.isInitialized);
@@ -33,7 +29,8 @@ const App: React.FC = () => {
   const { isConnected } = useNetworkStatus();
   const [ready, setReady] = useState(false);
   const [navStack, setNavStack] = useState<NavEntry[]>(INITIAL_STACK);
-  const prevConnected = useRef<boolean | null>(null);
+
+  useReconnect(isConnected);
 
   const current = navStack[navStack.length - 1];
 
@@ -51,41 +48,6 @@ const App: React.FC = () => {
     };
     init();
   }, [initialize]);
-
-  // When connection restores, wait 2s then refresh (mirrors mobile layout behavior)
-  useEffect(() => {
-    const prev = prevConnected.current;
-    prevConnected.current = isConnected;
-    if (prev === false && isConnected === true) {
-      const timer = setTimeout(() => {
-        const doRefresh = async () => {
-          useHomeStore.getState().prepareRefresh();
-
-          let sessionOk = false;
-          try {
-            const session = await sessionManager.refreshSession();
-            sessionOk = session.cookies.length > 0;
-          } catch {
-            logger.warn('App', 'Session refresh failed, skipping cache clear and using stale cache');
-          }
-
-          if (sessionOk) {
-            const allKeys = await window.electronAPI.store.getAllKeys();
-            const cacheKeys = allKeys.filter((k) =>
-              CACHE_PREFIXES_TO_CLEAR.some((prefix) => k.startsWith(prefix)),
-            );
-            await Promise.all(cacheKeys.map((k) => storage.remove(k)));
-            useHomeStore.getState().fetchHome(true).catch((): void => undefined);
-          } else {
-            useHomeStore.getState().fetchHome(false).catch((): void => undefined);
-          }
-        };
-        doRefresh();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [isConnected]);
 
   const navigate = useCallback((s: Screen, slug?: string) => {
     setNavStack([{ screen: s, slug }]);
@@ -188,10 +150,7 @@ const App: React.FC = () => {
           <div key={`${currentScreen}-${current.slug ?? ''}`} className="h-full animate-fade-in">
             {currentScreen === 'home' && <HomePage onAnimePress={handleAnimePress} onHistoryPress={handleHistoryPress} />}
             {currentScreen === 'search' && (
-              <SearchPage
-                onAnimePress={handleAnimePress}
-                onNavigateDetail={handleAnimePress}
-              />
+              <SearchPage onAnimePress={handleAnimePress} />
             )}
             {currentScreen === 'detail' && current.slug && (
               <DetailPage
