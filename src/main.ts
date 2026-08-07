@@ -50,6 +50,10 @@ const createWindow = () => {
 
   mainWindow.on('close', () => saveWindowState(mainWindow));
 
+  mainWindow.on('closed', () => {
+    hiddenSession.destroy();
+  });
+
   mainWindow.on('enter-full-screen', () => {
     mainWindow.webContents.send('player:fullscreen', true);
   });

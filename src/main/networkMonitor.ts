@@ -10,6 +10,14 @@ let mainWindow: BrowserWindow | undefined;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let pendingPromise: Promise<boolean> | null = null;
 
+// Optional chaining does not protect against destroyed windows, which throw
+// "Object has been destroyed" when reaching into a closed BrowserWindow.
+function notify(online: boolean): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('network:status-changed', online);
+  }
+}
+
 async function checkReachable(): Promise<boolean> {
   try {
     const controller = new AbortController();
@@ -29,7 +37,7 @@ async function refreshAndNotify(): Promise<boolean> {
     if (reachable !== lastIsReachable) {
       logger.info('Network', `Reachability changed: ${reachable ? 'online' : 'offline'}`);
       lastIsReachable = reachable;
-      mainWindow?.webContents.send('network:status-changed', reachable);
+      notify(reachable);
     }
     return reachable;
   })();
@@ -55,7 +63,7 @@ export const networkMonitor = {
         if (lastIsReachable !== false) {
           lastIsReachable = false;
           logger.info('Network', 'OS reports offline');
-          mainWindow?.webContents.send('network:status-changed', false);
+          notify(false);
         }
         return;
       }
