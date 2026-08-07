@@ -113,7 +113,9 @@ export class HiddenSessionWindow {
     this.window.webContents.on('did-finish-load', () => {
       const url = this.window?.webContents.getURL() || 'unknown';
       logger.info('SessionHidden', `Page loaded: ${url}, injecting bootstrap`);
-      this.window?.webContents.executeJavaScript(GLOBAL_BOOTSTRAP);
+      this.window?.webContents.executeJavaScript(GLOBAL_BOOTSTRAP).catch((err) => {
+        logger.warn('SessionHidden', 'Bootstrap injection interrupted', err);
+      });
     });
 
     this.window.on('closed', () => {
@@ -211,7 +213,9 @@ export class HiddenSessionWindow {
       }, POLL_TIMEOUT);
 
       const win = this.getWindow();
-      win.loadURL(SESSION_WASH_URL);
+      win.loadURL(SESSION_WASH_URL).catch((err) => {
+        logger.warn('SessionHidden', 'Wash navigation interrupted', err);
+      });
     });
   }
 
