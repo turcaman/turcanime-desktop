@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Search, Frown } from 'lucide-react';
 import { useSearchScreen } from '../hooks/useSearchScreen';
+import { useCardLayout } from '../hooks/useCardLayout';
 import { SearchBar } from '../components/search/SearchBar';
 import { RecentSearches } from '../components/search/RecentSearches';
 import { SuggestionsList } from '../components/search/SuggestionsList';
 import { SearchSkeleton } from '../components/skeletons/SearchSkeleton';
 import { AnimeCard } from '../components/AnimeCard';
 import { ErrorState } from '../components/ui/ErrorState';
-import { calcCardWidth, calcColumns, LAYOUT_CONFIG } from '../config/layout';
+import { cardGridStyle } from '../config/layout';
 import type { Anime, AutocompleteAnime } from '../../types';
 
 interface SearchPageProps {
@@ -35,19 +36,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({
     clearRecentSearches,
   } = useSearchScreen();
 
-  const [cardWidth, setCardWidth] = useState(200);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setCardWidth(calcCardWidth(containerRef.current.offsetWidth));
-      }
-    };
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, []);
+  const { cardWidth, columns } = useCardLayout(containerRef);
 
   const handleAnimePress = (anime: Anime) => {
     externalAnimePress?.(anime);
@@ -62,7 +52,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
   const ContentArea: React.FC = () => {
     if (status === 'searching' || isSearchLoading) {
-      return <SearchSkeleton cardWidth={cardWidth} containerWidth={containerRef.current?.offsetWidth ?? 800} />;
+      return <SearchSkeleton cardWidth={cardWidth} columns={columns} />;
     }
 
     if (status === 'typing') {
@@ -115,11 +105,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
         <div className="px-6 pt-3">
           <div
             className="grid"
-            style={{
-              gridTemplateColumns: `repeat(${calcColumns(containerRef.current?.offsetWidth ?? 800)}, ${cardWidth}px)`,
-              gap: `${LAYOUT_CONFIG.cardGap}px`,
-              justifyContent: 'center',
-            }}
+            style={{ ...cardGridStyle(columns, cardWidth), justifyContent: 'center' }}
           >
             {searchAnimes.map((anime) => (
               <AnimeCard
