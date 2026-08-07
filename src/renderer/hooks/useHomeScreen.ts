@@ -1,21 +1,21 @@
 import { useEffect, useMemo } from 'react';
 import { useHomeStore } from '../stores/homeStore';
 import { useHistoryStore } from '../stores/historyStore';
-import { useUserInitializationStore } from '../stores/userIndex';
+import { useAppInitStore } from '../stores/appInitStore';
 import type { Anime, HistoryItem } from '../../types';
 
 type SectionItem =
-  | { type: 'CONTINUE'; data: HistoryItem[] }
-  | { type: 'SECTION'; title: string; data: Anime[] };
+  | { type: 'CONTINUE'; items: HistoryItem[] }
+  | { type: 'SECTION'; title: string; items: Anime[] };
 
 export function useHomeScreen() {
   const homeData = useHomeStore((s) => s.homeData);
-  const isHomeLoading = useHomeStore((s) => s.isHomeLoading);
+  const homeLoading = useHomeStore((s) => s.isLoading);
   const isRefreshing = useHomeStore((s) => s.isRefreshing);
   const error = useHomeStore((s) => s.error);
   const fetchHome = useHomeStore((s) => s.fetchHome);
   const continueWatching = useHistoryStore((s) => s.continueWatching);
-  const isInitialized = useUserInitializationStore((s) => s.isInitialized);
+  const isInitialized = useAppInitStore((s) => s.isInitialized);
 
   useEffect(() => {
     fetchHome();
@@ -25,21 +25,21 @@ export function useHomeScreen() {
     const result: SectionItem[] = [];
 
     if (continueWatching.length > 0) {
-      result.push({ type: 'CONTINUE', data: continueWatching });
+      result.push({ type: 'CONTINUE', items: continueWatching });
     }
 
     if (homeData.recent.length > 0) {
       result.push({
         type: 'SECTION',
         title: 'Recién agregados',
-        data: homeData.recent,
+        items: homeData.recent,
       });
     }
 
     return result;
   }, [continueWatching, homeData]);
 
-  const isLoading = !isInitialized || isHomeLoading || isRefreshing;
+  const isLoading = !isInitialized || homeLoading || isRefreshing;
 
   const hasContent = isInitialized && homeData.recent.length > 0;
 

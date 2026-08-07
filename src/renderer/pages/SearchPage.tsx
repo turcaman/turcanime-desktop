@@ -24,7 +24,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
     searchAnimes,
     suggestions,
     recentSearches,
-    isSearchLoading,
+    isLoading,
     error,
     handleTextChange,
     handleSearch,
@@ -39,10 +39,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { cardWidth, columns } = useCardLayout(containerRef);
 
-  const handleAnimePress = (anime: Anime) => {
-    externalAnimePress?.(anime);
-  };
-
   const handleSuggestionSelect = (item: AutocompleteAnime) => {
     handleSelectSuggestion(item);
     if (externalAnimePress) {
@@ -51,7 +47,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   };
 
   const ContentArea: React.FC = () => {
-    if (status === 'searching' || isSearchLoading) {
+    if (status === 'searching' || isLoading) {
       return <SearchSkeleton cardWidth={cardWidth} columns={columns} />;
     }
 
@@ -113,7 +109,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
                 title={anime.title}
                 image={anime.image}
                 width={cardWidth}
-                onPress={() => handleAnimePress(anime)}
+                onPress={() => externalAnimePress?.(anime)}
               />
             ))}
           </div>

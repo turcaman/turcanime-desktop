@@ -6,9 +6,9 @@ export function useAutoHide(
   timeoutMs = 3000,
   onHide?: () => void,
 ) {
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const onHideRef = useRef(onHide);
   onHideRef.current = onHide;
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const clearTimer = useCallback(() => {
     if (hideTimer.current) {
@@ -19,24 +19,19 @@ export function useAutoHide(
 
   const restartTimer = useCallback(() => {
     clearTimer();
-    if (isPlaying && visible) {
+    if (visible && isPlaying) {
       hideTimer.current = setTimeout(() => { onHideRef.current?.(); }, timeoutMs);
     }
   }, [clearTimer, isPlaying, visible, timeoutMs]);
 
   useEffect(() => {
     if (visible && isPlaying) {
-      clearTimer();
       hideTimer.current = setTimeout(() => { onHideRef.current?.(); }, timeoutMs);
     } else {
       clearTimer();
     }
     return clearTimer;
   }, [visible, isPlaying, clearTimer, timeoutMs]);
-
-  useEffect(() => {
-    return clearTimer;
-  }, [clearTimer]);
 
   return { restartTimer, clearTimer };
 }

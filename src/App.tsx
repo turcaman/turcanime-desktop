@@ -5,7 +5,8 @@ import { SearchPage } from './renderer/pages/SearchPage';
 import { DetailPage } from './renderer/pages/DetailPage';
 import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
-import { useUserInitializationStore, useUpdateStore } from './renderer/stores/userIndex';
+import { useAppInitStore } from './renderer/stores/appInitStore';
+import { useUpdateStore } from './renderer/stores/updateStore';
 import { useNetworkStatus } from './renderer/hooks/useNetworkStatus';
 import { useReconnect } from './renderer/hooks/useReconnect';
 import { NoConnectionOverlay } from './renderer/components/NoConnectionOverlay';
@@ -23,8 +24,8 @@ interface NavEntry {
 const INITIAL_STACK: NavEntry[] = [{ screen: 'home' }];
 
 const App: React.FC = () => {
-  const initialize = useUserInitializationStore((s) => s.initialize);
-  const isInitialized = useUserInitializationStore((s) => s.isInitialized);
+  const initialize = useAppInitStore((s) => s.initialize);
+  const isInitialized = useAppInitStore((s) => s.isInitialized);
   const updateAvailable = useUpdateStore((s) => s.updateAvailable);
   const { isConnected } = useNetworkStatus();
   const [ready, setReady] = useState(false);

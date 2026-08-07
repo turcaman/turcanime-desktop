@@ -20,14 +20,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { cardWidth, columns } = useCardLayout(containerRef);
 
-  const handleAnimePress = useCallback((anime: Anime) => {
-    externalAnimePress?.(anime);
-  }, [externalAnimePress]);
-
-  const handleHistoryPress = useCallback((item: HistoryItem) => {
-    externalHistoryPress?.(item);
-  }, [externalHistoryPress]);
-
   const handleRetry = useCallback(() => {
     fetchHome(true);
   }, [fetchHome]);
@@ -47,9 +39,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               return (
                 <div key="continue">
                   <ContinueWatching
-                    items={section.data}
+                    items={section.items}
                     cardWidth={cardWidth}
-                    onItemPress={handleHistoryPress}
+                    onItemPress={externalHistoryPress}
                   />
                 </div>
               );
@@ -58,10 +50,10 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div key={`section-${idx}`}>
                 <AnimeGridSection
                   label={section.title}
-                  items={section.data}
+                  items={section.items}
                   cardWidth={cardWidth}
                   columns={columns}
-                  onItemPress={handleAnimePress}
+                  onItemPress={externalAnimePress}
                 />
               </div>
             );

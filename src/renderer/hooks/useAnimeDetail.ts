@@ -23,7 +23,7 @@ function buildRanges(episodes: Episode[]): EpisodeRange[] {
 
 export function useAnimeDetail(slug: string) {
   const activeAnime = useDetailsStore((s) => s.activeAnime);
-  const isDetailsLoading = useDetailsStore((s) => s.isDetailsLoading);
+  const isDetailsLoading = useDetailsStore((s) => s.isLoading);
   const error = useDetailsStore((s) => s.error);
   const fetchDetails = useDetailsStore((s) => s.fetchDetails);
   const servers = usePlayerStore((s) => s.servers);

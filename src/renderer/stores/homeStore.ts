@@ -9,7 +9,7 @@ let homeController: AbortController | null = null;
 
 interface HomeState {
   homeData: HomeData;
-  isHomeLoading: boolean;
+  isLoading: boolean;
   isRefreshing: boolean;
   error: AppError | null;
   fetchHome: (force?: boolean) => Promise<void>;
@@ -19,7 +19,7 @@ interface HomeState {
 
 export const useHomeStore = create<HomeState>((set) => ({
   homeData: { recent: [] },
-  isHomeLoading: false,
+  isLoading: false,
   isRefreshing: false,
   error: null,
 
@@ -29,7 +29,7 @@ export const useHomeStore = create<HomeState>((set) => ({
     }
     homeController = new AbortController();
 
-    set({ isHomeLoading: true, error: null });
+    set({ isLoading: true, error: null });
 
     const result = await runWithRetry(
       (attempt) =>
@@ -42,11 +42,11 @@ export const useHomeStore = create<HomeState>((set) => ({
     );
 
     if (result.error) {
-      set({ error: result.error, isHomeLoading: false, isRefreshing: false });
+      set({ error: result.error, isLoading: false, isRefreshing: false });
       return;
     }
 
-    set({ homeData: result.data ?? { recent: [] }, isHomeLoading: false, isRefreshing: false });
+    set({ homeData: result.data ?? { recent: [] }, isLoading: false, isRefreshing: false });
   },
 
   prepareRefresh: () => {
@@ -58,6 +58,6 @@ export const useHomeStore = create<HomeState>((set) => ({
       homeController.abort();
       homeController = null;
     }
-    set({ homeData: { recent: [] }, isHomeLoading: false, isRefreshing: false, error: null });
+    set({ homeData: { recent: [] }, isLoading: false, isRefreshing: false, error: null });
   },
 }));

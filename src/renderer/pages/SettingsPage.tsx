@@ -48,10 +48,6 @@ export const SettingsPage: React.FC = () => {
     }
   }, [setSessionRefreshing]);
 
-  const handleManualCheck = useCallback(async () => {
-    await checkForUpdates();
-  }, [checkForUpdates]);
-
   const handleDownload = useCallback(async () => {
     await window.electronAPI.app.openExternal(
       'https://turcanime.pages.dev',
@@ -111,7 +107,7 @@ export const SettingsPage: React.FC = () => {
               </button>
             </label>
             <button
-              onClick={handleManualCheck}
+              onClick={() => { void checkForUpdates(); }}
               disabled={checkingForUpdates}
               className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
             >

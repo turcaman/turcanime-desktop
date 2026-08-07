@@ -9,7 +9,7 @@ let detailsController: AbortController | null = null;
 
 interface DetailsState {
   activeAnime: AnimeDetail | null;
-  isDetailsLoading: boolean;
+  isLoading: boolean;
   error: AppError | null;
   fetchDetails: (slug: string) => Promise<void>;
   reset: () => void;
@@ -17,7 +17,7 @@ interface DetailsState {
 
 export const useDetailsStore = create<DetailsState>((set) => ({
   activeAnime: null,
-  isDetailsLoading: false,
+  isLoading: false,
   error: null,
 
   fetchDetails: async (slug: string) => {
@@ -26,7 +26,7 @@ export const useDetailsStore = create<DetailsState>((set) => ({
     }
     detailsController = new AbortController();
 
-    set({ isDetailsLoading: true, error: null });
+    set({ isLoading: true, error: null });
 
     const result = await runWithRetry(
       (attempt) =>
@@ -42,11 +42,11 @@ export const useDetailsStore = create<DetailsState>((set) => ({
     );
 
     if (result.error) {
-      set({ error: result.error, isDetailsLoading: false });
+      set({ error: result.error, isLoading: false });
       return;
     }
 
-    set({ activeAnime: result.data, isDetailsLoading: false });
+    set({ activeAnime: result.data, isLoading: false });
   },
 
   reset: () => {
@@ -54,6 +54,6 @@ export const useDetailsStore = create<DetailsState>((set) => ({
       detailsController.abort();
       detailsController = null;
     }
-    set({ activeAnime: null, isDetailsLoading: false, error: null });
+    set({ activeAnime: null, isLoading: false, error: null });
   },
 }));

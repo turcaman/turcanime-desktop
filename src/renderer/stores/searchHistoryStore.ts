@@ -2,8 +2,9 @@ import { create } from 'zustand';
 import { storage } from '../utils/storage';
 import { prependDedup, removeBy } from '../utils/history';
 import { logger } from '../utils/logger';
+import { STORAGE_KEYS } from '../config/storageKeys';
 
-const STORAGE_KEY = 'recent_searches';
+const STORAGE_KEY = STORAGE_KEYS.recentSearches;
 const MAX_SEARCHES = 10;
 
 interface SearchHistoryState {

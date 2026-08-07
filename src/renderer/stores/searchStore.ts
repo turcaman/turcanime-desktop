@@ -12,12 +12,12 @@ interface SearchState {
   searchAnimes: Anime[];
   suggestions: AutocompleteAnime[];
   lastSearchTerm: string;
-  isSearchLoading: boolean;
+  isLoading: boolean;
   error: AppError | null;
   fetchSearch: (query: string, force?: boolean) => Promise<void>;
   fetchSuggestions: (query: string) => Promise<void>;
   cancelSearch: () => void;
-  resetSearch: () => void;
+  reset: () => void;
   setSearchTerm: (term: string) => void;
 }
 
@@ -25,7 +25,7 @@ export const useSearchStore = create<SearchState>((set) => ({
   searchAnimes: [],
   suggestions: [],
   lastSearchTerm: '',
-  isSearchLoading: false,
+  isLoading: false,
   error: null,
 
   fetchSearch: async (query, force) => {
@@ -34,7 +34,7 @@ export const useSearchStore = create<SearchState>((set) => ({
     }
     searchController = new AbortController();
 
-    set({ isSearchLoading: true, error: null, lastSearchTerm: query });
+    set({ isLoading: true, error: null, lastSearchTerm: query });
 
     const timeout = setTimeout(() => searchController?.abort(), TIMEOUTS.SEARCH);
 
@@ -51,11 +51,11 @@ export const useSearchStore = create<SearchState>((set) => ({
     clearTimeout(timeout);
 
     if (result.error) {
-      set({ error: result.error, isSearchLoading: false });
+      set({ error: result.error, isLoading: false });
       return;
     }
 
-    set({ searchAnimes: result.data ?? [], isSearchLoading: false });
+    set({ searchAnimes: result.data ?? [], isLoading: false });
   },
 
   fetchSuggestions: async (query) => {
@@ -77,17 +77,17 @@ export const useSearchStore = create<SearchState>((set) => ({
 
   cancelSearch: () => {
     searchController?.abort();
-    set({ isSearchLoading: false });
+    set({ isLoading: false });
   },
 
-  resetSearch: () => {
+  reset: () => {
     searchController?.abort();
     suggestionsController?.abort();
     set({
       searchAnimes: [],
       suggestions: [],
       lastSearchTerm: '',
-      isSearchLoading: false,
+      isLoading: false,
       error: null,
     });
   },

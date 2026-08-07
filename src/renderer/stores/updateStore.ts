@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { storage } from '../utils/storage';
 import { logger } from '../utils/logger';
+import { STORAGE_KEYS } from '../config/storageKeys';
 
 function parseVersion(v: string): number[] {
   return v.split('.').map(n => parseInt(n, 10) || 0);
@@ -44,7 +45,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
     const prev = get().updateCheckEnabled;
     set({ updateCheckEnabled: enabled });
     try {
-      await storage.set('update_check_enabled', enabled);
+      await storage.set(STORAGE_KEYS.updateCheckEnabled, enabled);
     } catch (err) {
       set({ updateCheckEnabled: prev });
       logger.error('updateStore', 'Failed to persist update check toggle', err);

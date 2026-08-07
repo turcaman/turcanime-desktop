@@ -11,12 +11,12 @@ export function useSearchScreen() {
   const term = useSearchStore((s) => s.lastSearchTerm);
   const searchAnimes = useSearchStore((s) => s.searchAnimes);
   const suggestions = useSearchStore((s) => s.suggestions);
-  const isSearchLoading = useSearchStore((s) => s.isSearchLoading);
+  const isLoading = useSearchStore((s) => s.isLoading);
   const error = useSearchStore((s) => s.error);
   const fetchSearch = useSearchStore((s) => s.fetchSearch);
   const fetchSuggestions = useSearchStore((s) => s.fetchSuggestions);
   const cancelSearch = useSearchStore((s) => s.cancelSearch);
-  const resetSearch = useSearchStore((s) => s.resetSearch);
+  const resetSearch = useSearchStore((s) => s.reset);
   const setSearchTerm = useSearchStore((s) => s.setSearchTerm);
   const [status, setStatus] = useState<SearchStatus>(term ? 'searched' : 'idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -99,7 +99,7 @@ export function useSearchScreen() {
     searchAnimes,
     suggestions,
     recentSearches,
-    isSearchLoading,
+    isLoading,
     error,
     handleTextChange,
     handleSearch,

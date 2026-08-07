@@ -5,8 +5,9 @@ import { useSearchHistoryStore } from './searchHistoryStore';
 import { useSettingsStore } from './settingsStore';
 import { useUpdateStore } from './updateStore';
 import type { HistoryItem } from '../../types';
+import { STORAGE_KEYS } from '../config/storageKeys';
 
-interface UserInitState {
+interface AppInitState {
   isInitialized: boolean;
   initialize: () => Promise<void>;
 }
@@ -17,15 +18,17 @@ function migrateHistoryItem(item: HistoryItem & { url?: string }): HistoryItem {
   return { ...item, slug: item.slug ?? item.url ?? '' };
 }
 
-export const useUserInitializationStore = create<UserInitState>((set) => ({
+export const useAppInitStore = create<AppInitState>((set) => ({
   isInitialized: false,
 
   initialize: async () => {
-    const storedHistory = (await storage.get<HistoryItem[]>('last_viewed')) ?? [];
+    const storedHistory = (await storage.get<HistoryItem[]>(STORAGE_KEYS.lastViewed)) ?? [];
     const history = storedHistory.map(migrateHistoryItem);
-    const searches = (await storage.get<string[]>('recent_searches')) ?? [];
-    const episodeOrder = (await storage.get<'asc' | 'desc'>('episode_order')) ?? 'asc';
-    const updateCheckEnabled = (await storage.get<boolean>('update_check_enabled')) ?? true;
+    const searches = (await storage.get<string[]>(STORAGE_KEYS.recentSearches)) ?? [];
+    const episodeOrder =
+      (await storage.get<'asc' | 'desc'>(STORAGE_KEYS.episodeOrder)) ?? 'asc';
+    const updateCheckEnabled =
+      (await storage.get<boolean>(STORAGE_KEYS.updateCheckEnabled)) ?? true;
     const currentVersion = await window.electronAPI.app.getVersion();
 
     useHistoryStore.getState().initialize(history);
@@ -36,8 +39,3 @@ export const useUserInitializationStore = create<UserInitState>((set) => ({
     set({ isInitialized: true });
   },
 }));
-
-export { useHistoryStore } from './historyStore';
-export { useSearchHistoryStore } from './searchHistoryStore';
-export { useSettingsStore } from './settingsStore';
-export { useUpdateStore } from './updateStore';
