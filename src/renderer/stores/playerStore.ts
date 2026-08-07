@@ -7,18 +7,22 @@ import type { AppError, VideoServer } from '../../types';
 
 interface PlayerState {
   servers: VideoServer[];
+  // slug+number the current servers belong to, so re-entering the player for
+  // the same episode can skip the redundant fetchServers call.
+  serversFor: { slug: string; number: number } | null;
   streamUrl: string;
   lastLanguage: string;
   isLoading: boolean;
   error: AppError | null;
   fetchServers: (slug: string, number: number) => Promise<void>;
-  resolveStream: (server: VideoServer) => Promise<void>;
+  resolveStream: (server: VideoServer, options?: { force?: boolean }) => Promise<void>;
   setLastLanguage: (lang: string) => void;
   reset: () => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   servers: [],
+  serversFor: null,
   streamUrl: '',
   lastLanguage: 'sub',
   isLoading: false,
@@ -42,10 +46,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return;
     }
 
-    set({ servers: result.data ?? [], isLoading: false });
+    set({ servers: result.data ?? [], serversFor: { slug, number }, isLoading: false });
   },
 
-  resolveStream: async (server) => {
+  resolveStream: async (server, options) => {
     set({ isLoading: true, error: null });
 
     const cacheKey = `${CACHE_PREFIXES.STREAM}_${server.id}`;
@@ -58,7 +62,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
             const resolved = await source.resolveStreamUrl(server.url);
             return resolved;
           },
-          { ttl: CACHE_TTL.STREAM, force: attempt > 0 },
+          { ttl: CACHE_TTL.STREAM, force: attempt > 0 || options?.force === true },
         ),
       'playerStore',
     );
@@ -85,6 +89,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const lang = get().lastLanguage;
     set({
       servers: [],
+      serversFor: null,
       streamUrl: '',
       lastLanguage: lang,
       isLoading: false,

@@ -134,7 +134,7 @@ export const source = {
     return parser.parseEpisodeServers(html);
   },
 
-  async resolveStreamUrl(videoUrl: string): Promise<{ url: string; headers?: Record<string, string> }> {
+  async resolveStreamUrl(videoUrl: string): Promise<{ url: string }> {
     await sessionManager.waitForCookies();
     const session = await sessionManager.getSession();
     const ua = session?.userAgent ?? '';
@@ -183,8 +183,8 @@ export const source = {
       logger.info('Source', 'resolveStreamUrl: /e/ detected, calling extractBest');
       const result = await extractBest(iframeUrl, { userAgent: ua });
       if (result) {
-        logger.info('Source', `resolveStreamUrl: extractBest OK: ${result.url.slice(0, 80)}`);
-        return result;
+        logger.info('Source', `resolveStreamUrl: extractBest OK: ${result.slice(0, 80)}`);
+        return { url: result };
       }
       logger.warn('Source', 'resolveStreamUrl: extractBest returned null, falling back to iframe URL');
     } else {

@@ -24,11 +24,6 @@ interface HlsStream {
   url: string;
 }
 
-export interface ByseResult {
-  url: string;
-  headers: Record<string, string>;
-}
-
 function selectIndexes(version: string): [number, number] | null {
   const n = parseInt(version, 10);
   if (isNaN(n) || n < 1 || n > 20) return null;
@@ -126,7 +121,7 @@ async function proxyFetch(url: string, opts?: { method?: string; headers?: Recor
 export async function extractBest(
   iframeUrl: string,
   options?: { signal?: AbortSignal; userAgent?: string },
-): Promise<ByseResult | null> {
+): Promise<string | null> {
   const u = new URL(iframeUrl);
   const host = u.hostname;
   const id = u.pathname.split('/').filter(Boolean).pop();
@@ -174,14 +169,17 @@ export async function extractBest(
       throw new Error(`Master playlist HTTP ${hlsRes.status}: ${su}`);
     }
 
-    allStreams.push(...parseMaster(hlsRes.data as string, su));
+    const body = hlsRes.data as string;
+    if (body.trimStart().startsWith('#EXTM3U')) {
+      allStreams.push(...parseMaster(body, su));
+    } else if (/\.(mp4|webm|mkv|m4v)(\?|#|$)/i.test(su)) {
+      // Direct media file (no HLS playlist): use it as-is.
+      allStreams.push({ quality: 'auto', url: su });
+    }
   }
 
   const best = bestStream(allStreams);
   if (!best) return null;
 
-  return {
-    url: best.url,
-    headers: { 'User-Agent': ua, Accept: '*/*', Referer: `https://${host}/` },
-  };
+  return best.url;
 }
