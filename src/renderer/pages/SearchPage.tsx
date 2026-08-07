@@ -101,7 +101,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
         <div className="px-6 pt-3">
           <div
             className="grid"
-            style={{ ...cardGridStyle(columns, cardWidth), justifyContent: 'center' }}
+            style={cardGridStyle(columns, cardWidth)}
           >
             {searchAnimes.map((anime) => (
               <AnimeCard
@@ -130,6 +130,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
         autoFocus
       />
       <ContentArea />
+      <div className="h-8" />
     </div>
   );
 };

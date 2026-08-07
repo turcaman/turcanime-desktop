@@ -17,7 +17,7 @@ export const SearchSkeleton: React.FC<SearchSkeletonProps> = ({
     <div className="px-6 pt-3">
       <div
         className="grid"
-        style={{ ...cardGridStyle(columns, cardWidth), justifyContent: 'center' }}
+        style={cardGridStyle(columns, cardWidth)}
       >
         {Array.from({ length: rows * columns }).map((_, idx) => (
           <SkeletonCard key={idx} cardWidth={cardWidth} />

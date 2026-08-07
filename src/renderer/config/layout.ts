@@ -1,6 +1,8 @@
 export const LAYOUT_CONFIG = {
   cardGap: 12,
-  sidePadding: 20,
+  // Must match the px-6 used by every grid/carousel container; otherwise the
+  // card grid overflows its padding and looks cramped against the edges.
+  sidePadding: 24,
   minCardWidth: 140,
   maxCardWidth: 200,
 };
