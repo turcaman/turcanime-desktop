@@ -260,7 +260,7 @@ export function usePlayer(
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, episodeNumber, hasNext, onNavigateEpisode, saveProgress, resolveStream]);
+  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, resolveStream]);
   useEffect(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
     lastSavedEp.current = episodeNumber;
@@ -276,7 +276,7 @@ export function usePlayer(
     return () => {
       if (progressTimer.current) clearInterval(progressTimer.current);
     };
-  }, [slug, episodeNumber, videoRef, saveProgress]);
+  }, [episodeNumber, videoRef]);
 
   // Periodically save progress (state + disk) so it survives app close
   const persistTimer = useRef<ReturnType<typeof setInterval>>();

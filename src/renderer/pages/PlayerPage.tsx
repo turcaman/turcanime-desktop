@@ -94,6 +94,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [toggleFullscreen]);
 
+// Re-run only when the episode (or anime) changes; lastLanguage is captured
+// once here and updated later by resolveStream, so it must not re-trigger.
   useEffect(() => {
     const prev = prevEpisodeRef.current;
     prevEpisodeRef.current = episodeNumber;
@@ -108,7 +110,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
         : null;
       resolveStream(preferred ?? s[0]);
     });
-  }, [slug, episodeNumber, fetchServers, lastLanguage, resolveStream]);
+  }, [slug, episodeNumber, fetchServers, resolveStream]);
 
   return (
     <div

@@ -46,9 +46,13 @@ export function useAnimeDetail(slug: string) {
   useEffect(() => {
     setActiveRangeIdxState(0);
     useDetailsStore.getState().reset();
+    let cancelled = false;
     storage.get<number>(`range_${slug}`).then((idx) => {
-      if (idx != null) setActiveRangeIdxState(idx);
+      if (!cancelled && idx != null) setActiveRangeIdxState(idx);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   const retry = useCallback(() => {
