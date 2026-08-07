@@ -18,7 +18,10 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
+      iconUrl: 'https://raw.githubusercontent.com/turcaman/turcanime-desktop/main/assets/icon.ico',
+    }),
     new MakerRpm({
       options: Object.assign({
         icon: {
