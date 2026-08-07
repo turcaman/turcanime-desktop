@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHomeStore } from '../stores/homeStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useAppInitStore } from '../stores/appInitStore';
@@ -17,7 +17,14 @@ export function useHomeScreen() {
   const continueWatching = useHistoryStore((s) => s.continueWatching);
   const isInitialized = useAppInitStore((s) => s.isInitialized);
 
+  // The first render happens before the mount effect fires fetchHome, so the
+  // store still reports isLoading:false with empty homeData; this flag keeps
+  // that frame on the skeleton. A past refactor removed it as 'dead code' and
+  // regressed the flash.
+  const [hasStarted, setHasStarted] = useState(false);
+
   useEffect(() => {
+    setHasStarted(true);
     fetchHome();
   }, [fetchHome]);
 
@@ -39,9 +46,13 @@ export function useHomeScreen() {
     return result;
   }, [continueWatching, homeData]);
 
-  const isLoading = !isInitialized || homeLoading || isRefreshing;
+  const isLoading = !isInitialized || !hasStarted || homeLoading || isRefreshing;
 
   const hasContent = isInitialized && homeData.recent.length > 0;
+
+  // True only after a fetch completed successfully with zero results, so the
+  // 'Sin datos' message never shows for the pre-fetch/in-flight states above.
+  const isEmpty = hasStarted && !homeLoading && !isRefreshing && !error && !hasContent;
 
   return {
     sections,
@@ -49,5 +60,6 @@ export function useHomeScreen() {
     error,
     fetchHome,
     hasContent,
+    isEmpty,
   };
 }

@@ -16,7 +16,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onAnimePress: externalAnimePress,
   onHistoryPress: externalHistoryPress,
 }) => {
-  const { sections, isLoading, error, fetchHome, hasContent } = useHomeScreen();
+  const { sections, isLoading, error, fetchHome, hasContent, isEmpty } = useHomeScreen();
   const containerRef = useRef<HTMLDivElement>(null);
   const { cardWidth, columns } = useCardLayout(containerRef);
 
@@ -27,6 +27,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const showSkeleton = isLoading && !hasContent && !error;
   const showContent = hasContent && !error;
   const showError = !hasContent && error && !isLoading;
+  const showEmpty = isEmpty;
 
   return (
     <div ref={containerRef} className="h-full w-full bg-[#0f0f11] overflow-y-auto">
@@ -65,10 +66,15 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {showError && <ErrorState onRetry={handleRetry} />}
 
-      {!showSkeleton && !showContent && !showError && (
+      {showEmpty && (
         <div className="flex items-center justify-center h-full text-neutral-500 text-sm select-none">
           Sin datos disponibles
         </div>
+      )}
+
+      {/* Any uncovered state keeps the skeleton, never a blank screen. */}
+      {!showSkeleton && !showContent && !showError && !showEmpty && (
+        <HomeSkeleton cardWidth={cardWidth} columns={columns} />
       )}
     </div>
   );
