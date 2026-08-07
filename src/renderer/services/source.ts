@@ -46,6 +46,14 @@ async function fetchWithSession(
   return { ok: res.ok, status: res.status, data: res.data };
 }
 
+async function fetchSearchItems(query: string): Promise<Record<string, unknown>[]> {
+  const res = await fetchWithSession(
+    `/api/anime/search?q=${encodeURIComponent(query)}`,
+  );
+  const json: Record<string, unknown> = JSON.parse(res.data);
+  return (json.data as Record<string, unknown>[]) ?? [];
+}
+
 export const source = {
   async getHomeData(): Promise<HomeData> {
     const res = await fetchWithSession(SOURCE_CONFIG.endpoints.home);
@@ -57,11 +65,7 @@ export const source = {
   },
 
   async search(query: string): Promise<Anime[]> {
-    const res = await fetchWithSession(
-      `/api/anime/search?q=${encodeURIComponent(query)}`,
-    );
-    const json: Record<string, unknown> = JSON.parse(res.data);
-    const items = (json.data as Record<string, unknown>[]) ?? [];
+    const items = await fetchSearchItems(query);
     return items.map((item) => ({
       title: (item.name as string) ?? '',
       image: posterToUrl(item.poster as string),
@@ -71,11 +75,7 @@ export const source = {
   },
 
   async getSuggestions(query: string): Promise<AutocompleteAnime[]> {
-    const res = await fetchWithSession(
-      `/api/anime/search?q=${encodeURIComponent(query)}`,
-    );
-    const json: Record<string, unknown> = JSON.parse(res.data);
-    const items = (json.data as Record<string, unknown>[]) ?? [];
+    const items = await fetchSearchItems(query);
     return items.map((item) => ({
       id: String(item.id ?? ''),
       name: (item.name as string) ?? '',
@@ -96,15 +96,12 @@ export const source = {
     const status = parser.extractStatusFromHtml(html);
     const synopsis = parser.extractSynopsisFromDom(html) || parser.extractSynopsisFromJsonLd(html) || '';
     const genres = parser.extractGenresFromJsonLd(html);
-    const poster = parser.extractPosterFromRsc(html) || '';
     const episodes = parser.parseEpisodes(html, slug);
 
-    let banner = meta.image || poster || '';
-    let relations = null;
-
     const scriptsResult = parser.parseAllFromScripts(html);
-    if (scriptsResult.poster) banner = scriptsResult.poster;
-    relations = scriptsResult.relations;
+    const poster = scriptsResult.poster || '';
+    let banner = meta.image || poster || '';
+    const relations = scriptsResult.relations;
 
     if (!banner) {
       const jsonLdImage = parser.extractImageFromJsonLd(html);

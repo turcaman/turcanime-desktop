@@ -1,6 +1,13 @@
 import type { Anime, AnimeRelations, Episode, VideoServer } from '../../types';
 import { SOURCE_CONFIG } from '../config/source';
 
+function mapJsonEpisodes(episodes: Record<string, unknown>[]): Episode[] {
+  return episodes.map((ep) => ({
+    id: String(ep.id ?? ''),
+    number: Number(ep.number ?? 0),
+    url: String(ep.url ?? ''),
+  }));
+}
 
 export function cleanTitle(title: string): string {
   return title
@@ -82,12 +89,7 @@ export class HtmlParser {
     const rawJsonMatch = ParserUtils.extractJson(html, '"episodes":', '[', ']');
     if (rawJsonMatch) {
       try {
-        const episodes = JSON.parse(rawJsonMatch);
-        return episodes.map((ep: Record<string, unknown>) => ({
-          id: String(ep.id ?? ''),
-          number: Number(ep.number ?? 0),
-          url: String(ep.url ?? ''),
-        }));
+        return mapJsonEpisodes(JSON.parse(rawJsonMatch));
       } catch {
         // fall through
       }
@@ -101,12 +103,7 @@ export class HtmlParser {
       const scriptJsonMatch = ParserUtils.extractJson(unescaped, '"episodes":', '[', ']');
       if (scriptJsonMatch) {
         try {
-          const episodes = JSON.parse(scriptJsonMatch);
-          return episodes.map((ep: Record<string, unknown>) => ({
-            id: String(ep.id ?? ''),
-            number: Number(ep.number ?? 0),
-            url: String(ep.url ?? ''),
-          }));
+          return mapJsonEpisodes(JSON.parse(scriptJsonMatch));
         } catch {
           continue;
         }
@@ -118,11 +115,7 @@ export class HtmlParser {
       try {
         const state = JSON.parse(scriptMatch[1]);
         const episodes = state.episodes ?? state.props?.episodes ?? [];
-        return episodes.map((ep: Record<string, unknown>) => ({
-          id: String(ep.id ?? ''),
-          number: Number(ep.number ?? 0),
-          url: String(ep.url ?? ''),
-        }));
+        return mapJsonEpisodes(episodes);
       } catch {
         // fall through
       }
@@ -188,43 +181,32 @@ export class HtmlParser {
     return '';
   }
 
-  extractSynopsisFromJsonLd(html: string): string {
+  private extractFromJsonLd(html: string): Record<string, unknown> | null {
     const match = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
-    if (match) {
-      try {
-        const data = JSON.parse(match[1]);
-        return data.description ?? '';
-      } catch {
-        // ignore
-      }
+    if (!match) return null;
+    try {
+      const data = JSON.parse(match[1]);
+      return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : null;
+    } catch {
+      return null;
     }
-    return '';
+  }
+
+  extractSynopsisFromJsonLd(html: string): string {
+    const data = this.extractFromJsonLd(html);
+    return (data?.description as string) ?? '';
   }
 
   extractImageFromJsonLd(html: string): string {
-    const match = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
-    if (match) {
-      try {
-        const data = JSON.parse(match[1]);
-        return data.image ?? '';
-      } catch {
-        // ignore
-      }
-    }
-    return '';
+    const data = this.extractFromJsonLd(html);
+    return (data?.image as string) ?? '';
   }
 
   extractGenresFromJsonLd(html: string): string[] {
-    const match = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
-    if (match) {
-      try {
-        const data = JSON.parse(match[1]);
-        if (Array.isArray(data.genre)) return data.genre;
-        if (typeof data.genre === 'string') return [data.genre];
-      } catch {
-        // ignore
-      }
-    }
+    const data = this.extractFromJsonLd(html);
+    const genre = data?.['genre'];
+    if (Array.isArray(genre)) return genre as string[];
+    if (typeof genre === 'string') return [genre];
     return [];
   }
 
@@ -242,24 +224,18 @@ export class HtmlParser {
     }
   }
 
-  extractPosterFromRsc(html: string): string {
-    const scripts = html.matchAll(/<script[^>]*>(.*?)<\/script>/gs);
-    for (const match of scripts) {
-      const text = match[1];
-      if (!text || !text.includes('self.__next_f.push')) continue;
-
-      const posterMatch = text.match(/"poster"\s*:\s*"([^"]+)"/);
-      if (posterMatch) {
-        const path = posterMatch[1];
-        if (path.startsWith('http')) return path;
-        if (path.startsWith('/')) return 'https://image.tmdb.org/t/p/w300' + path;
-      }
-      const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
-      const idx = text.indexOf(tmdbPattern);
-      if (idx !== -1) {
-        const end = text.indexOf('"', idx + tmdbPattern.length);
-        if (end !== -1) return text.slice(idx, end);
-      }
+  private posterFromScriptText(text: string): string {
+    const posterMatch = text.match(/"poster"\s*:\s*"([^"]+)"/);
+    if (posterMatch) {
+      const path = posterMatch[1];
+      if (path.startsWith('http')) return path;
+      if (path.startsWith('/')) return 'https://image.tmdb.org/t/p/w300' + path;
+    }
+    const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
+    const idx = text.indexOf(tmdbPattern);
+    if (idx !== -1) {
+      const end = text.indexOf('"', idx + tmdbPattern.length);
+      if (end !== -1) return text.slice(idx, end);
     }
     return '';
   }
@@ -275,20 +251,7 @@ export class HtmlParser {
       if (!text || !text.includes('self.__next_f.push')) continue;
 
       if (!poster) {
-        const posterMatch = text.match(/"poster"\s*:\s*"([^"]+)"/);
-        if (posterMatch) {
-          const path = posterMatch[1];
-          if (path.startsWith('http')) poster = path;
-          else if (path.startsWith('/')) poster = 'https://image.tmdb.org/t/p/w300' + path;
-        }
-        if (!poster) {
-          const tmdbPattern = 'https://image.tmdb.org/t/p/w300/';
-          const idx = text.indexOf(tmdbPattern);
-          if (idx !== -1) {
-            const end = text.indexOf('"', idx + tmdbPattern.length);
-            if (end !== -1) poster = text.slice(idx, end);
-          }
-        }
+        poster = this.posterFromScriptText(text);
       }
 
       const p = this.parseRscPayload(text);
@@ -346,20 +309,13 @@ export class HtmlParser {
       const text = match[1];
       if (!text || !text.includes('self.__next_f.push')) continue;
 
-      const s = text.indexOf('([');
-      const e = text.lastIndexOf('])');
-      if (s === -1 || e === -1 || e <= s) continue;
+      const payload = this.parseRscPayload(text);
+      if (!payload || !payload.includes('"players":')) continue;
+
+      const playersJson = ParserUtils.extractJson(payload, '"players":', '[', ']');
+      if (!playersJson) continue;
 
       try {
-        const slice = text.slice(s + 1, e + 1);
-        const arr = JSON.parse(slice);
-        if (!Array.isArray(arr) || typeof arr[1] !== 'string') continue;
-        const payload = arr[1];
-        if (!payload.includes('"players":')) continue;
-
-        const playersJson = ParserUtils.extractJson(payload, '"players":', '[', ']');
-        if (!playersJson) continue;
-
         const players = JSON.parse(playersJson) as Array<{
           id: number;
           server_name: string;
