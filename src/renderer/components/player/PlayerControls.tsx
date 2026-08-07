@@ -41,6 +41,29 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+interface PlayerIconButtonProps {
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  size?: 'sm' | 'lg';
+  children: React.ReactNode;
+}
+
+function PlayerIconButton({ onClick, disabled, size = 'sm', children }: PlayerIconButtonProps) {
+  const sizeClass =
+    size === 'lg'
+      ? 'w-14 h-14 bg-white/15 hover:bg-white/25 disabled:opacity-70'
+      : 'w-10 h-10 bg-white/10 hover:bg-white/20 disabled:opacity-30';
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center justify-center rounded-full transition-colors ${sizeClass}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
   playing,
   buffering,
@@ -153,26 +176,24 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex items-center justify-center gap-5" onDoubleClick={(e) => e.stopPropagation()}>
-            <button
+            <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onPrev(); }}
               disabled={!hasPrev || loading}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30"
             >
               <SkipBack className="w-4 h-4 text-white drop-shadow-sm" />
-            </button>
+            </PlayerIconButton>
 
-            <button
+            <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onSeekBack(); }}
               disabled={loading}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30"
             >
               <RotateCcw className="w-4 h-4 text-white drop-shadow-sm" />
-            </button>
+            </PlayerIconButton>
 
-            <button
+            <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
               disabled={showLoader}
-              className="flex items-center justify-center w-14 h-14 rounded-full bg-white/15 hover:bg-white/25 transition-colors disabled:opacity-70"
+              size="lg"
             >
               {showLoader ? (
                 <Loader2 className="w-5 h-5 text-white drop-shadow-sm animate-spin" />
@@ -181,23 +202,21 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               ) : (
                 <Play className="w-5 h-5 text-white drop-shadow-sm ml-0.5" />
               )}
-            </button>
+            </PlayerIconButton>
 
-            <button
+            <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onSeekForward(); }}
               disabled={loading}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30"
             >
               <RotateCw className="w-4 h-4 text-white drop-shadow-sm" />
-            </button>
+            </PlayerIconButton>
 
-            <button
+            <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onNext(); }}
               disabled={!hasNext || loading}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30"
             >
               <SkipForward className="w-4 h-4 text-white drop-shadow-sm" />
-            </button>
+            </PlayerIconButton>
           </div>
         </div>
 
