@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { source } from '../services/source';
-import { sessionManager } from '../services/session';
 import { withCache } from '../utils/cache';
-import { logger } from '../utils/logger';
+import { runWithRetry } from '../utils/runWithRetry';
 import { CACHE_PREFIXES, CACHE_TTL } from '../../config/cache';
 import type { AppError, HomeData } from '../../types';
 
@@ -13,18 +12,18 @@ interface HomeState {
   isHomeLoading: boolean;
   isRefreshing: boolean;
   error: AppError | null;
-  fetchHome: (force?: boolean, retryCount?: number) => Promise<void>;
+  fetchHome: (force?: boolean) => Promise<void>;
   prepareRefresh: () => void;
   reset: () => void;
 }
 
-export const useHomeStore = create<HomeState>((set, get) => ({
+export const useHomeStore = create<HomeState>((set) => ({
   homeData: { recent: [] },
   isHomeLoading: false,
   isRefreshing: false,
   error: null,
 
-  fetchHome: async (force, retryCount = 0) => {
+  fetchHome: async (force) => {
     if (homeController) {
       homeController.abort();
     }
@@ -32,30 +31,17 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
     set({ isHomeLoading: true, error: null });
 
-    const result = await withCache(
-      CACHE_PREFIXES.HOME,
-      async () => {
-        const data = await source.getHomeData();
-        return data;
-      },
-      { ttl: CACHE_TTL.HOME, signal: homeController.signal, force },
+    const result = await runWithRetry(
+      (attempt) =>
+        withCache(
+          CACHE_PREFIXES.HOME,
+          () => source.getHomeData(),
+          { ttl: CACHE_TTL.HOME, signal: homeController?.signal, force: attempt > 0 || force },
+        ),
+      'homeStore',
     );
 
     if (result.error) {
-      const isAuth = result.error.type === 'AUTH_ERROR';
-      if (isAuth && retryCount < 3) {
-        const backoff = Math.min(1000 * Math.pow(2, retryCount), 8000);
-        logger.info('homeStore', `Auth error (attempt ${retryCount + 1}/3), refreshing session...`);
-        await sessionManager.refreshSession();
-        await new Promise((r) => setTimeout(r, backoff));
-        return get().fetchHome(true, retryCount + 1);
-      }
-      if (retryCount < 2 && !isAuth) {
-        const backoff = Math.min(1000 * Math.pow(2, retryCount), 4000);
-        logger.info('homeStore', `Retry ${retryCount + 1}/3 after ${backoff}ms`);
-        await new Promise((r) => setTimeout(r, backoff));
-        return get().fetchHome(true, retryCount + 1);
-      }
       set({ error: result.error, isHomeLoading: false, isRefreshing: false });
       return;
     }

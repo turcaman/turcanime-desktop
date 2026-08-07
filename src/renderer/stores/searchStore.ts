@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { source } from '../services/source';
-import { sessionManager } from '../services/session';
 import { withCache } from '../utils/cache';
+import { runWithRetry } from '../utils/runWithRetry';
 import { CACHE_PREFIXES, CACHE_TTL, TIMEOUTS } from '../../config/cache';
 import type { Anime, AppError, AutocompleteAnime } from '../../types';
 
@@ -14,21 +14,21 @@ interface SearchState {
   lastSearchTerm: string;
   isSearchLoading: boolean;
   error: AppError | null;
-  fetchSearch: (query: string, force?: boolean, retryCount?: number) => Promise<void>;
+  fetchSearch: (query: string, force?: boolean) => Promise<void>;
   fetchSuggestions: (query: string) => Promise<void>;
   cancelSearch: () => void;
   resetSearch: () => void;
   setSearchTerm: (term: string) => void;
 }
 
-export const useSearchStore = create<SearchState>((set, get) => ({
+export const useSearchStore = create<SearchState>((set) => ({
   searchAnimes: [],
   suggestions: [],
   lastSearchTerm: '',
   isSearchLoading: false,
   error: null,
 
-  fetchSearch: async (query, force, retryCount = 0) => {
+  fetchSearch: async (query, force) => {
     if (searchController) {
       searchController.abort();
     }
@@ -38,27 +38,19 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 
     const timeout = setTimeout(() => searchController?.abort(), TIMEOUTS.SEARCH);
 
-    const result = await withCache(
-      `${CACHE_PREFIXES.SEARCH}_${query}`,
-      async () => source.search(query),
-      { ttl: CACHE_TTL.SEARCH, signal: searchController.signal, force },
+    const result = await runWithRetry(
+      (attempt) =>
+        withCache(
+          `${CACHE_PREFIXES.SEARCH}_${query}`,
+          () => source.search(query),
+          { ttl: CACHE_TTL.SEARCH, signal: searchController?.signal, force: attempt > 0 || force },
+        ),
+      'searchStore',
     );
 
     clearTimeout(timeout);
 
     if (result.error) {
-      const isAuth = result.error.type === 'AUTH_ERROR';
-      if (isAuth && retryCount < 3) {
-        const backoff = Math.min(1000 * Math.pow(2, retryCount), 8000);
-        await sessionManager.refreshSession();
-        await new Promise((r) => setTimeout(r, backoff));
-        return get().fetchSearch(query, true, retryCount + 1);
-      }
-      if (retryCount < 2 && !isAuth) {
-        const backoff = Math.min(1000 * Math.pow(2, retryCount), 4000);
-        await new Promise((r) => setTimeout(r, backoff));
-        return get().fetchSearch(query, true, retryCount + 1);
-      }
       set({ error: result.error, isSearchLoading: false });
       return;
     }

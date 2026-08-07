@@ -6,7 +6,6 @@ import { logger } from '../utils/logger';
 import { SourceError } from '../utils/errors';
 import type { Anime, AnimeDetail, AutocompleteAnime, HomeData, VideoServer } from '../../types';
 
-const RETRY_DELAY = 1_000;
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300';
 
 function posterToUrl(poster: string): string {
@@ -19,7 +18,6 @@ function posterToUrl(poster: string): string {
 async function fetchWithSession(
   url: string,
   options?: Record<string, unknown>,
-  retryCount = 0,
 ): Promise<{ ok: boolean; status: number; data: string }> {
   const hasCookies = await sessionManager.waitForCookies();
   if (!hasCookies) {
@@ -39,11 +37,6 @@ async function fetchWithSession(
       logger.warn('Source', 'Background session refresh after AUTH_ERROR failed', e);
     });
     throw new SourceError(`HTTP ${res.status}`, 'AUTH_ERROR');
-  }
-
-  if (!res.ok && retryCount < 1) {
-    await new Promise((r) => setTimeout(r, RETRY_DELAY));
-    return fetchWithSession(url, options, retryCount + 1);
   }
 
   if (!res.data) {
