@@ -12,7 +12,7 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({ cardWidth }) => {
       style={{ width: cardWidth }}
     >
       <div
-        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-neutral-800/50"
+        className="relative bg-neutral-800 rounded-xl overflow-hidden mb-3 border border-neutral-800/70"
         style={{ height: cardWidth * 1.4 }}
       >
         <Skeleton className="absolute inset-0 rounded-none" />

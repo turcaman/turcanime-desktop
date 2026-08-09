@@ -35,10 +35,10 @@ export const EpisodeRangeSelector: React.FC<EpisodeRangeSelectorProps> = ({
         <button
           key={idx}
           onClick={() => handleClick(idx)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+          className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/70 ${
             idx === activeRangeIdx
               ? 'bg-purple-500/15 text-purple-400'
-              : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
+              : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
           }`}
         >
           {range.label}

@@ -31,7 +31,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
             <button
               key={item.slug}
               onClick={() => onItemPress?.(item)}
-              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 active:scale-[0.98] transition-transform duration-150 border border-neutral-800/50 hover:border-neutral-700/60"
+              className="flex-shrink-0 text-left rounded-xl overflow-hidden bg-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/70 border border-neutral-800/70 hover:border-neutral-700/60 transition-colors"
               style={{ width: itemWidth }}
             >
               <div className="relative w-full" style={{ aspectRatio: `${itemWidth}/${Math.round(itemWidth * 1.5)}` }}>
@@ -41,8 +41,9 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-neutral-100/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 pb-2 pt-4">
-                  <p className="text-[11px] font-medium text-neutral-300 mb-0.5 leading-tight">
+                  <p className="text-[11px] font-medium text-neutral-200 mb-0.5 leading-tight">
                     Ep. {item.number}
                   </p>
                   <p className="text-sm font-semibold text-white leading-tight truncate">

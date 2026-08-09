@@ -19,7 +19,7 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
   return (
     <div className="px-6 pt-3">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+        <h2 className="text-[11px] font-medium text-neutral-300 uppercase tracking-[0.14em]">
           Búsquedas recientes
         </h2>
         {onClearAll && (
@@ -41,8 +41,8 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
             onClick={() => onSelect(term)}
             className="flex items-center gap-3 flex-1 min-w-0 text-left"
           >
-            <Clock className="w-4 h-4 text-neutral-500 flex-shrink-0" />
-            <span className="text-sm text-neutral-400 truncate group-hover:text-neutral-300 transition-colors">
+            <Clock className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+            <span className="text-sm text-neutral-300 truncate group-hover:text-neutral-200 transition-colors">
               {term}
             </span>
           </button>
@@ -54,7 +54,7 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
             className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-neutral-800 transition-all"
             aria-label={`Eliminar ${term}`}
           >
-            <X className="w-3.5 h-3.5 text-neutral-500" />
+            <X className="w-3.5 h-3.5 text-neutral-400" />
           </button>
         </div>
       ))}

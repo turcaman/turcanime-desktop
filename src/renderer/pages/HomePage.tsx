@@ -67,7 +67,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {showError && <ErrorState onRetry={handleRetry} />}
 
       {showEmpty && (
-        <div className="flex items-center justify-center h-full text-neutral-500 text-sm select-none">
+        <div className="flex items-center justify-center h-full text-neutral-400 text-sm select-none">
           Sin datos disponibles
         </div>
       )}

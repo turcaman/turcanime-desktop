@@ -57,7 +57,7 @@ function PlayerIconButton({ onClick, disabled, size = 'sm', children }: PlayerIc
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center justify-center rounded-full transition-colors ${sizeClass}`}
+      className={`flex items-center justify-center rounded-full transition-colors cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${sizeClass}`}
     >
       {children}
     </button>
@@ -160,7 +160,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         <div className="absolute top-0 left-0 right-0 flex items-start px-4 pt-4 z-50 pointer-events-none">
           <button
             onClick={(e) => { e.stopPropagation(); onBack(); }}
-            className="pointer-events-auto p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            className="pointer-events-auto p-1.5 rounded-full hover:bg-white/10 transition-colors cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <ChevronLeft className="w-6 h-6 text-white drop-shadow-lg" />
           </button>
@@ -169,7 +169,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               <p className="text-white font-semibold text-sm truncate drop-shadow-lg">{animeTitle}</p>
             )}
             {episodeNumber != null && (
-              <p className="text-neutral-300 text-xs drop-shadow-lg">Episodio {episodeNumber}</p>
+              <p className="text-neutral-200 text-xs drop-shadow-lg">Episodio {episodeNumber}</p>
             )}
           </div>
         </div>
@@ -235,7 +235,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               onChange={handleSliderChange}
               onMouseUp={handleSliderEnd}
               onTouchEnd={handleSliderEnd}
-              className="flex-1 h-1 appearance-none bg-white/20 rounded-full cursor-pointer
+              className="flex-1 h-1 appearance-none bg-white/20 rounded-full cursor-default
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
                 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400
                 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-purple-500/40
@@ -244,7 +244,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
                 background: `linear-gradient(to right, rgb(168,85,247) ${progress}%, rgba(255,255,255,0.15) ${progress}%)`,
               }}
             />
-            <span className="text-xs text-white/70 w-10 tabular-nums drop-shadow-lg select-none">
+            <span className="text-xs text-white/80 w-10 tabular-nums drop-shadow-lg select-none">
               {formatTime(duration)}
             </span>
           </div>

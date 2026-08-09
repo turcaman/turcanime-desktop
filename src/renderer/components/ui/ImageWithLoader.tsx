@@ -36,7 +36,7 @@ export const ImageWithLoader: React.FC<ImageWithLoaderProps> = ({
 
   return (
     <div className={`flex items-center justify-center bg-neutral-900 ${className}`} style={style}>
-      <span className="text-sm text-neutral-500">{fallbackText}</span>
+      <span className="text-sm text-neutral-400">{fallbackText}</span>
     </div>
   );
 };

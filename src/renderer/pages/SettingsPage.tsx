@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { RefreshCw, Bell, ExternalLink, CheckCircle2, Download, Info } from 'lucide-react';
 import { sessionManager } from '../services/session';
 import { useHomeStore } from '../stores/homeStore';
@@ -12,6 +12,17 @@ export const SettingsPage: React.FC = () => {
   const setSessionRefreshing = useUIStore((s) => s.setSessionRefreshing);
   const [refreshed, setRefreshed] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [confirmingRefresh, setConfirmingRefresh] = useState(false);
+  const refreshButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmCancelRef = useRef<HTMLButtonElement>(null);
+
+  // Keep keyboard focus inside the confirm row instead of leaving it on the
+  // now-disabled button underneath.
+  useEffect(() => {
+    if (confirmingRefresh) {
+      confirmCancelRef.current?.focus();
+    }
+  }, [confirmingRefresh]);
 
   const updateCheckEnabled = useUpdateStore((s) => s.updateCheckEnabled);
   const setUpdateCheckEnabled = useUpdateStore((s) => s.setUpdateCheckEnabled);
@@ -22,14 +33,10 @@ export const SettingsPage: React.FC = () => {
   const checkForUpdates = useUpdateStore((s) => s.checkForUpdates);
 
   const handleRefresh = useCallback(async () => {
-    const ok = window.confirm(
-      'Si el contenido no carga o ves errores, esto renueva la conexión con el servidor para intentar solucionarlo.',
-    );
-    if (!ok) return;
-
     setSessionRefreshing(true);
     setRefreshed(false);
     setRefreshError(null);
+    setConfirmingRefresh(false);
     try {
       const session = await sessionManager.refreshSession();
       if (session.cookies.length === 0) {
@@ -59,37 +66,63 @@ export const SettingsPage: React.FC = () => {
       <div className="p-6 pt-4 space-y-8">
 
         <div>
-          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Conexión</h2>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshingSession}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw
-              className={`w-4 h-4 text-purple-400 flex-shrink-0 ${isRefreshingSession ? 'animate-spin' : ''}`}
-            />
-            <div className="flex flex-col items-start">
-              <span className="text-sm text-neutral-200">
-                {refreshed ? 'Conexión renovada' : 'Renovar conexión'}
-              </span>
-              <span className="text-[11px] text-neutral-500 mt-0.5">
-                Refresca sesión y cache
-              </span>
-            </div>
-          </button>
+          <h2 className="text-[11px] font-medium text-neutral-300 uppercase tracking-[0.14em] mb-3">Conexión</h2>
+          <div className="relative">
+            <button
+              ref={refreshButtonRef}
+              onClick={() => setConfirmingRefresh(true)}
+              disabled={isRefreshingSession || confirmingRefresh}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/70 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50 disabled:hover:bg-neutral-900/50"
+            >
+              <RefreshCw
+                className={`w-4 h-4 text-purple-400 flex-shrink-0 ${isRefreshingSession ? 'animate-spin' : ''}`}
+              />
+              <div className="flex flex-col items-start">
+                <span className="text-sm text-neutral-200">
+                  {refreshed ? 'Conexión renovada' : 'Renovar conexión'}
+                </span>
+                <span className="text-[11px] text-neutral-400 mt-0.5">
+                  Refresca sesión y cache
+                </span>
+              </div>
+            </button>
+            {confirmingRefresh && !isRefreshingSession && (
+              <div className="absolute inset-0 flex items-center gap-3 px-4 rounded-lg border border-neutral-700/60 bg-neutral-900 animate-fade-in">
+                <span className="text-sm text-neutral-200 flex-1 min-w-0 leading-snug">
+                  ¿Seguro? Se renovará la sesión y se limpiará la caché.
+                </span>
+                <button
+                  onClick={() => void handleRefresh()}
+                  className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 rounded-md transition-colors"
+                >
+                  Sí
+                </button>
+                <button
+                  ref={confirmCancelRef}
+                  onClick={() => {
+                    setConfirmingRefresh(false);
+                    refreshButtonRef.current?.focus();
+                  }}
+                  className="flex-shrink-0 px-3 py-1.5 text-xs text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded-md transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+          </div>
           {refreshError && (
             <p className="text-[11px] text-red-400/80 mt-1.5 px-1">{refreshError}</p>
           )}
         </div>
 
         <div>
-          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Actualizaciones</h2>
+          <h2 className="text-[11px] font-medium text-neutral-300 uppercase tracking-[0.14em] mb-3">Actualizaciones</h2>
           <div className="space-y-1.5">
             <label className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors cursor-pointer">
-              <Bell className="w-4 h-4 text-neutral-500 flex-shrink-0" />
+              <Bell className="w-4 h-4 text-neutral-400 flex-shrink-0" />
               <div className="flex flex-col items-start flex-1 min-w-0">
                 <span className="text-sm text-neutral-200">Buscar actualizaciones</span>
-                <span className="text-[11px] text-neutral-500 mt-0.5">Al iniciar la app</span>
+                <span className="text-[11px] text-neutral-400 mt-0.5">Al iniciar la app</span>
               </div>
               <button
                 role="switch"
@@ -109,7 +142,7 @@ export const SettingsPage: React.FC = () => {
             <button
               onClick={() => { void checkForUpdates(); }}
               disabled={checkingForUpdates}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/70 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
             >
               <Download
                 className={`w-4 h-4 text-purple-400 flex-shrink-0 ${checkingForUpdates ? 'animate-pulse' : ''}`}
@@ -120,7 +153,7 @@ export const SettingsPage: React.FC = () => {
                 </span>
                 <div className="h-[18px] flex items-center mt-0.5">
                   {checkingForUpdates && (
-                    <span className="text-[11px] text-neutral-500">Buscando...</span>
+                    <span className="text-[11px] text-neutral-400">Buscando...</span>
                   )}
                   {!checkingForUpdates && lastCheckError && (
                     <span className="text-[11px] text-red-400/70">{lastCheckError}</span>
@@ -150,13 +183,13 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div>
-          <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Acerca de</h2>
-          <div className="rounded-lg border border-neutral-800/50 bg-neutral-900/50">
+          <h2 className="text-[11px] font-medium text-neutral-300 uppercase tracking-[0.14em] mb-3">Acerca de</h2>
+          <div className="rounded-lg border border-neutral-800/70 bg-neutral-900/50">
             <div className="flex items-center gap-3 px-4 py-3.5">
-              <Info className="w-4 h-4 text-neutral-500 flex-shrink-0" />
+              <Info className="w-4 h-4 text-neutral-400 flex-shrink-0" />
               <div className="flex flex-col items-start">
                 <span className="text-sm text-neutral-300">Versión {currentVersion ?? '—'}</span>
-                <span className="text-[11px] text-neutral-500 mt-0.5">Turcanime Desktop</span>
+                <span className="text-[11px] text-neutral-400 mt-0.5">Turcanime Desktop</span>
               </div>
             </div>
           </div>

@@ -19,7 +19,8 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
         {onBack && (
           <button
             onClick={onBack}
-            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 active:scale-95 transition-all z-10"
+            aria-label="Volver"
+            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/70"
           >
             <ChevronLeft className="w-5 h-5 text-white" />
           </button>
@@ -55,7 +56,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex-shrink-0 w-24">
-                <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1 border border-neutral-800/50">
+                <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1 border border-neutral-800/70">
                   <Skeleton className="absolute inset-0 rounded-none" />
                 </div>
                 <Skeleton className="h-3 w-full rounded" />
@@ -81,7 +82,7 @@ export const DetailSkeleton: React.FC<DetailSkeletonProps> = ({ onBack }) => {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/40"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/70 bg-neutral-900/40"
           >
             <div className="flex-1 min-w-0">
               <Skeleton className="h-[14px] w-40 rounded" />

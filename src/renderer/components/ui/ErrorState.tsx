@@ -16,7 +16,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       <div className="flex flex-col items-center gap-5 text-center">
         <div className="w-14 h-14 rounded-full bg-neutral-800/80 flex items-center justify-center">
           <svg
-            className="w-7 h-7 text-neutral-500"
+            className="w-7 h-7 text-neutral-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

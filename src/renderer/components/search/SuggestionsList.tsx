@@ -40,7 +40,7 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-neutral-600">
+              <div className="w-full h-full flex items-center justify-center text-neutral-500">
                 <Film className="w-3.5 h-3.5" />
               </div>
             )}

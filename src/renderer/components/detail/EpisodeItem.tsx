@@ -17,7 +17,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
   return (
     <button
       onClick={() => onPress(episode)}
-      className="group flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/50 bg-neutral-900/40 hover:bg-neutral-800/60 transition-colors text-left"
+      className="group flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/70 bg-neutral-900/40 hover:bg-neutral-800/60 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/70"
     >
       <div className="flex-1 min-w-0">
         <span className="text-sm text-neutral-300 truncate group-hover:text-neutral-100 transition-colors">
@@ -32,7 +32,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
           </div>
         )}
       </div>
-      <Play className="w-4 h-4 text-neutral-600 flex-shrink-0" />
+      <Play className="w-4 h-4 text-neutral-500 group-hover:text-purple-400 flex-shrink-0 transition-colors" />
     </button>
   );
 };

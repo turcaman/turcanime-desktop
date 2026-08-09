@@ -73,8 +73,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       }
       return (
         <div className="flex flex-col items-center justify-center pt-20 select-none">
-          <Search className="w-12 h-12 text-neutral-700 mb-4" />
-          <p className="text-sm text-neutral-500">
+          <Search className="w-12 h-12 text-neutral-600 mb-4" />
+          <p className="text-sm text-neutral-400">
             Busca tu anime favorito
           </p>
         </div>
@@ -89,8 +89,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       if (searchAnimes.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center pt-20 select-none">
-            <Frown className="w-12 h-12 text-neutral-700 mb-4" />
-            <p className="text-sm text-neutral-500">
+            <Frown className="w-12 h-12 text-neutral-600 mb-4" />
+            <p className="text-sm text-neutral-400">
               Sin resultados para &quot;{term}&quot;
             </p>
           </div>
