@@ -36,6 +36,12 @@ interface ElectronAPI {
     data: unknown;
     json: boolean;
   }>;
+  proxyBuffer: (url: string, rangeStart?: number | null, rangeEnd?: number | null) => Promise<{
+    ok: boolean;
+    status: number;
+    data: ArrayBuffer | null;
+    error?: string;
+  }>;
   fullscreen: {
     set: (flag: boolean) => Promise<void>;
     onChanged: (cb: (flag: boolean) => void) => () => void;

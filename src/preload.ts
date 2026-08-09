@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('fetch:bridge', url, headers),
   proxyFetch: (url: string, opts?: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }) =>
     ipcRenderer.invoke('fetch:proxy', url, opts),
+  proxyBuffer: (url: string, rangeStart?: number | null, rangeEnd?: number | null) =>
+    ipcRenderer.invoke('fetch:proxyBuffer', url, rangeStart ?? null, rangeEnd ?? null),
   fullscreen: {
     set: (flag: boolean) => ipcRenderer.invoke('player:setFullScreen', flag),
     onChanged: (cb: (flag: boolean) => void) => {

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { sessionManager } from '../services/session';
+import { attachHls, isHlsUrl } from '../services/hlsPlayback';
 import { pickPreferredServer } from '../utils/servers';
 import { logger } from '../utils/logger';
 import type { AnimeDetail } from '../../types';
@@ -34,6 +35,8 @@ export function usePlayer(
 
   const refreshRetryCount = useRef(0);
   const lastRecoveredStreamUrl = useRef<string>('');
+  // Current hls.js instance for HLS streams; destroyed before every source swap.
+  const hlsRef = useRef<ReturnType<typeof attachHls> | null>(null);
   // Bumped after a forced stream re-resolve so the video reloads even when the
   // resolved URL is identical to the failed one (same URL would not change the
   // streamUrl state and the effect would never re-run).
@@ -165,6 +168,10 @@ export function usePlayer(
 
   useEffect(() => {
     if (!streamUrl || !videoRef.current) {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
       if (videoRef.current && videoRef.current.src) {
         videoRef.current.removeAttribute('src');
         videoRef.current.load();
@@ -182,16 +189,43 @@ export function usePlayer(
     setBuffering(false);
 
     const video = videoRef.current;
-    video.src = streamUrl;
-    video.load();
+    // Tear down any previous HLS session before switching source.
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    const isHls = isHlsUrl(streamUrl);
+    // For HLS, leave the element alone: hls.js assigns video.src to its own
+    // MediaSource blob URL internally.
+    if (!isHls) {
+      video.src = streamUrl;
+      video.load();
+    }
     lastSavedEp.current = episodeNumber;
 
     const restoredItems = useHistoryStore.getState().lastViewed;
     const historyItem = restoredItems.find(
       (item) => item.slug === slug && item.number === episodeNumber,
     );
-    if (historyItem && historyItem.progress > 0) {
-      video.currentTime = historyItem.progress;
+    const restoreProgress = historyItem && historyItem.progress > 0 ? historyItem.progress : 0;
+    // Removed in the cleanup below so a failed HLS episode cannot leave a
+    // stale listener that seeks the next stream to the previous position.
+    let restoreOnReady: (() => void) | null = null;
+    if (isHls) {
+      // currentTime is not reliable until the manifest is parsed and media is
+      // attached; apply the restored position once metadata is available.
+      if (restoreProgress > 0) {
+        restoreOnReady = () => {
+          video.currentTime = restoreProgress;
+          if (restoreOnReady) {
+            video.removeEventListener('loadedmetadata', restoreOnReady);
+          }
+        };
+        video.addEventListener('loadedmetadata', restoreOnReady);
+      }
+    } else if (restoreProgress > 0) {
+      video.currentTime = restoreProgress;
     }
 
     const handleTimeUpdate = () => {
@@ -229,7 +263,7 @@ export function usePlayer(
       // stream (e.g. an HLS url the engine cannot play); surface it instead.
       if (code === 4) {
         usePlayerStore.setState({
-          error: { type: 'SERVER_ERROR', message: 'Este servidor no pudo reproducirse. Probá con otro idioma o servidor.' },
+          error: { type: 'SERVER_ERROR', message: 'No se pudo reproducir este contenido.' },
         });
         return;
       }
@@ -279,9 +313,27 @@ export function usePlayer(
     video.addEventListener('playing', handlePlaying);
     video.addEventListener('error', handleError);
 
+    if (isHls) {
+      const hls = attachHls(video, streamUrl, (error) => {
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+          hlsRef.current = null;
+        }
+        usePlayerStore.setState({ error });
+      });
+      hlsRef.current = hls;
+    }
+
     video.play().catch((): void => undefined);
 
     return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      if (restoreOnReady) {
+        video.removeEventListener('loadedmetadata', restoreOnReady);
+      }
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('play', handlePlay);

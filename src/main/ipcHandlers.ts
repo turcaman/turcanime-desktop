@@ -91,6 +91,40 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  // Binary variant of fetch:proxy for HLS segments (hls.js custom loader).
+  // net.fetch in main is not subject to CORS and can attach the session UA and
+  // a same-origin Referer so CDNs that validate headers accept the requests.
+  // Supports byte-range requests for #EXT-X-BYTERANGE playlists: the Range
+  // header is sent and, if the server ignores it (200 full body), the slice is
+  // applied here so hls.js always receives exactly the requested bytes.
+  ipcMain.handle('fetch:proxyBuffer', async (_event, url: string, rangeStart: number | null = null, rangeEnd: number | null = null) => {
+    try {
+      const session = hiddenSession.getSession();
+      const headers: Record<string, string> = {
+        'User-Agent': session?.userAgent ?? '',
+        'Referer': `${new URL(url).origin}/`,
+        'Accept': '*/*',
+      };
+      // rangeEnd === 0 means "no byte range" (hls.js defaults to 0,0); only
+      // real EXT-X-BYTERANGE requests carry an end offset.
+      if (rangeStart != null && rangeEnd != null && rangeEnd > 0) {
+        headers['Range'] = `bytes=${rangeStart}-${rangeEnd}`;
+      }
+      const response = await net.fetch(url, { method: 'GET', headers });
+      let data = await response.arrayBuffer();
+      // Server ignored the Range header: trim to the requested window.
+      if (rangeStart != null && rangeEnd != null && rangeEnd > 0 && data.byteLength > rangeEnd - rangeStart + 1) {
+        data = data.slice(rangeStart, rangeEnd + 1);
+      }
+
+      logger.debug('IPC', `fetch:proxyBuffer ${url.slice(0, 80)} -> ${response.status} (${data.byteLength}B)`);
+      return { ok: response.ok, status: response.status, data };
+    } catch (err) {
+      logger.error('IPC', `fetch:proxyBuffer failed: ${url.slice(0, 80)}: ${err}`);
+      return { ok: false, status: 0, data: null, error: String(err) };
+    }
+  });
+
   ipcMain.handle('fetch:bridge', async (_event, url: string, headers: Record<string, string>) => {
     logger.debug('IPC', `fetch:bridge ${url.slice(0, 80)}`);
     try {
