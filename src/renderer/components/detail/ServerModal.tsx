@@ -69,7 +69,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
           {!isLoading && displayServers.length === 0 && (
             <div className="flex items-center justify-center h-28">
               <p className="text-sm text-neutral-400">
-                No hay servidor disponible
+                No hay idiomas disponibles
               </p>
             </div>
           )}

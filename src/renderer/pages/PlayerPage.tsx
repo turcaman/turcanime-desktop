@@ -78,7 +78,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
       const target = pickPreferredServer(state.servers, state.lastLanguage);
       if (!target) {
         usePlayerStore.setState({
-          error: { type: 'SERVER_ERROR', message: 'No hay servidores disponibles para este episodio.' },
+          error: { type: 'SERVER_ERROR', message: 'No hay idiomas disponibles para este episodio.' },
         });
         return;
       }
@@ -91,7 +91,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
       const s = usePlayerStore.getState();
       if (s.servers.length === 0) {
         usePlayerStore.setState({
-          error: { type: 'SERVER_ERROR', message: 'No hay servidores disponibles para este episodio.' },
+          error: { type: 'SERVER_ERROR', message: 'No hay idiomas disponibles para este episodio.' },
         });
         return;
       }
