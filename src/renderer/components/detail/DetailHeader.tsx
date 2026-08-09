@@ -94,9 +94,9 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
               >
                 {anime.synopsis}
               </p>
-              {hasLongSynopsis && (
+              {hasLongSynopsis && !expanded && (
                 <span className="text-xs text-neutral-300 hover:text-neutral-100 mt-1 transition-colors block">
-                  {expanded ? 'Mostrar menos' : 'Leer más'}
+                  Leer más
                 </span>
               )}
             </button>
