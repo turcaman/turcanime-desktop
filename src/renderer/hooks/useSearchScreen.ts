@@ -1,9 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSearchStore } from '../stores/searchStore';
 import { useSearchHistoryStore } from '../stores/searchHistoryStore';
-import type { AutocompleteAnime } from '../../types';
-
-type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 
 const DEBOUNCE_MS = 300;
 
@@ -13,12 +10,13 @@ export function useSearchScreen() {
   const suggestions = useSearchStore((s) => s.suggestions);
   const isLoading = useSearchStore((s) => s.isLoading);
   const error = useSearchStore((s) => s.error);
+  const status = useSearchStore((s) => s.status);
   const fetchSearch = useSearchStore((s) => s.fetchSearch);
   const fetchSuggestions = useSearchStore((s) => s.fetchSuggestions);
   const cancelSearch = useSearchStore((s) => s.cancelSearch);
   const resetSearch = useSearchStore((s) => s.reset);
   const setSearchTerm = useSearchStore((s) => s.setSearchTerm);
-  const [status, setStatus] = useState<SearchStatus>(term ? 'searched' : 'idle');
+  const setStatus = useSearchStore((s) => s.setStatus);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const recentSearches = useSearchHistoryStore((s) => s.recentSearches);
@@ -48,7 +46,7 @@ export function useSearchScreen() {
       setStatus('idle');
       resetSearch();
     }
-  }, [setSearchTerm, resetSearch]);
+  }, [setSearchTerm, resetSearch, setStatus]);
 
   const executeSearch = useCallback(async (searchTerm?: string) => {
     const query = (searchTerm ?? term).trim();
@@ -58,7 +56,7 @@ export function useSearchScreen() {
     await fetchSearch(query);
     await saveRecentSearch(query);
     setStatus('searched');
-  }, [term, fetchSearch, saveRecentSearch]);
+  }, [term, fetchSearch, saveRecentSearch, setStatus]);
 
   const handleSearch = useCallback(() => {
     executeSearch();
@@ -70,10 +68,12 @@ export function useSearchScreen() {
     }
   }, [term, fetchSearch]);
 
-  const handleSelectSuggestion = useCallback((anime: AutocompleteAnime) => {
-    setSearchTerm(anime.name);
-    executeSearch(anime.name);
-  }, [setSearchTerm, executeSearch]);
+  const handleSelectSuggestion = useCallback(() => {
+    const inputText = term.trim();
+    if (inputText) {
+      saveRecentSearch(inputText);
+    }
+  }, [term, saveRecentSearch]);
 
   const handleSelectRecent = useCallback((recentTerm: string) => {
     setSearchTerm(recentTerm);

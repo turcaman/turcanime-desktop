@@ -5,6 +5,8 @@ import { runWithRetry } from '../utils/runWithRetry';
 import { CACHE_PREFIXES, CACHE_TTL, TIMEOUTS } from '../../config/cache';
 import type { Anime, AppError, AutocompleteAnime } from '../../types';
 
+export type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
+
 let searchController: AbortController | null = null;
 let suggestionsController: AbortController | null = null;
 
@@ -12,6 +14,7 @@ interface SearchState {
   searchAnimes: Anime[];
   suggestions: AutocompleteAnime[];
   lastSearchTerm: string;
+  status: SearchStatus;
   isLoading: boolean;
   error: AppError | null;
   fetchSearch: (query: string, force?: boolean) => Promise<void>;
@@ -19,12 +22,14 @@ interface SearchState {
   cancelSearch: () => void;
   reset: () => void;
   setSearchTerm: (term: string) => void;
+  setStatus: (status: SearchStatus) => void;
 }
 
 export const useSearchStore = create<SearchState>((set) => ({
   searchAnimes: [],
   suggestions: [],
   lastSearchTerm: '',
+  status: 'idle',
   isLoading: false,
   error: null,
 
@@ -87,6 +92,7 @@ export const useSearchStore = create<SearchState>((set) => ({
       searchAnimes: [],
       suggestions: [],
       lastSearchTerm: '',
+      status: 'idle',
       isLoading: false,
       error: null,
     });
@@ -94,5 +100,9 @@ export const useSearchStore = create<SearchState>((set) => ({
 
   setSearchTerm: (term) => {
     set({ lastSearchTerm: term });
+  },
+
+  setStatus: (status) => {
+    set({ status });
   },
 }));

@@ -40,7 +40,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   const { cardWidth, columns } = useCardLayout(containerRef);
 
   const handleSuggestionSelect = (item: AutocompleteAnime) => {
-    handleSelectSuggestion(item);
+    handleSelectSuggestion();
     if (externalAnimePress) {
       externalAnimePress({ title: item.name, image: item.poster, slug: item.slug, status: '' });
     }
