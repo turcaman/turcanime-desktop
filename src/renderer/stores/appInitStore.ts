@@ -4,7 +4,6 @@ import { useHistoryStore } from './historyStore';
 import { useSearchHistoryStore } from './searchHistoryStore';
 import { useSettingsStore } from './settingsStore';
 import { useUpdateStore } from './updateStore';
-import { useUIStore } from './uiStore';
 import type { HistoryItem } from '../../types';
 import { STORAGE_KEYS } from '../config/storageKeys';
 
@@ -30,15 +29,12 @@ export const useAppInitStore = create<AppInitState>((set) => ({
       (await storage.get<'asc' | 'desc'>(STORAGE_KEYS.episodeOrder)) ?? 'asc';
     const updateCheckEnabled =
       (await storage.get<boolean>(STORAGE_KEYS.updateCheckEnabled)) ?? true;
-    const sidebarCollapsed =
-      (await storage.get<boolean>(STORAGE_KEYS.sidebarCollapsed)) ?? false;
     const currentVersion = await window.electronAPI.app.getVersion();
 
     useHistoryStore.getState().initialize(history);
     useSearchHistoryStore.getState().initialize(searches);
     useSettingsStore.getState().initialize({ episodeOrder });
     useUpdateStore.getState().initialize({ updateCheckEnabled, currentVersion });
-    useUIStore.getState().initialize({ sidebarCollapsed });
 
     set({ isInitialized: true });
   },
