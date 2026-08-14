@@ -5,6 +5,7 @@ import { networkMonitor } from './networkMonitor';
 import { logger } from './logger';
 import { TIMEOUTS } from '../config/cache';
 import { backoffDelay } from '../config/backoff';
+import { SOURCE_CONFIG } from '../config/source';
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -192,9 +193,18 @@ export function registerIpcHandlers(): void {
     const session = hiddenSession.getSession();
     const headers: Record<string, string> = {
       'User-Agent': session?.userAgent ?? '',
-      'Referer': `${new URL(url).origin}/`,
+      // The stream CDNs validate the Referer against the site, not the CDN's
+      // own origin: the site player embeds the stream with the site referer
+      // (same pattern the working fetch:bridge uses). A self-referrer (CDN
+      // origin) looks like a hotlink and gets 403.
+      'Referer': `${SOURCE_CONFIG.baseUrl}/`,
       'Accept': '*/*',
     };
+    // HLS CDNs may also gate playlists/segments on the session cookies set
+    // during stream resolution; send them like the site player does.
+    if (session?.cookies) {
+      headers['Cookie'] = session.cookies;
+    }
     // rangeEnd === 0 means "no byte range" (hls.js defaults to 0,0); only
     // real EXT-X-BYTERANGE requests carry an end offset.
     if (rangeStart != null && rangeEnd != null && rangeEnd > 0) {
