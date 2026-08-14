@@ -10,6 +10,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAutoHide } from '../../hooks/useAutoHide';
+import { SeekBar } from './SeekBar';
 
 interface PlayerControlsProps {
   playing: boolean;
@@ -30,15 +31,6 @@ interface PlayerControlsProps {
   onNext: () => void;
   onBack: () => void;
   onToggleFullscreen: () => void;
-}
-
-function formatTime(seconds: number): string {
-  if (isNaN(seconds) || seconds < 0) return '0:00';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 interface PlayerIconButtonProps {
@@ -86,8 +78,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 }) => {
   const [visible, setVisible] = useState(true);
   const showLoader = loading || buffering;
-  const [slidingValue, setSlidingValue] = useState<number | null>(null);
-  const [pendingSeek, setPendingSeek] = useState<number | null>(null);
   const { restartTimer, clearTimer } = useAutoHide(visible, playing, 3000, () => { setVisible(false); });
   const fadeRef = useRef<HTMLDivElement>(null);
 
@@ -104,15 +94,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     return () => { document.documentElement.style.cursor = ''; };
   }, [isFullscreen, visible]);
 
-  const displayTime = slidingValue ?? pendingSeek ?? currentTime;
-  const isSliding = slidingValue != null;
-
-  useEffect(() => {
-    if (pendingSeek != null && Math.abs(currentTime - pendingSeek) < 1) {
-      setPendingSeek(null);
-    }
-  }, [currentTime, pendingSeek]);
-
   const handleMouseMove = useCallback(() => {
     if (!visible) setVisible(true);
     restartTimer();
@@ -122,22 +103,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     setVisible((v) => !v);
     clearTimer();
   }, [clearTimer]);
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    clearTimer();
-    setSlidingValue(Number(e.target.value));
-  };
-
-  const handleSliderEnd = (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
-    const value = Number((e.target as HTMLInputElement).value);
-    if (loading) return;
-    onSeek(value);
-    setPendingSeek(value);
-    setSlidingValue(null);
-    restartTimer();
-  };
-
-  const progress = duration > 0 ? (displayTime / duration) * 100 : 0;
 
   return (
     <div
@@ -221,34 +186,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
-          <div className="flex items-center gap-2">
-            <span className={`text-xs w-10 text-right tabular-nums drop-shadow-lg select-none ${isSliding ? 'text-purple-400' : 'text-white/80'}`}>
-              {formatTime(displayTime)}
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={duration > 0 ? duration : 1}
-              value={displayTime}
-              onMouseDown={() => clearTimer()}
-              onTouchStart={() => clearTimer()}
-              onChange={handleSliderChange}
-              onMouseUp={handleSliderEnd}
-              onTouchEnd={handleSliderEnd}
-              className="flex-1 h-1 appearance-none bg-white/20 rounded-full cursor-default
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-400
-                [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-purple-500/40
-                hover:h-1.5 transition-all duration-150"
-              style={{
-                background: `linear-gradient(to right, rgb(168,85,247) ${progress}%, rgba(255,255,255,0.15) ${progress}%)`,
-              }}
-            />
-            <span className="text-xs text-white/80 w-10 tabular-nums drop-shadow-lg select-none">
-              {formatTime(duration)}
-            </span>
-          </div>
-
+          <SeekBar
+            currentTime={currentTime}
+            duration={duration}
+            loading={loading}
+            onSeek={onSeek}
+            onInteractStart={clearTimer}
+            onInteractEnd={restartTimer}
+          />
         </div>
       </div>
     </div>
