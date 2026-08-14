@@ -98,7 +98,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                 {anime.synopsis}
               </p>
               {hasLongSynopsis && !expanded && (
-                <span className="text-xs text-neutral-300 hover:text-neutral-100 mt-1 transition-colors block">
+                <span className="text-xs text-purple-500 hover:text-purple-400 mt-1 transition-colors block">
                   Leer más
                 </span>
               )}
@@ -132,7 +132,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
         </h3>
         <button
           onClick={onToggleSort}
-          className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/70"
+          className="p-1.5 rounded-md text-purple-500 hover:text-purple-400 hover:bg-neutral-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50"
           aria-label={isAscending ? 'Orden descendente' : 'Orden ascendente'}
         >
           <ChevronUp className={`w-4 h-4 transition-transform ${isAscending ? '' : 'rotate-180'}`} />

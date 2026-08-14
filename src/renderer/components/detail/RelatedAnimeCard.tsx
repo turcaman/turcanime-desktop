@@ -28,7 +28,7 @@ export const RelatedAnimeCard: React.FC<RelatedAnimeCardProps> = ({
           />
         )}
         {label && (
-          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-neutral-900/80 rounded text-[8px] text-neutral-200 font-bold uppercase">
+          <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-purple-500 rounded text-[8px] text-white font-bold uppercase">
             {label}
           </div>
         )}

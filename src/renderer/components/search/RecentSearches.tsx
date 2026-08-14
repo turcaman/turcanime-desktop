@@ -41,7 +41,7 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
             onClick={() => onSelect(term)}
             className="flex items-center gap-3 flex-1 min-w-0 text-left"
           >
-            <Clock className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+            <Clock className="w-4 h-4 text-purple-500 flex-shrink-0" />
             <span className="text-sm text-neutral-300 truncate group-hover:text-neutral-200 transition-colors">
               {term}
             </span>
