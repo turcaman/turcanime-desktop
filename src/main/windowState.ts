@@ -1,9 +1,6 @@
 import { screen, type BrowserWindow, type Rectangle } from 'electron';
 import { store } from './store';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const electronStore = store as any;
-
 interface WindowState {
   bounds: Rectangle;
   maximized: boolean;
@@ -24,7 +21,7 @@ function isVisible(bounds: Rectangle): boolean {
 }
 
 export function loadWindowState(): WindowState | null {
-  const state = electronStore.get(WINDOW_STATE_KEY) as WindowState | undefined;
+  const state = store.get(WINDOW_STATE_KEY) as WindowState | undefined;
   if (!state || !state.bounds) return null;
   if (!isVisible(state.bounds)) return null;
   return state;
@@ -35,5 +32,5 @@ export function saveWindowState(win: BrowserWindow): void {
     bounds: win.getBounds(),
     maximized: win.isMaximized(),
   };
-  electronStore.set(WINDOW_STATE_KEY, state);
+  store.set(WINDOW_STATE_KEY, state);
 }

@@ -4,13 +4,45 @@ import { store } from './store';
 import { networkMonitor } from './networkMonitor';
 import { logger } from './logger';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const electronStore = store as any;
-
 let mainWindow: BrowserWindow | undefined;
 
 export function setMainWindow(win: BrowserWindow): void {
   mainWindow = win;
+}
+
+type FetchViaNetResult = {
+  ok: boolean;
+  status: number;
+  data: unknown;
+  error?: string;
+};
+
+// Shared net.fetch wrapper for the proxy/bridge handlers. Main-process fetches
+// are not subject to CORS and can attach the session UA and a same-origin
+// Referer so CDNs that validate headers accept the requests. Logging and the
+// uniform { ok, status, data } envelope (with error shaping) live in one
+// place instead of being duplicated per handler.
+async function fetchViaNet(
+  url: string,
+  init: { method?: string; headers?: Record<string, string>; body?: string },
+  parse: 'text' | 'json' | 'buffer',
+  label: string,
+): Promise<FetchViaNetResult> {
+  try {
+    const response = await net.fetch(url, init);
+    if (parse === 'buffer') {
+      const data = await response.arrayBuffer();
+      logger.debug('IPC', `${label} ${url.slice(0, 80)} -> ${response.status} (${data.byteLength}B)`);
+      return { ok: response.ok, status: response.status, data };
+    }
+    const data = parse === 'json' ? await response.json() : await response.text();
+    const size = typeof data === 'string' ? `${data.length} bytes` : 'JSON';
+    logger.debug('IPC', `${label} ${url.slice(0, 60)} -> ${response.status} (${size})`);
+    return { ok: response.ok, status: response.status, data };
+  } catch (err) {
+    logger.error('IPC', `${label} failed: ${url.slice(0, 60)}: ${err}`);
+    return { ok: false, status: 0, data: null, error: String(err) };
+  }
 }
 
 export function registerIpcHandlers(): void {
@@ -43,23 +75,23 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('store:get', async (_event, key: string) => {
     logger.debug('IPC', `store:get ${key}`);
-    return electronStore.get(key);
+    return store.get(key);
   });
 
   ipcMain.handle('store:set', async (_event, key: string, value: unknown) => {
     logger.debug('IPC', `store:set ${key}`);
-    electronStore.set(key, value);
+    store.set(key, value);
     return true;
   });
 
   ipcMain.handle('store:delete', async (_event, key: string) => {
     logger.debug('IPC', `store:delete ${key}`);
-    electronStore.delete(key);
+    store.delete(key);
     return true;
   });
 
   ipcMain.handle('store:getAllKeys', async () => {
-    const keys = Object.keys(electronStore.store);
+    const keys = Object.keys(store.store);
     logger.debug('IPC', `store:getAllKeys -> ${keys.length} keys`);
     return keys;
   });
@@ -72,74 +104,64 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('fetch:proxy', async (_event, url: string, opts: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }) => {
     logger.debug('IPC', `fetch:proxy ${url.slice(0, 80)}`);
-    try {
-      const method = opts?.method ?? 'GET';
-      const headers = opts?.headers ?? {};
-      const body = opts?.body;
-      const response = await net.fetch(url, { method, headers, body });
-      if (opts?.json) {
-        const data = await response.json();
-        logger.debug('IPC', `fetch:proxy ${url.slice(0, 60)} -> ${response.status} (JSON)`);
-        return { ok: response.ok, status: response.status, data };
-      }
-      const data = await response.text();
-      logger.debug('IPC', `fetch:proxy ${url.slice(0, 60)} -> ${response.status} (${data.length} bytes)`);
-      return { ok: response.ok, status: response.status, data };
-    } catch (err) {
-      logger.error('IPC', `fetch:proxy failed: ${url.slice(0, 60)}: ${err}`);
-      return { ok: false, status: 0, data: null, error: String(err) };
-    }
+    return fetchViaNet(
+      url,
+      {
+        method: opts?.method ?? 'GET',
+        headers: opts?.headers ?? {},
+        body: opts?.body,
+      },
+      opts?.json ? 'json' : 'text',
+      'fetch:proxy',
+    );
   });
 
   // Binary variant of fetch:proxy for HLS segments (hls.js custom loader).
-  // net.fetch in main is not subject to CORS and can attach the session UA and
-  // a same-origin Referer so CDNs that validate headers accept the requests.
   // Supports byte-range requests for #EXT-X-BYTERANGE playlists: the Range
   // header is sent and, if the server ignores it (200 full body), the slice is
   // applied here so hls.js always receives exactly the requested bytes.
   ipcMain.handle('fetch:proxyBuffer', async (_event, url: string, rangeStart: number | null = null, rangeEnd: number | null = null) => {
-    try {
-      const session = hiddenSession.getSession();
-      const headers: Record<string, string> = {
-        'User-Agent': session?.userAgent ?? '',
-        'Referer': `${new URL(url).origin}/`,
-        'Accept': '*/*',
-      };
-      // rangeEnd === 0 means "no byte range" (hls.js defaults to 0,0); only
-      // real EXT-X-BYTERANGE requests carry an end offset.
-      if (rangeStart != null && rangeEnd != null && rangeEnd > 0) {
-        headers['Range'] = `bytes=${rangeStart}-${rangeEnd}`;
-      }
-      const response = await net.fetch(url, { method: 'GET', headers });
-      let data = await response.arrayBuffer();
-      // Server ignored the Range header: trim to the requested window.
-      if (rangeStart != null && rangeEnd != null && rangeEnd > 0 && data.byteLength > rangeEnd - rangeStart + 1) {
-        data = data.slice(rangeStart, rangeEnd + 1);
-      }
-
-      logger.debug('IPC', `fetch:proxyBuffer ${url.slice(0, 80)} -> ${response.status} (${data.byteLength}B)`);
-      return { ok: response.ok, status: response.status, data };
-    } catch (err) {
-      logger.error('IPC', `fetch:proxyBuffer failed: ${url.slice(0, 80)}: ${err}`);
-      return { ok: false, status: 0, data: null, error: String(err) };
+    const session = hiddenSession.getSession();
+    const headers: Record<string, string> = {
+      'User-Agent': session?.userAgent ?? '',
+      'Referer': `${new URL(url).origin}/`,
+      'Accept': '*/*',
+    };
+    // rangeEnd === 0 means "no byte range" (hls.js defaults to 0,0); only
+    // real EXT-X-BYTERANGE requests carry an end offset.
+    if (rangeStart != null && rangeEnd != null && rangeEnd > 0) {
+      headers['Range'] = `bytes=${rangeStart}-${rangeEnd}`;
     }
+    const result = await fetchViaNet(
+      url,
+      { method: 'GET', headers },
+      'buffer',
+      'fetch:proxyBuffer',
+    );
+    // Server ignored the Range header: trim to the requested window.
+    if (
+      rangeStart != null && rangeEnd != null && rangeEnd > 0 &&
+      result.data instanceof ArrayBuffer &&
+      result.data.byteLength > rangeEnd - rangeStart + 1
+    ) {
+      return {
+        ok: result.ok,
+        status: result.status,
+        data: result.data.slice(rangeStart, rangeEnd + 1),
+        error: result.error,
+      };
+    }
+    return result;
   });
 
   ipcMain.handle('fetch:bridge', async (_event, url: string, headers: Record<string, string>) => {
     logger.debug('IPC', `fetch:bridge ${url.slice(0, 80)}`);
-    try {
-      logger.debug('IPC', `fetch:bridge headers: ${JSON.stringify(headers)}`);
-      const response = await net.fetch(url, { method: 'GET', headers });
-      const data = await response.text();
-      logger.debug('IPC', `fetch:bridge ${url.slice(0, 60)} -> ${response.status} (${data.length} bytes)`);
-      if (!response.ok) {
-        logger.warn('IPC', `fetch:bridge response body (first 500): ${data.slice(0, 500)}`);
-      }
-      return { ok: response.ok, status: response.status, data };
-    } catch (err) {
-      logger.error('IPC', `fetch:bridge failed: ${url.slice(0, 60)}: ${err}`);
-      return { ok: false, status: 0, data: null, error: String(err) };
+    logger.debug('IPC', `fetch:bridge headers: ${JSON.stringify(headers)}`);
+    const result = await fetchViaNet(url, { method: 'GET', headers }, 'text', 'fetch:bridge');
+    if (!result.ok && typeof result.data === 'string') {
+      logger.warn('IPC', `fetch:bridge response body (first 500): ${result.data.slice(0, 500)}`);
     }
+    return result;
   });
 
   ipcMain.handle('player:setFullScreen', (_event, flag: boolean) => {
