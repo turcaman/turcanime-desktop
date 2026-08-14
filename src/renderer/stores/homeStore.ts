@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { source } from '../services/source';
 import { createCachedFetcher } from '../utils/cachedFetcher';
-import { renewSessionAndInvalidateCache } from '../utils/sessionRecovery';
+import { renewSession } from '../utils/sessionRecovery';
 import { CACHE_PREFIXES, CACHE_TTL } from '../../config/cache';
 import type { AppError, HomeData } from '../../types';
 
@@ -28,7 +28,7 @@ function scheduleRecovery(): void {
   recoveryTimer = setTimeout(() => {
     recoveryTimer = null;
     void (async () => {
-      const ok = await renewSessionAndInvalidateCache();
+      const ok = await renewSession();
       await useHomeStore.getState().fetchHome(ok);
     })();
   }, delay);

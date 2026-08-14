@@ -2,11 +2,10 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useUIStore } from '../../stores/uiStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { renewSessionAndInvalidateCache } from '../../utils/sessionRecovery';
+import { renewSession } from '../../utils/sessionRecovery';
 
 export const ConnectionSection: React.FC = () => {
   const isRefreshingSession = useUIStore((s) => s.isRefreshingSession);
-  const setSessionRefreshing = useUIStore((s) => s.setSessionRefreshing);
   const [refreshed, setRefreshed] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [confirmingRefresh, setConfirmingRefresh] = useState(false);
@@ -22,24 +21,21 @@ export const ConnectionSection: React.FC = () => {
   }, [confirmingRefresh]);
 
   const handleRefresh = useCallback(async () => {
-    setSessionRefreshing(true);
     setRefreshed(false);
     setRefreshError(null);
     setConfirmingRefresh(false);
-    // renewSessionAndClearCache never throws: a failed or cookie-less refresh
-    // is reported via the returned flag.
-    const ok = await renewSessionAndInvalidateCache();
+    // renewSession never throws and dedupes concurrent renewals (manual or
+    // automatic); a failed or cookie-less refresh is reported via the flag.
+    const ok = await renewSession();
     if (!ok) {
       setRefreshError('No se pudo renovar la conexión. Espera un momento e inténtalo de nuevo.');
-      setSessionRefreshing(false);
       return;
     }
     // The home screen refetches on the invalidation timestamp (and on mount).
     useSettingsStore.getState().invalidateCache();
     setRefreshed(true);
     setTimeout(() => setRefreshed(false), 2000);
-    setSessionRefreshing(false);
-  }, [setSessionRefreshing]);
+  }, []);
 
   return (
     <div>
@@ -56,10 +52,10 @@ export const ConnectionSection: React.FC = () => {
           />
           <div className="flex flex-col items-start">
             <span className="text-sm text-neutral-200">
-              {refreshed ? 'Conexión renovada' : 'Renovar conexión'}
+              {isRefreshingSession ? 'Renovando conexión...' : refreshed ? 'Conexión renovada' : 'Renovar conexión'}
             </span>
             <span className="text-[11px] text-neutral-400 mt-0.5">
-              Refresca sesión y cache
+              {isRefreshingSession ? 'Renovando sesión y caché...' : 'Refresca sesión y cache'}
             </span>
           </div>
         </button>
