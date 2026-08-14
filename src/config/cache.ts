@@ -26,4 +26,7 @@ export const LIMITS = {
 export const TIMEOUTS = {
   SEARCH: 15_000,
   REQUEST_TIMEOUT: 30_000,
+  MAX_ATTEMPTS: 3,
+  RETRY_BASE_DELAY: 1_000,
+  RETRY_MAX_DELAY: 4_000,
 };

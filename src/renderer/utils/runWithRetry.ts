@@ -1,5 +1,6 @@
 import { sessionManager } from '../services/session';
 import { logger } from './logger';
+import { backoffDelay } from '../../config/backoff';
 import type { AppError } from '../../types';
 
 const BACKOFF_BASE_MS = 1000;
@@ -19,8 +20,8 @@ function wait(ms: number): Promise<void> {
 
 // Single retry policy for all HTTP-backed stores: auth errors refresh the
 // session and retry up to AUTH_MAX_RETRIES; transient errors retry up to
-// MAX_RETRIES, both with exponential backoff. Errors are never cached, so a
-// fresh attempt always re-fetches.
+// MAX_RETRIES, both with full-jitter exponential backoff (mirrors the mobile
+// app). Errors are never cached, so a fresh attempt always re-fetches.
 export async function runWithRetry<T>(
   run: (attempt: number) => Promise<RetryResult<T>>,
   context: string,
@@ -33,12 +34,12 @@ export async function runWithRetry<T>(
     if (isAuth && attempt < AUTH_MAX_RETRIES) {
       logger.info(context, `Auth error (attempt ${attempt + 1}/${AUTH_MAX_RETRIES}), refreshing session`);
       await sessionManager.refreshSession();
-      await wait(Math.min(BACKOFF_BASE_MS * Math.pow(2, attempt), AUTH_BACKOFF_CAP_MS));
+      await wait(backoffDelay(attempt, BACKOFF_BASE_MS, AUTH_BACKOFF_CAP_MS));
       continue;
     }
     if (!isAuth && attempt < MAX_RETRIES) {
       logger.info(context, `Retry ${attempt + 1}/${MAX_RETRIES} after backoff`);
-      await wait(Math.min(BACKOFF_BASE_MS * Math.pow(2, attempt), RETRY_BACKOFF_CAP_MS));
+      await wait(backoffDelay(attempt, BACKOFF_BASE_MS, RETRY_BACKOFF_CAP_MS));
       continue;
     }
     return result;

@@ -4,6 +4,7 @@ import { store } from './store';
 import { networkMonitor } from './networkMonitor';
 import { logger } from './logger';
 import { TIMEOUTS } from '../config/cache';
+import { backoffDelay } from '../config/backoff';
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -23,27 +24,53 @@ type FetchViaNetResult = {
 // Referer so CDNs that validate headers accept the requests. Logging and the
 // uniform { ok, status, data } envelope (with error shaping) live in one
 // place instead of being duplicated per handler.
+//
+// Requests that never complete (timeout or network error, status 0) are
+// retried up to TIMEOUTS.MAX_ATTEMPTS with full-jitter backoff, mirroring the
+// mobile fetch layer. HTTP statuses flow through untouched so the caller
+// (store or hls.js) applies its own policy. retryOnFailure=false keeps one
+// timed attempt for HLS segments, where hls.js owns the retry logic.
 async function fetchViaNet(
   url: string,
   init: { method?: string; headers?: Record<string, string>; body?: string },
   parse: 'text' | 'json' | 'buffer',
   label: string,
+  retryOnFailure = true,
 ): Promise<FetchViaNetResult> {
-  try {
-    const response = await net.fetch(url, init);
-    if (parse === 'buffer') {
-      const data = await response.arrayBuffer();
-      logger.debug('IPC', `${label} ${url.slice(0, 80)} -> ${response.status} (${data.byteLength}B)`);
+  const attemptFetch = async (): Promise<FetchViaNetResult> => {
+    try {
+      const response = await net.fetch(url, init);
+      if (parse === 'buffer') {
+        const data = await response.arrayBuffer();
+        logger.debug('IPC', `${label} ${url.slice(0, 80)} -> ${response.status} (${data.byteLength}B)`);
+        return { ok: response.ok, status: response.status, data };
+      }
+      const data = parse === 'json' ? await response.json() : await response.text();
+      const size = typeof data === 'string' ? `${data.length} bytes` : 'JSON';
+      logger.debug('IPC', `${label} ${url.slice(0, 60)} -> ${response.status} (${size})`);
       return { ok: response.ok, status: response.status, data };
+    } catch (err) {
+      logger.error('IPC', `${label} failed: ${url.slice(0, 60)}: ${err}`);
+      return { ok: false, status: 0, data: null, error: String(err) };
     }
-    const data = parse === 'json' ? await response.json() : await response.text();
-    const size = typeof data === 'string' ? `${data.length} bytes` : 'JSON';
-    logger.debug('IPC', `${label} ${url.slice(0, 60)} -> ${response.status} (${size})`);
-    return { ok: response.ok, status: response.status, data };
-  } catch (err) {
-    logger.error('IPC', `${label} failed: ${url.slice(0, 60)}: ${err}`);
-    return { ok: false, status: 0, data: null, error: String(err) };
+  };
+
+  for (let attempt = 0; ; attempt++) {
+    const result = await withTimeout(
+      attemptFetch(),
+      TIMEOUTS.REQUEST_TIMEOUT,
+      label,
+      { ok: false, status: 0, data: null, error: 'TIMEOUT' },
+    );
+    if (result.ok || result.status !== 0 || !retryOnFailure) return result;
+    if (attempt >= TIMEOUTS.MAX_ATTEMPTS - 1) return result;
+    logger.info('IPC', `${label} failed (attempt ${attempt + 1}/${TIMEOUTS.MAX_ATTEMPTS}), retrying`);
+    await sleep(backoffDelay(attempt));
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Hidden-window fetches have no built-in timeout; a stalled page request
@@ -127,12 +154,20 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('fetch:request', async (_event, url: string, options?: Record<string, unknown>) => {
     logger.debug('IPC', `fetch:request ${url.slice(0, 80)}`);
-    return withTimeout(
-      hiddenSession.fetchInPage(url, options),
-      TIMEOUTS.REQUEST_TIMEOUT,
-      `fetch:request ${url.slice(0, 60)}`,
-      { ok: false, status: 0, data: null, error: 'TIMEOUT' },
-    );
+    for (let attempt = 0; ; attempt++) {
+      const result = await withTimeout(
+        hiddenSession.fetchInPage(url, options),
+        TIMEOUTS.REQUEST_TIMEOUT,
+        `fetch:request ${url.slice(0, 60)}`,
+        { ok: false, status: 0, data: null, error: 'TIMEOUT' },
+      );
+      // Retry only when the request never completed (timeout / network error);
+      // real HTTP responses go back as-is for the store to handle.
+      if (result.ok || result.status !== 0) return result;
+      if (attempt >= TIMEOUTS.MAX_ATTEMPTS - 1) return result;
+      logger.info('IPC', `fetch:request failed (attempt ${attempt + 1}/${TIMEOUTS.MAX_ATTEMPTS}), retrying`);
+      await sleep(backoffDelay(attempt));
+    }
   });
 
   ipcMain.handle('fetch:proxy', async (_event, url: string, opts: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }) => {
@@ -170,6 +205,7 @@ export function registerIpcHandlers(): void {
       { method: 'GET', headers },
       'buffer',
       'fetch:proxyBuffer',
+      false, // hls.js owns retry for segments; keep a single timed attempt
     );
     // Server ignored the Range header: trim to the requested window.
     if (
