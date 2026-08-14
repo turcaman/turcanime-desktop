@@ -22,7 +22,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const banner = anime.banner || anime.image;
-  const hasLongSynopsis = anime.synopsis.length > 200;
+  const hasLongSynopsis = anime.synopsis.length > 150;
   // The parser normalizes status to 'En emisión'/'Finalizado'; fall back to
   // 'Finalizado' when the source did not report one.
   const isAiring = /emisi[oó]n/i.test(anime.status ?? '');
@@ -69,7 +69,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
           </h1>
           {anime.genres.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {anime.genres.slice(0, 4).map((g) => (
+              {anime.genres.map((g) => (
                 <span
                   key={g}
                   className="text-[10px] font-semibold text-white/80 bg-white/10 rounded-md px-2.5 py-1"
@@ -83,9 +83,9 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
       </div>
 
       <div className="px-6 pt-5">
-        {anime.synopsis && (
-          <div className="mb-5">
-            <h3 className="text-[11px] font-medium text-neutral-400 uppercase tracking-[0.14em] mb-3">Sinopsis</h3>
+        <div className="mb-5">
+          <h3 className="text-[11px] font-medium text-neutral-400 uppercase tracking-[0.14em] mb-3">Sinopsis</h3>
+          {anime.synopsis ? (
             <button
               onClick={() => setExpanded(!expanded)}
               className="text-left w-full"
@@ -103,8 +103,10 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
                 </span>
               )}
             </button>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-neutral-400">Sinopsis no disponible</p>
+          )}
+        </div>
 
         {anime.relations && (anime.relations.prequel.length > 0 || anime.relations.sequel.length > 0 || anime.relations.related.length > 0) && (
           <div className="mb-3">

@@ -13,7 +13,7 @@ export const AboutSection: React.FC = () => {
           <Info className="w-4 h-4 text-neutral-400 flex-shrink-0" />
           <div className="flex flex-col items-start">
             <span className="text-sm text-neutral-300">Versión {currentVersion ?? '—'}</span>
-            <span className="text-[11px] text-neutral-400 mt-0.5">Turcanime Desktop</span>
+            <span className="text-[11px] text-neutral-400 mt-0.5">Turcanime</span>
           </div>
         </div>
       </div>

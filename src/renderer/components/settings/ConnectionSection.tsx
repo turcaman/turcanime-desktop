@@ -65,7 +65,7 @@ export const ConnectionSection: React.FC = () => {
         {confirmingRefresh && !isRefreshingSession && (
           <div className="absolute inset-0 flex items-center gap-3 px-4 rounded-lg border border-neutral-700/60 bg-neutral-900 animate-fade-in">
             <span className="text-sm text-neutral-200 flex-1 min-w-0 leading-snug">
-              ¿Seguro? Se renovará la sesión y se limpiará la caché.
+              Si el contenido no carga o ves errores, esto renueva la conexión con el servidor para intentar solucionarlo.
             </span>
             <button
               onClick={() => void handleRefresh()}

@@ -30,6 +30,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           </svg>
         </div>
         <p className="text-sm text-neutral-400">{title}</p>
+        <p className="text-sm text-neutral-500 max-w-[300px] leading-snug">
+          El sitio está tardando más de lo normal en responder. Inténtalo de nuevo en un momento.
+        </p>
         <div className="flex items-center gap-3">
           {onBack && (
             <button
