@@ -19,8 +19,11 @@ async function fetchWithSession(
   const res = await window.electronAPI.fetch(fullUrl, options);
 
   if (!res.ok && !res.data) {
-    const errMsg = typeof res.error === 'string' && res.error.length > 0 ? res.error : 'Network request failed';
-    throw new SourceError(errMsg, 'NETWORK_ERROR');
+    const isTimeout = res.error === 'TIMEOUT';
+    const errMsg = isTimeout
+      ? 'Request timed out'
+      : (typeof res.error === 'string' && res.error.length > 0 ? res.error : 'Network request failed');
+    throw new SourceError(errMsg, isTimeout ? 'TIMEOUT' : 'NETWORK_ERROR');
   }
 
   if (res.status === 401 || res.status === 403) {

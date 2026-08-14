@@ -3,6 +3,7 @@ import { hiddenSession } from './sessionHidden';
 import { store } from './store';
 import { networkMonitor } from './networkMonitor';
 import { logger } from './logger';
+import { TIMEOUTS } from '../config/cache';
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -42,6 +43,34 @@ async function fetchViaNet(
   } catch (err) {
     logger.error('IPC', `${label} failed: ${url.slice(0, 60)}: ${err}`);
     return { ok: false, status: 0, data: null, error: String(err) };
+  }
+}
+
+// Hidden-window fetches have no built-in timeout; a stalled page request
+// would otherwise leave the store loading forever. Enforce a ceiling and
+// report it as a TIMEOUT error (mirrors the mobile REQUEST_TIMEOUT).
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+  timeoutValue: T,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('TIMEOUT')), ms);
+      }),
+    ]);
+  } catch (err) {
+    if (err instanceof Error && err.message === 'TIMEOUT') {
+      logger.warn('IPC', `${label} timed out after ${ms}ms`);
+      return timeoutValue;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -98,8 +127,12 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('fetch:request', async (_event, url: string, options?: Record<string, unknown>) => {
     logger.debug('IPC', `fetch:request ${url.slice(0, 80)}`);
-    const result = await hiddenSession.fetchInPage(url, options);
-    return result;
+    return withTimeout(
+      hiddenSession.fetchInPage(url, options),
+      TIMEOUTS.REQUEST_TIMEOUT,
+      `fetch:request ${url.slice(0, 60)}`,
+      { ok: false, status: 0, data: null, error: 'TIMEOUT' },
+    );
   });
 
   ipcMain.handle('fetch:proxy', async (_event, url: string, opts: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }) => {
