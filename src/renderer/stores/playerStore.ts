@@ -6,6 +6,8 @@ import { pickPreferredServer } from '../utils/servers';
 import { CACHE_PREFIXES, CACHE_TTL } from '../../config/cache';
 import type { AppError, VideoServer } from '../../types';
 
+const NO_SERVERS_MESSAGE = 'No hay idiomas disponibles para este episodio.';
+
 interface PlayerState {
   servers: VideoServer[];
   // slug+number the current servers belong to, so re-entering the player for
@@ -95,9 +97,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ streamUrl: '', error: null });
       const target = pickPreferredServer(state.servers, state.lastLanguage);
       if (!target) {
-        set({
-          error: { type: 'SERVER_ERROR', message: 'No hay idiomas disponibles para este episodio.' },
-        });
+        set({ error: { type: 'SERVER_ERROR', message: NO_SERVERS_MESSAGE } });
         return;
       }
       get().resolveStream(target, force ? { force: true } : undefined);
@@ -108,9 +108,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     get().fetchServers(slug, number).then(() => {
       const s = get();
       if (s.servers.length === 0) {
-        set({
-          error: { type: 'SERVER_ERROR', message: 'No hay idiomas disponibles para este episodio.' },
-        });
+        set({ error: { type: 'SERVER_ERROR', message: NO_SERVERS_MESSAGE } });
         return;
       }
       const target = pickPreferredServer(s.servers, s.lastLanguage);

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronUp } from 'lucide-react';
 import { ImageWithLoader } from '../ui/ImageWithLoader';
+import { RelatedAnimeCard } from './RelatedAnimeCard';
+import { buildRelationsList } from '../../utils/relations';
 import type { AnimeDetail } from '../../../types';
 
 interface DetailHeaderProps {
@@ -21,8 +23,9 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
   const [expanded, setExpanded] = useState(false);
   const banner = anime.banner || anime.image;
   const hasLongSynopsis = anime.synopsis.length > 200;
-  const statusLower = anime.status?.toLowerCase();
-  const isAiring = statusLower != null && (statusLower.includes('emisión') || statusLower.includes('emision'));
+  // The parser normalizes status to 'En emisión'/'Finalizado'; fall back to
+  // 'Finalizado' when the source did not report one.
+  const isAiring = /emisi[oó]n/i.test(anime.status ?? '');
   const statusLabel = isAiring ? 'En emisión' : 'Finalizado';
 
   return (
@@ -107,35 +110,14 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({
           <div className="mb-3">
             <h3 className="text-[11px] font-medium text-neutral-400 uppercase tracking-[0.14em] mb-3">Relacionados</h3>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {[
-                ...anime.relations.prequel.map((r) => ({ ...r, _label: 'Precuela' as const })),
-                ...anime.relations.sequel.map((r) => ({ ...r, _label: 'Secuela' as const })),
-                ...anime.relations.related.map((r) => ({ ...r, _label: null as string | null })),
-              ].map((r) => (
-                <button
+              {buildRelationsList(anime.relations).map((r) => (
+                <RelatedAnimeCard
                   key={r.slug}
-                  onClick={() => onRelatedPress?.(r.slug)}
-                  className="flex-shrink-0 w-24 text-left group"
-                >
-                  <div className="relative w-full aspect-[2/3] bg-neutral-800 rounded-md overflow-hidden mb-1 border border-neutral-800/70 group-hover:border-neutral-700/60 transition-colors">
-                    {r.poster && (
-                      <img
-                        src={r.poster}
-                        alt={r.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                    {r._label && (
-                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-neutral-900/80 rounded text-[8px] text-neutral-200 font-bold uppercase">
-                        {r._label}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-neutral-300 line-clamp-2 leading-tight min-h-[25px] group-hover:text-neutral-100 transition-colors">
-                    {r.name}
-                  </p>
-                </button>
+                  name={r.name}
+                  poster={r.poster}
+                  label={r.label}
+                  onPress={() => onRelatedPress?.(r.slug)}
+                />
               ))}
             </div>
           </div>

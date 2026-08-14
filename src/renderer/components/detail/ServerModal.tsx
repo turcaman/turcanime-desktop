@@ -13,12 +13,15 @@ interface ServerModalProps {
   onClose: () => void;
 }
 
+// The parser normalizes server languages to 'sub'/'latino'/'castellano'.
+const LANGUAGE_LABELS: Record<string, string> = {
+  sub: 'Subtitulado',
+  latino: 'Latino',
+  castellano: 'Castellano',
+};
+
 function mapLanguage(lang: string): string {
-  const code = (lang || '').toUpperCase();
-  if (code.includes('SUB')) return 'Subtitulado';
-  if (code.includes('LAT')) return 'Latino';
-  if (code.includes('CAS')) return 'Castellano';
-  return lang || 'Desconocido';
+  return LANGUAGE_LABELS[lang] ?? (lang || 'Desconocido');
 }
 
 export const ServerModal: React.FC<ServerModalProps> = ({
