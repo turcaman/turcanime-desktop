@@ -1,6 +1,7 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, session } from 'electron';
 import path from 'node:path';
 import { logger } from './logger';
+import { mergeCookies } from './cookies';
 
 const SESSION_WASH_URL = 'https://www.animelatinohd.com/';
 const POLL_TIMEOUT = 90_000;
@@ -70,6 +71,7 @@ export class HiddenSessionWindow {
   private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextWashDelayMs = 0;
   private lastWashAt = 0;
+  private cookieCaptureRegistered = false;
 
   private getWindow(): BrowserWindow {
     if (!this.window) {
@@ -123,6 +125,45 @@ export class HiddenSessionWindow {
       logger.debug('SessionHidden', 'Hidden window closed');
       this.window = null;
     });
+
+    this.registerCookieCapture();
+  }
+
+  // Absorb Set-Cookie headers from every response in the hidden session
+  // (fetchInPage and the wash alike) into the serialized snapshot, mirroring
+  // the mobile fetch layer. The Chromium cookie jar of the hidden window
+  // already stores these automatically, so this only keeps the snapshot used
+  // by main-process net.fetch calls (fetch:bridge) fresh between washes,
+  // avoiding AUTH_ERROR when the origin rotates its cookies mid-session.
+  //
+  // Deliberately passive: it never goes through setSession(), so the wash
+  // machinery (backoff, last-good, pending resolvers) is never triggered, and
+  // it only merges into an existing snapshot -- the wash owns session creation.
+  private registerCookieCapture(): void {
+    if (this.cookieCaptureRegistered) return;
+    this.cookieCaptureRegistered = true;
+
+    const sess = session.fromPartition('persist:anime-session');
+    sess.webRequest.onHeadersReceived((details, callback) => {
+      callback({});
+      const headers = details.responseHeaders;
+      if (!headers) return;
+      const entry = Object.entries(headers).find(([key]) => key.toLowerCase() === 'set-cookie');
+      if (!entry) return;
+      const value = entry[1];
+      const setCookies = Array.isArray(value) ? value : [value];
+      if (setCookies.length === 0) return;
+      this.mergeSessionCookies(setCookies);
+    });
+  }
+
+  private mergeSessionCookies(setCookieHeaders: string[]): void {
+    if (!this.currentSession || this.currentSession.cookies.length === 0) return;
+    const merged = mergeCookies(this.currentSession.cookies, setCookieHeaders);
+    if (merged !== this.currentSession.cookies) {
+      this.currentSession = { ...this.currentSession, cookies: merged };
+      logger.debug('SessionHidden', `Session cookies merged (${merged.length} chars)`);
+    }
   }
 
   destroy(): void {
