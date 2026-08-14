@@ -1,16 +1,18 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePlayerStore } from '../stores/playerStore';
 import { useHistoryStore } from '../stores/historyStore';
-import { sessionManager } from '../services/session';
 import { attachHls, isHlsUrl } from '../services/hlsPlayback';
-import { pickPreferredServer } from '../utils/servers';
-import { logger } from '../utils/logger';
+import { usePlaybackProgress } from './usePlaybackProgress';
+import { usePlaybackRecovery } from './usePlaybackRecovery';
 import type { AnimeDetail } from '../../types';
 
 const PROGRESS_INTERVAL = 250;
-const PLAYER_REFRESH_MAX_RETRIES = 2;
-const NETWORK_ERROR_CODES = [2, 3];
 
+// Orchestrates a playback session for one episode: media element wiring
+// (source, HLS, events), position tracking and progress persistence
+// (usePlaybackProgress) and stream recovery on network errors
+// (usePlaybackRecovery), plus playback controls, shortcuts and prev/next
+// navigation.
 export function usePlayer(
   slug: string,
   episodeNumber: number,
@@ -21,70 +23,34 @@ export function usePlayer(
   const streamUrl = usePlayerStore((s) => s.streamUrl);
   const isLoading = usePlayerStore((s) => s.isLoading);
   const error = usePlayerStore((s) => s.error);
-  const resolveStream = usePlayerStore((s) => s.resolveStream);
-  const addToHistory = useHistoryStore((s) => s.addToHistory);
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
-  const lastSavedEp = useRef(episodeNumber);
-  const animeInfoRef = useRef({ title: '', image: '' });
-  animeInfoRef.current = { title: anime?.title ?? '', image: anime?.image ?? '' };
-
-  const refreshRetryCount = useRef(0);
-  const lastRecoveredStreamUrl = useRef<string>('');
   // Current hls.js instance for HLS streams; destroyed before every source swap.
   const hlsRef = useRef<ReturnType<typeof attachHls> | null>(null);
-  // Bumped after a forced stream re-resolve so the video reloads even when the
-  // resolved URL is identical to the failed one (same URL would not change the
-  // streamUrl state and the effect would never re-run).
-  const [reloadNonce, setReloadNonce] = useState(0);
-  // Last known media position, used by saveProgress during unmount cleanup
-  // when the video ref is already null.
-  const lastMediaState = useRef({ time: 0, duration: 0 });
+
+  const setMediaState = useCallback((time: number, dur: number) => {
+    setCurrentTime(time);
+    setDuration(dur);
+  }, []);
+
+  const { saveProgress, updateMediaState } = usePlaybackProgress({
+    slug,
+    anime,
+    episodeNumber,
+    videoRef,
+    streamUrl,
+    onMediaState: setMediaState,
+  });
+  const { reloadNonce, handleMediaError } = usePlaybackRecovery(streamUrl);
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < episodes.length - 1;
-
-  const saveProgress = useCallback(() => {
-    const video = videoRef.current;
-    const rawTime = video ? video.currentTime : lastMediaState.current.time;
-    let duration = video
-      ? (typeof video.duration === 'number' &&
-        isFinite(video.duration) &&
-        video.duration > 0
-        ? video.duration
-        : 0)
-      : lastMediaState.current.duration;
-
-    if (!duration) {
-      const prev = useHistoryStore.getState().lastViewed.find(
-        (item) => item.slug === slug && item.number === lastSavedEp.current,
-      );
-      if (prev?.duration && isFinite(prev.duration) && prev.duration > 0) {
-        duration = prev.duration;
-      }
-    }
-
-    let progress = rawTime;
-    if (duration > 0 && progress / duration >= 0.9) {
-      progress = duration;
-    }
-
-    addToHistory({
-      title: animeInfoRef.current.title,
-      image: animeInfoRef.current.image,
-      slug,
-      number: lastSavedEp.current,
-      progress,
-      duration,
-      timestamp: Date.now(),
-    });
-  }, [slug, addToHistory, videoRef]);
 
   const navigatePrev = useCallback(() => {
     if (hasPrev) {
@@ -166,6 +132,8 @@ export function usePlayer(
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePlay, seekBack10, seekForward10]);
 
+  // Wires the media source, restores progress and attaches the video element
+  // events. Runs whenever the stream URL or episode changes.
   useEffect(() => {
     if (!streamUrl || !videoRef.current) {
       if (hlsRef.current) {
@@ -177,11 +145,6 @@ export function usePlayer(
         videoRef.current.load();
       }
       return;
-    }
-
-    if (streamUrl !== lastRecoveredStreamUrl.current) {
-      refreshRetryCount.current = 0;
-      lastRecoveredStreamUrl.current = streamUrl;
     }
 
     setCurrentTime(0);
@@ -202,7 +165,6 @@ export function usePlayer(
       video.src = streamUrl;
       video.load();
     }
-    lastSavedEp.current = episodeNumber;
 
     const restoredItems = useHistoryStore.getState().lastViewed;
     const historyItem = restoredItems.find(
@@ -228,17 +190,8 @@ export function usePlayer(
       video.currentTime = restoreProgress;
     }
 
-    const handleTimeUpdate = () => {
-      lastMediaState.current = { time: video.currentTime, duration: video.duration || 0 };
-      setCurrentTime(video.currentTime);
-      setDuration(video.duration || 0);
-    };
-
-    const handleLoadedMetadata = () => {
-      lastMediaState.current = { ...lastMediaState.current, duration: video.duration || 0 };
-      setDuration(video.duration || 0);
-    };
-
+    const handleTimeUpdate = () => updateMediaState(video.currentTime, video.duration || 0);
+    const handleLoadedMetadata = () => updateMediaState(video.currentTime, video.duration || 0);
     const handlePlay = () => setPlaying(true);
     const handlePause = () => setPlaying(false);
 
@@ -253,55 +206,7 @@ export function usePlayer(
     const handleWaiting = () => setBuffering(true);
     const handleCanPlay = () => setBuffering(false);
     const handlePlaying = () => setBuffering(false);
-
-    const handleError = () => {
-      const mediaError = video.error;
-      const code = mediaError?.code ?? 0;
-      logger.warn('Player', `video error code=${code} message=${mediaError?.message ?? 'unknown'}`);
-
-      // SRC_NOT_SUPPORTED (4) cannot be recovered by re-resolving the same
-      // stream (e.g. an HLS url the engine cannot play); surface it instead.
-      if (code === 4) {
-        usePlayerStore.setState({
-          error: { type: 'SERVER_ERROR', message: 'No se pudo reproducir este contenido.' },
-        });
-        return;
-      }
-      if (!NETWORK_ERROR_CODES.includes(code)) return;
-
-      if (refreshRetryCount.current >= PLAYER_REFRESH_MAX_RETRIES) {
-        logger.warn('Player', `refresh retries exhausted (${PLAYER_REFRESH_MAX_RETRIES}), giving up`);
-        usePlayerStore.setState({
-          error: { type: 'NETWORK_ERROR', message: 'La reproducción se interrumpió y no se pudo recuperar.' },
-        });
-        return;
-      }
-
-      refreshRetryCount.current += 1;
-      logger.info('Player', `network error during playback, refreshing session and re-resolving stream (attempt ${refreshRetryCount.current}/${PLAYER_REFRESH_MAX_RETRIES})`);
-
-      (async () => {
-        try {
-          await sessionManager.refreshSession();
-        } catch (e) {
-          logger.warn('Player', 'session refresh failed before stream re-resolve', e);
-          return;
-        }
-        const state = usePlayerStore.getState();
-        const target = pickPreferredServer(state.servers, state.lastLanguage);
-        if (!target) return;
-        try {
-          // force bypasses the stream cache: re-resolving a cached URL would
-          // set the same streamUrl, no effect re-run, and a silent dead player.
-          // lastRecoveredStreamUrl is refreshed inside the effect so a fresh
-          // URL resets the retry counter.
-          await resolveStream(target, { force: true });
-          setReloadNonce((n) => n + 1);
-        } catch (e) {
-          logger.warn('Player', 'stream re-resolve failed', e);
-        }
-      })();
-    };
+    const handleError = () => handleMediaError(video);
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -314,12 +219,12 @@ export function usePlayer(
     video.addEventListener('error', handleError);
 
     if (isHls) {
-      const hls = attachHls(video, streamUrl, (error) => {
+      const hls = attachHls(video, streamUrl, (err) => {
         if (hlsRef.current) {
           hlsRef.current.destroy();
           hlsRef.current = null;
         }
-        usePlayerStore.setState({ error });
+        usePlayerStore.setState({ error: err });
       });
       hlsRef.current = hls;
     }
@@ -344,35 +249,22 @@ export function usePlayer(
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, resolveStream, reloadNonce]);
+  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, updateMediaState, handleMediaError, reloadNonce]);
+
+  // Keep the UI position in sync while playing (timeupdate also fires, but
+  // the timer keeps updates flowing while paused or during slow events).
   useEffect(() => {
     if (progressTimer.current) clearInterval(progressTimer.current);
-    lastSavedEp.current = episodeNumber;
     progressTimer.current = setInterval(() => {
       if (videoRef.current && !videoRef.current.paused) {
-        const ct = videoRef.current.currentTime;
-        const dur = videoRef.current.duration || 0;
-        lastMediaState.current = { time: ct, duration: dur };
-        setCurrentTime(ct);
-        setDuration(dur);
+        updateMediaState(videoRef.current.currentTime, videoRef.current.duration || 0);
       }
     }, PROGRESS_INTERVAL);
 
     return () => {
       if (progressTimer.current) clearInterval(progressTimer.current);
     };
-  }, [episodeNumber, videoRef]);
-
-  // Periodically save progress (state + disk) so it survives app close
-  const persistTimer = useRef<ReturnType<typeof setInterval>>();
-  useEffect(() => {
-    if (!streamUrl) return;
-    persistTimer.current = setInterval(saveProgress, 10000);
-    return () => {
-      if (persistTimer.current) clearInterval(persistTimer.current);
-      saveProgress();
-    };
-  }, [streamUrl, saveProgress]);
+  }, [episodeNumber, videoRef, updateMediaState]);
 
   return {
     playing,
