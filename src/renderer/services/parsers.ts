@@ -1,5 +1,5 @@
 import type { Anime, AnimeRelations, Episode, VideoServer } from '../../types';
-import { SOURCE_CONFIG } from '../../config/source';
+import { SOURCE_CONFIG, LANGUAGE_MAP } from '../../config/source';
 
 function mapJsonEpisodes(episodes: Record<string, unknown>[]): Episode[] {
   return episodes.map((ep) => ({
@@ -296,12 +296,6 @@ export class HtmlParser {
   }
 
   parseEpisodeServers(html: string): VideoServer[] {
-    const languageMap: Record<string, string> = {
-      SUB: 'sub',
-      LAT: 'latino',
-      ESP: 'castellano',
-    };
-
     const scripts = html.matchAll(/<script[^>]*>(.*?)<\/script>/gs);
     for (const match of scripts) {
       const text = match[1];
@@ -332,7 +326,7 @@ export class HtmlParser {
           id: String(p.id ?? idx + 1),
           title: p.server_name ?? `Server ${idx + 1}`,
           url: p.bridge_url ?? '',
-          language: languageMap[p.language ?? ''] ?? 'sub',
+          language: LANGUAGE_MAP[p.language ?? ''] ?? (p.language ?? 'Subtitulado'),
         }));
       } catch {
         continue;

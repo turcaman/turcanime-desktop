@@ -13,17 +13,6 @@ interface ServerModalProps {
   onClose: () => void;
 }
 
-// The parser normalizes server languages to 'sub'/'latino'/'castellano'.
-const LANGUAGE_LABELS: Record<string, string> = {
-  sub: 'Subtitulado',
-  latino: 'Latino',
-  castellano: 'Castellano',
-};
-
-function mapLanguage(lang: string): string {
-  return LANGUAGE_LABELS[lang] ?? (lang || 'Desconocido');
-}
-
 export const ServerModal: React.FC<ServerModalProps> = ({
   visible,
   episodeNumber,
@@ -72,7 +61,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
           {!isLoading && displayServers.length === 0 && (
             <div className="flex items-center justify-center h-28">
               <p className="text-sm text-neutral-400">
-                No hay idiomas disponibles
+                No hay servidor disponible
               </p>
             </div>
           )}
@@ -86,7 +75,7 @@ export const ServerModal: React.FC<ServerModalProps> = ({
                   className="flex items-center w-full px-4 py-3 bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors border border-neutral-800/70 hover:border-neutral-700/60"
                 >
                   <span className="text-sm text-neutral-200">
-                    {mapLanguage(server.language)}
+                    {server.language ?? 'Desconocido'}
                   </span>
                 </button>
               ))}

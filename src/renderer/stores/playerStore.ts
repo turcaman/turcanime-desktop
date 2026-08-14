@@ -6,7 +6,7 @@ import { pickPreferredServer } from '../utils/servers';
 import { CACHE_PREFIXES, CACHE_TTL } from '../../config/cache';
 import type { AppError, VideoServer } from '../../types';
 
-const NO_SERVERS_MESSAGE = 'No hay idiomas disponibles para este episodio.';
+const NO_SERVERS_MESSAGE = 'No hay servidor disponible para este episodio.';
 
 interface PlayerState {
   servers: VideoServer[];
@@ -31,7 +31,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   servers: [],
   serversFor: null,
   streamUrl: '',
-  lastLanguage: 'sub',
+  lastLanguage: 'Subtitulado',
   isLoading: false,
   error: null,
 

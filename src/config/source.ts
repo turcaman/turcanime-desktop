@@ -6,6 +6,14 @@ export const SOURCE_CONFIG = {
   },
 };
 
+// Site language codes mapped straight to display labels at parse time (as in
+// the mobile app), so the UI never re-maps codes.
+export const LANGUAGE_MAP: Record<string, string> = {
+  SUB: 'Subtitulado',
+  LAT: 'Latino',
+  ESP: 'Castellano',
+};
+
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300';
 
 // Poster paths arrive as absolute URLs, TMDB paths (/xxx.jpg) or site-relative
