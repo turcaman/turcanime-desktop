@@ -1,19 +1,10 @@
-import { SOURCE_CONFIG } from '../../config/source';
+import { SOURCE_CONFIG, posterToUrl } from '../../config/source';
 import { sessionManager } from './session';
 import { HtmlParser, ParserUtils, cleanTitle } from './parsers';
 import { extractBest } from './extractors';
 import { logger } from '../utils/logger';
 import { SourceError } from '../utils/errors';
-import type { Anime, AnimeDetail, AutocompleteAnime, HomeData, VideoServer } from '../../types';
-
-const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w300';
-
-function posterToUrl(poster: string): string {
-  if (!poster) return '';
-  if (poster.startsWith('http://') || poster.startsWith('https://')) return poster;
-  if (poster.startsWith('/')) return `${TMDB_IMAGE_BASE}${poster}`;
-  return `${SOURCE_CONFIG.baseUrl}/${poster}`;
-}
+import type { AnimeDetail, HomeData, VideoServer } from '../../types';
 
 async function fetchWithSession(
   url: string,
@@ -46,15 +37,31 @@ async function fetchWithSession(
   return { ok: res.ok, status: res.status, data: res.data };
 }
 
-async function fetchSearchItems(query: string): Promise<Record<string, unknown>[]> {
+export interface RawSearchItem {
+  id?: unknown;
+  name: string;
+  slug: string;
+  poster: string;
+  type?: string;
+}
+
+// Raw search payload shared by results and suggestions so both hit the
+// endpoint once per query (the store caches the raw items under one key).
+export async function searchRaw(query: string): Promise<RawSearchItem[]> {
   const res = await fetchWithSession(
     `/api/anime/search?q=${encodeURIComponent(query)}`,
   );
   const json: Record<string, unknown> = JSON.parse(res.data);
-  return (json.data as Record<string, unknown>[]) ?? [];
+  const items = json.data;
+  if (!Array.isArray(items)) {
+    throw new SourceError('Unexpected search response format', 'UNKNOWN');
+  }
+  return items as RawSearchItem[];
 }
 
 export const source = {
+  searchRaw,
+
   async getHomeData(): Promise<HomeData> {
     const res = await fetchWithSession(SOURCE_CONFIG.endpoints.home);
     const html = res.data;
@@ -64,26 +71,6 @@ export const source = {
     return { recent };
   },
 
-  async search(query: string): Promise<Anime[]> {
-    const items = await fetchSearchItems(query);
-    return items.map((item) => ({
-      title: (item.name as string) ?? '',
-      image: posterToUrl(item.poster as string),
-      slug: (item.slug as string) ?? '',
-      status: '',
-    }));
-  },
-
-  async getSuggestions(query: string): Promise<AutocompleteAnime[]> {
-    const items = await fetchSearchItems(query);
-    return items.map((item) => ({
-      id: String(item.id ?? ''),
-      name: (item.name as string) ?? '',
-      poster: posterToUrl(item.poster as string),
-      slug: (item.slug as string) ?? '',
-      type: (item.type as string) ?? 'anime',
-    }));
-  },
 
   async getDetails(slug: string, options?: Record<string, unknown>): Promise<AnimeDetail> {
     const res = await fetchWithSession(`/anime/${slug}`, options);

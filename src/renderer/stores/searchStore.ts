@@ -1,7 +1,9 @@
 import { create } from 'zustand';
-import { source } from '../services/source';
+import { source, type RawSearchItem } from '../services/source';
+import { cleanTitle } from '../services/parsers';
 import { withCache } from '../utils/cache';
 import { createCachedFetcher } from '../utils/cachedFetcher';
+import { posterToUrl } from '../../config/source';
 import { CACHE_PREFIXES, CACHE_TTL, TIMEOUTS } from '../../config/cache';
 import type { Anime, AppError, AutocompleteAnime } from '../../types';
 
@@ -9,11 +11,36 @@ export type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 
 let suggestionsController: AbortController | null = null;
 
-const searchFetcher = createCachedFetcher<[query: string, force?: boolean], Anime[]>({
+// Results and suggestions share one cache entry per query (same raw endpoint);
+// normalize the key so casing/whitespace variants hit the same entry.
+function normalizeSearchKey(query: string): string {
+  return query.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
+function toAnime(item: RawSearchItem): Anime {
+  return {
+    title: cleanTitle(item.name ?? ''),
+    image: posterToUrl(item.poster ?? ''),
+    slug: item.slug ?? '',
+    status: '',
+  };
+}
+
+function toSuggestion(item: RawSearchItem): AutocompleteAnime {
+  return {
+    id: String(item.id ?? ''),
+    name: item.name ?? '',
+    poster: posterToUrl(item.poster ?? ''),
+    slug: item.slug ?? '',
+    type: item.type ?? 'anime',
+  };
+}
+
+const searchFetcher = createCachedFetcher<[query: string, force?: boolean], RawSearchItem[]>({
   context: 'searchStore',
-  cacheKey: (query) => `${CACHE_PREFIXES.SEARCH}_${query}`,
+  cacheKey: (query) => `${CACHE_PREFIXES.SEARCH}_${normalizeSearchKey(query)}`,
   ttl: CACHE_TTL.SEARCH,
-  fetch: (query) => source.search(query),
+  fetch: (query) => source.searchRaw(query),
   forceArgIndex: 1,
 });
 
@@ -54,7 +81,7 @@ export const useSearchStore = create<SearchState>((set) => ({
       return;
     }
 
-    set({ searchAnimes: result.data ?? [], status: 'searched' });
+    set({ searchAnimes: (result.data ?? []).map(toAnime), status: 'searched' });
   },
 
   fetchSuggestions: async (query) => {
@@ -64,14 +91,14 @@ export const useSearchStore = create<SearchState>((set) => ({
     suggestionsController = new AbortController();
 
     const result = await withCache(
-      `${CACHE_PREFIXES.SUGGESTIONS}_${query}`,
-      async () => source.getSuggestions(query),
-      { ttl: CACHE_TTL.SUGGESTIONS, signal: suggestionsController.signal },
+      `${CACHE_PREFIXES.SEARCH}_${normalizeSearchKey(query)}`,
+      () => source.searchRaw(query),
+      { ttl: CACHE_TTL.SEARCH, signal: suggestionsController.signal },
     );
 
     if (result.error) return;
 
-    set({ suggestions: result.data ?? [] });
+    set({ suggestions: (result.data ?? []).map(toSuggestion) });
   },
 
   cancelSearch: () => {
