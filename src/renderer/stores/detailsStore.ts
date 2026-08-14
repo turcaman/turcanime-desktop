@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { source } from '../services/source';
-import { withCache } from '../utils/cache';
-import { runWithRetry } from '../utils/runWithRetry';
+import { createCachedFetcher } from '../utils/cachedFetcher';
 import { CACHE_PREFIXES, CACHE_TTL } from '../../config/cache';
 import type { AnimeDetail, AppError } from '../../types';
 
-let detailsController: AbortController | null = null;
+const detailsFetcher = createCachedFetcher<[slug: string], AnimeDetail | null>({
+  context: 'detailsStore',
+  cacheKey: (slug) => `${CACHE_PREFIXES.ANIME}_${slug}`,
+  ttl: CACHE_TTL.DETAILS,
+  fetch: (slug) => source.getDetails(slug),
+});
 
 interface DetailsState {
   activeAnime: AnimeDetail | null;
@@ -20,26 +24,11 @@ export const useDetailsStore = create<DetailsState>((set) => ({
   isLoading: false,
   error: null,
 
-  fetchDetails: async (slug: string) => {
-    if (detailsController) {
-      detailsController.abort();
-    }
-    detailsController = new AbortController();
-
+  fetchDetails: async (slug) => {
     set({ isLoading: true, error: null });
-
-    const result = await runWithRetry(
-      (attempt) =>
-        withCache(
-          `${CACHE_PREFIXES.ANIME}_${slug}`,
-          (signal) => {
-            const details = source.getDetails(slug, { signal });
-            return details;
-          },
-          { ttl: CACHE_TTL.DETAILS, signal: detailsController?.signal, force: attempt > 0 },
-        ),
-      'detailsStore',
-    );
+    const { result, isCurrent } = await detailsFetcher.run(slug);
+    // A newer fetchDetails/reset superseded this one; skip stale writes.
+    if (!isCurrent()) return;
 
     if (result.error) {
       set({ error: result.error, isLoading: false });
@@ -50,10 +39,7 @@ export const useDetailsStore = create<DetailsState>((set) => ({
   },
 
   reset: () => {
-    if (detailsController) {
-      detailsController.abort();
-      detailsController = null;
-    }
+    detailsFetcher.abort();
     set({ activeAnime: null, isLoading: false, error: null });
   },
 }));

@@ -8,7 +8,6 @@ export function useSearchScreen() {
   const term = useSearchStore((s) => s.lastSearchTerm);
   const searchAnimes = useSearchStore((s) => s.searchAnimes);
   const suggestions = useSearchStore((s) => s.suggestions);
-  const isLoading = useSearchStore((s) => s.isLoading);
   const error = useSearchStore((s) => s.error);
   const status = useSearchStore((s) => s.status);
   const fetchSearch = useSearchStore((s) => s.fetchSearch);
@@ -52,11 +51,10 @@ export function useSearchScreen() {
     const query = (searchTerm ?? term).trim();
     if (!query) return;
 
-    setStatus('searching');
+    // fetchSearch owns the searching -> searched transition in the store.
     await fetchSearch(query);
     await saveRecentSearch(query);
-    setStatus('searched');
-  }, [term, fetchSearch, saveRecentSearch, setStatus]);
+  }, [term, fetchSearch, saveRecentSearch]);
 
   const handleSearch = useCallback(() => {
     executeSearch();
@@ -92,6 +90,10 @@ export function useSearchScreen() {
       cancelSearch();
     };
   }, [cancelSearch]);
+
+  // Loading is derived from the searching status: the store no longer keeps a
+  // parallel isLoading flag.
+  const isLoading = status === 'searching';
 
   return {
     term,

@@ -1,12 +1,9 @@
 import { create } from 'zustand';
 import { source } from '../services/source';
-import { sessionManager } from '../services/session';
-import { withCache, clearAllCache } from '../utils/cache';
-import { runWithRetry } from '../utils/runWithRetry';
+import { createCachedFetcher } from '../utils/cachedFetcher';
+import { renewSessionAndClearCache } from '../utils/sessionRecovery';
 import { CACHE_PREFIXES, CACHE_TTL } from '../../config/cache';
 import type { AppError, HomeData } from '../../types';
-
-let homeController: AbortController | null = null;
 
 // After a cold start without cookies (e.g. clearing the cache) every fetch
 // dies with AUTH_ERROR until the session wash succeeds. Retry with increasing
@@ -31,16 +28,19 @@ function scheduleRecovery(): void {
   recoveryTimer = setTimeout(() => {
     recoveryTimer = null;
     void (async () => {
-      const session = await sessionManager.refreshSession();
-      if (session.cookies.length > 0) {
-        await clearAllCache();
-        await useHomeStore.getState().fetchHome(true);
-      } else {
-        await useHomeStore.getState().fetchHome(false);
-      }
+      const ok = await renewSessionAndClearCache();
+      await useHomeStore.getState().fetchHome(ok);
     })();
   }, delay);
 }
+
+const homeFetcher = createCachedFetcher<[force?: boolean], HomeData>({
+  context: 'homeStore',
+  cacheKey: () => CACHE_PREFIXES.HOME,
+  ttl: CACHE_TTL.HOME,
+  fetch: () => source.getHomeData(),
+  forceArgIndex: 0,
+});
 
 interface HomeState {
   homeData: HomeData;
@@ -59,31 +59,14 @@ export const useHomeStore = create<HomeState>((set) => ({
   error: null,
 
   fetchHome: async (force) => {
-    if (homeController) {
-      homeController.abort();
-    }
-    const controller = new AbortController();
-    homeController = controller;
-
     set({ isLoading: true, error: null });
-
-    const result = await runWithRetry(
-      (attempt) =>
-        withCache(
-          CACHE_PREFIXES.HOME,
-          () => source.getHomeData(),
-          { ttl: CACHE_TTL.HOME, signal: controller.signal, force: attempt > 0 || force },
-        ),
-      'homeStore',
-    );
+    const { result, isCurrent } = await homeFetcher.run(force);
 
     // A newer fetchHome/reset superseded this one. Aborts resolve as
     // {data: null, error: null} (treated as success by runWithRetry), so
     // writing here would wipe homeData and clear the error, briefly flashing
     // the 'Sin datos' empty state.
-    if (controller.signal.aborted || homeController !== controller) {
-      return;
-    }
+    if (!isCurrent()) return;
 
     if (result.error) {
       set({ error: result.error, isLoading: false, isRefreshing: false });
@@ -102,10 +85,7 @@ export const useHomeStore = create<HomeState>((set) => ({
   },
 
   reset: () => {
-    if (homeController) {
-      homeController.abort();
-      homeController = null;
-    }
+    homeFetcher.abort();
     clearRecovery();
     set({ homeData: { recent: [] }, isLoading: false, isRefreshing: false, error: null });
   },

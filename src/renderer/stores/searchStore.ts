@@ -1,21 +1,27 @@
 import { create } from 'zustand';
 import { source } from '../services/source';
 import { withCache } from '../utils/cache';
-import { runWithRetry } from '../utils/runWithRetry';
+import { createCachedFetcher } from '../utils/cachedFetcher';
 import { CACHE_PREFIXES, CACHE_TTL, TIMEOUTS } from '../../config/cache';
 import type { Anime, AppError, AutocompleteAnime } from '../../types';
 
 export type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 
-let searchController: AbortController | null = null;
 let suggestionsController: AbortController | null = null;
+
+const searchFetcher = createCachedFetcher<[query: string, force?: boolean], Anime[]>({
+  context: 'searchStore',
+  cacheKey: (query) => `${CACHE_PREFIXES.SEARCH}_${query}`,
+  ttl: CACHE_TTL.SEARCH,
+  fetch: (query) => source.search(query),
+  forceArgIndex: 1,
+});
 
 interface SearchState {
   searchAnimes: Anime[];
   suggestions: AutocompleteAnime[];
   lastSearchTerm: string;
   status: SearchStatus;
-  isLoading: boolean;
   error: AppError | null;
   fetchSearch: (query: string, force?: boolean) => Promise<void>;
   fetchSuggestions: (query: string) => Promise<void>;
@@ -30,37 +36,25 @@ export const useSearchStore = create<SearchState>((set) => ({
   suggestions: [],
   lastSearchTerm: '',
   status: 'idle',
-  isLoading: false,
   error: null,
 
   fetchSearch: async (query, force) => {
-    if (searchController) {
-      searchController.abort();
-    }
-    searchController = new AbortController();
+    set({ error: null, lastSearchTerm: query, status: 'searching' });
 
-    set({ isLoading: true, error: null, lastSearchTerm: query });
-
-    const timeout = setTimeout(() => searchController?.abort(), TIMEOUTS.SEARCH);
-
-    const result = await runWithRetry(
-      (attempt) =>
-        withCache(
-          `${CACHE_PREFIXES.SEARCH}_${query}`,
-          () => source.search(query),
-          { ttl: CACHE_TTL.SEARCH, signal: searchController?.signal, force: attempt > 0 || force },
-        ),
-      'searchStore',
-    );
-
+    const timeout = setTimeout(() => searchFetcher.abort(), TIMEOUTS.SEARCH);
+    const { result, isCurrent } = await searchFetcher.run(query, force);
     clearTimeout(timeout);
 
+    // A newer search/reset superseded this one (or the timeout fired); the
+    // request itself cannot be cancelled, so skip stale writes.
+    if (!isCurrent()) return;
+
     if (result.error) {
-      set({ error: result.error, isLoading: false });
+      set({ error: result.error, status: 'searched' });
       return;
     }
 
-    set({ searchAnimes: result.data ?? [], isLoading: false });
+    set({ searchAnimes: result.data ?? [], status: 'searched' });
   },
 
   fetchSuggestions: async (query) => {
@@ -81,19 +75,17 @@ export const useSearchStore = create<SearchState>((set) => ({
   },
 
   cancelSearch: () => {
-    searchController?.abort();
-    set({ isLoading: false });
+    searchFetcher.abort();
   },
 
   reset: () => {
-    searchController?.abort();
+    searchFetcher.abort();
     suggestionsController?.abort();
     set({
       searchAnimes: [],
       suggestions: [],
       lastSearchTerm: '',
       status: 'idle',
-      isLoading: false,
       error: null,
     });
   },
