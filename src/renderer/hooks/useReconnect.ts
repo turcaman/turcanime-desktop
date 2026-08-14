@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useHomeStore } from '../stores/homeStore';
-import { renewSessionAndClearCache } from '../utils/sessionRecovery';
+import { renewSessionAndInvalidateCache } from '../utils/sessionRecovery';
 
 // When connection restores, wait 2s then refresh session + cache (mirrors
 // mobile behavior). Avoids hammering the source while the network settles.
@@ -14,7 +14,7 @@ export function useReconnect(isConnected: boolean): void {
       const timer = setTimeout(() => {
         const doRefresh = async () => {
           useHomeStore.getState().prepareRefresh();
-          const ok = await renewSessionAndClearCache();
+          const ok = await renewSessionAndInvalidateCache();
           useHomeStore.getState().fetchHome(ok).catch((): void => undefined);
         };
         doRefresh();

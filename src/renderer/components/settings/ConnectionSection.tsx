@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { useHomeStore } from '../../stores/homeStore';
 import { useUIStore } from '../../stores/uiStore';
-import { renewSessionAndClearCache } from '../../utils/sessionRecovery';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { renewSessionAndInvalidateCache } from '../../utils/sessionRecovery';
 
 export const ConnectionSection: React.FC = () => {
   const isRefreshingSession = useUIStore((s) => s.isRefreshingSession);
@@ -28,15 +28,16 @@ export const ConnectionSection: React.FC = () => {
     setConfirmingRefresh(false);
     // renewSessionAndClearCache never throws: a failed or cookie-less refresh
     // is reported via the returned flag.
-    const ok = await renewSessionAndClearCache();
+    const ok = await renewSessionAndInvalidateCache();
     if (!ok) {
       setRefreshError('No se pudo renovar la conexión. Espera un momento e inténtalo de nuevo.');
       setSessionRefreshing(false);
       return;
     }
+    // The home screen refetches on the invalidation timestamp (and on mount).
+    useSettingsStore.getState().invalidateCache();
     setRefreshed(true);
     setTimeout(() => setRefreshed(false), 2000);
-    useHomeStore.getState().fetchHome(true).catch((): void => undefined);
     setSessionRefreshing(false);
   }, [setSessionRefreshing]);
 

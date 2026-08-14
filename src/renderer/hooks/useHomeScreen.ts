@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHomeStore } from '../stores/homeStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { useAppInitStore } from '../stores/appInitStore';
+import { useSettingsStore } from '../stores/settingsStore';
 import type { Anime, HistoryItem } from '../../types';
 
 type SectionItem =
@@ -16,6 +17,7 @@ export function useHomeScreen() {
   const fetchHome = useHomeStore((s) => s.fetchHome);
   const continueWatching = useHistoryStore((s) => s.continueWatching);
   const isInitialized = useAppInitStore((s) => s.isInitialized);
+  const cacheInvalidationTimestamp = useSettingsStore((s) => s.cacheInvalidationTimestamp);
 
   // The first render happens before the mount effect fires fetchHome, so the
   // store still reports isLoading:false with empty homeData; this flag keeps
@@ -27,6 +29,18 @@ export function useHomeScreen() {
     setHasStarted(true);
     fetchHome();
   }, [fetchHome]);
+
+  // Refetch in place when a session renewal wipes the caches (e.g. from the
+  // settings screen) while home stays mounted; the initial mount fetch is
+  // covered by the effect above.
+  const prevInvalidation = useRef(cacheInvalidationTimestamp);
+  useEffect(() => {
+    const prev = prevInvalidation.current;
+    prevInvalidation.current = cacheInvalidationTimestamp;
+    if (cacheInvalidationTimestamp > 0 && cacheInvalidationTimestamp !== prev) {
+      fetchHome();
+    }
+  }, [cacheInvalidationTimestamp, fetchHome]);
 
   const sections = useMemo(() => {
     const result: SectionItem[] = [];
