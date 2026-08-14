@@ -1,5 +1,6 @@
 import React from 'react';
 import { SectionTitle } from '../ui/SectionTitle';
+import { calcProgress } from '../../utils/math';
 import type { HistoryItem } from '../../../types';
 
 interface ContinueWatchingProps {
@@ -22,10 +23,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({
       <SectionTitle label="Continuar viendo" />
       <div className="flex gap-3 px-6 overflow-x-auto pb-4 scrollbar-none">
         {items.map((item) => {
-          const progress =
-            item.duration && item.duration > 0
-              ? Math.min((item.progress ?? 0) / item.duration, 1)
-              : 0;
+          const progress = calcProgress(item.progress, item.duration);
 
           return (
             <button

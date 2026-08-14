@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play } from 'lucide-react';
+import { calcProgress } from '../../utils/math';
 import type { Episode } from '../../../types';
 
 interface EpisodeItemProps {
@@ -10,9 +11,7 @@ interface EpisodeItemProps {
 }
 
 export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, progress, duration }) => {
-  const pct = progress != null && duration != null && duration > 0
-    ? Math.min(progress / duration, 1)
-    : null;
+  const pct = calcProgress(progress, duration);
 
   return (
     <button
@@ -23,7 +22,7 @@ export const EpisodeItem: React.FC<EpisodeItemProps> = ({ episode, onPress, prog
         <span className="text-sm text-neutral-300 truncate group-hover:text-neutral-100 transition-colors">
           Episodio {episode.number}
         </span>
-        {pct != null && (
+        {pct > 0 && (
           <div className="w-full h-1 bg-neutral-800 rounded-full mt-1.5 overflow-hidden">
             <div
               className="h-full bg-purple-500 rounded-full transition-all duration-300"
