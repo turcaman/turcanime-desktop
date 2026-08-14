@@ -72,7 +72,7 @@ export const ConnectionSection: React.FC = () => {
               onClick={() => void handleRefresh()}
               className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 rounded-md transition-colors"
             >
-              Sí
+              Renovar
             </button>
             <button
               ref={confirmCancelRef}
