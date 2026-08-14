@@ -4,6 +4,7 @@ import { SearchPage } from './renderer/pages/SearchPage';
 import { DetailPage } from './renderer/pages/DetailPage';
 import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
+import { useNavigationStack } from './renderer/hooks/useNavigationStack';
 import { useAppInitStore } from './renderer/stores/appInitStore';
 import { useUpdateStore } from './renderer/stores/updateStore';
 import { useNetworkStatus } from './renderer/hooks/useNetworkStatus';
@@ -12,26 +13,23 @@ import { NoConnectionOverlay } from './renderer/components/NoConnectionOverlay';
 import { Sidebar } from './renderer/components/Sidebar';
 import { sessionManager } from './renderer/services/session';
 
-type Screen = 'home' | 'search' | 'detail' | 'player' | 'settings';
-
-interface NavEntry {
-  screen: Screen;
-  slug?: string;
-  episodeNumber?: number;
-}
-
-const INITIAL_STACK: NavEntry[] = [{ screen: 'home' }];
-
 const App: React.FC = () => {
   const initialize = useAppInitStore((s) => s.initialize);
   const isInitialized = useAppInitStore((s) => s.isInitialized);
   const { isConnected } = useNetworkStatus();
   const [ready, setReady] = useState(false);
-  const [navStack, setNavStack] = useState<NavEntry[]>(INITIAL_STACK);
+
+  const {
+    current,
+    navigate,
+    push,
+    navigateToPlayer,
+    updatePlayerEpisode,
+    replaceCurrentDetail,
+    goBack,
+  } = useNavigationStack();
 
   useReconnect(isConnected);
-
-  const current = navStack[navStack.length - 1];
 
   useEffect(() => {
     let cancelled = false;
@@ -51,44 +49,6 @@ const App: React.FC = () => {
       cancelled = true;
     };
   }, [initialize]);
-
-  const navigate = useCallback((s: Screen) => {
-    setNavStack([{ screen: s }]);
-  }, []);
-
-  const push = useCallback((s: Screen, slug?: string, episodeNumber?: number) => {
-    setNavStack((prev) => [...prev, { screen: s, slug, episodeNumber }]);
-  }, []);
-
-  const navigateToPlayer = useCallback((slug: string, episodeNumber: number) => {
-    setNavStack((prev) => [...prev, { screen: 'player', slug, episodeNumber }]);
-  }, []);
-
-  const updatePlayerEpisode = useCallback((episodeNumber: number) => {
-    setNavStack((prev) => {
-      const last = prev[prev.length - 1];
-      if (last?.screen !== 'player') return prev;
-      const copy = [...prev];
-      copy[copy.length - 1] = { ...last, episodeNumber };
-      return copy;
-    });
-  }, []);
-
-  const replaceCurrentDetail = useCallback((slug: string) => {
-    setNavStack((prev) => {
-      const last = prev[prev.length - 1];
-      if (last?.screen === 'detail') {
-        const copy = [...prev];
-        copy[copy.length - 1] = { screen: 'detail', slug };
-        return copy;
-      }
-      return [...prev, { screen: 'detail', slug }];
-    });
-  }, []);
-
-  const goBack = useCallback(() => {
-    setNavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
-  }, []);
 
   const openDetail = useCallback((item: { slug: string }) => {
     if (item.slug) {
