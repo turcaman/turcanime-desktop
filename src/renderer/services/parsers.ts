@@ -141,14 +141,12 @@ export class HtmlParser {
     return episodes.sort((a, b) => a.number - b.number);
   }
 
-  extractMetaTags(html: string): { title: string; image: string; description: string } {
+  extractMetaTags(html: string): { title: string; image: string } {
     const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]*)"[^>]*\/?>/i);
     const imageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]*)"[^>]*\/?>/i);
-    const descMatch = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]*)"[^>]*\/?>/i);
     return {
       title: titleMatch?.[1] ?? '',
       image: imageMatch?.[1] ?? '',
-      description: descMatch?.[1] ?? '',
     };
   }
 

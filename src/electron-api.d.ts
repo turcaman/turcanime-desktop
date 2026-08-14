@@ -34,7 +34,7 @@ interface ElectronAPI {
     ok: boolean;
     status: number;
     data: unknown;
-    json: boolean;
+    error?: string;
   }>;
   proxyBuffer: (url: string, rangeStart?: number | null, rangeEnd?: number | null) => Promise<{
     ok: boolean;

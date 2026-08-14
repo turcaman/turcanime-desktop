@@ -109,7 +109,7 @@ interface ProxyFetchResult {
   ok: boolean;
   status: number;
   data: unknown;
-  json: boolean;
+  error?: string;
 }
 
 async function proxyFetch(url: string, opts?: { method?: string; headers?: Record<string, string>; body?: string; json?: boolean }): Promise<ProxyFetchResult> {
