@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react';
-import { calcCardLayout, type CardLayout } from '../config/layout';
+import { calcCardLayout, type CardLayout } from '../../config/layout';
 
 // Keeps the responsive card grid in sync with the container size. Uses a
 // ResizeObserver instead of a window resize listener so the grid also

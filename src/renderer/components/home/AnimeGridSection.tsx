@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimeCard } from '../AnimeCard';
 import { SectionTitle } from '../ui/SectionTitle';
-import { cardGridStyle } from '../../config/layout';
+import { cardGridStyle } from '../../../config/layout';
 import type { Anime } from '../../../types';
 
 interface AnimeGridSectionProps {

@@ -27,7 +27,7 @@ Run both before committing.
 
 | File | Purpose |
 |------|---------|
-| `src/renderer/config/source.ts` | Source config (base URL, endpoints) |
+| `src/config/source.ts` | Source config (base URL, endpoints) |
 | `src/config/cache.ts` | Cache prefixes, TTLs, limits |
 | `src/renderer/services/session.ts` | Session management (renderer) |
 | `src/renderer/services/source.ts` | HTTP fetcher with session |

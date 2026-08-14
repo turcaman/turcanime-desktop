@@ -3,7 +3,7 @@ import { storage } from '../utils/storage';
 import { computeContinueWatching } from '../utils/history';
 import { logger } from '../utils/logger';
 import type { HistoryItem } from '../../types';
-import { STORAGE_KEYS } from '../config/storageKeys';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 
 const STORAGE_KEY = STORAGE_KEYS.lastViewed;
 const MAX_HISTORY = 50;

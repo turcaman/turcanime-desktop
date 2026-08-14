@@ -1,4 +1,4 @@
-import { SOURCE_CONFIG } from '../config/source';
+import { SOURCE_CONFIG } from '../../config/source';
 import { sessionManager } from './session';
 import { HtmlParser, ParserUtils, cleanTitle } from './parsers';
 import { extractBest } from './extractors';

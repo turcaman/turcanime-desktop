@@ -1,6 +1,6 @@
 import React from 'react';
 import { Film } from 'lucide-react';
-import { SOURCE_CONFIG } from '../../config/source';
+import { SOURCE_CONFIG } from '../../../config/source';
 import type { AutocompleteAnime } from '../../../types';
 
 const TMDB_POSTER_W92 = 'https://image.tmdb.org/t/p/w92';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cardGridStyle } from '../../config/layout';
+import { cardGridStyle } from '../../../config/layout';
 import { SkeletonCard } from './SkeletonCard';
 
 interface SearchSkeletonProps {

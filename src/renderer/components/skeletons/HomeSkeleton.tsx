@@ -1,6 +1,6 @@
 import React from 'react';
 import { Skeleton } from '../ui/Skeleton';
-import { cardGridStyle } from '../../config/layout';
+import { cardGridStyle } from '../../../config/layout';
 import { SkeletonCard } from './SkeletonCard';
 
 interface HomeSkeletonProps {

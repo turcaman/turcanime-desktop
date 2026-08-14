@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { storage } from '../utils/storage';
 import { logger } from '../utils/logger';
-import { STORAGE_KEYS } from '../config/storageKeys';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 
 function parseVersion(v: string): number[] {
   return v.split('.').map(n => parseInt(n, 10) || 0);

@@ -5,7 +5,7 @@ import { useSearchHistoryStore } from './searchHistoryStore';
 import { useSettingsStore } from './settingsStore';
 import { useUpdateStore } from './updateStore';
 import type { HistoryItem } from '../../types';
-import { STORAGE_KEYS } from '../config/storageKeys';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 
 interface AppInitState {
   isInitialized: boolean;

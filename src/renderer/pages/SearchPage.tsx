@@ -8,7 +8,7 @@ import { SuggestionsList } from '../components/search/SuggestionsList';
 import { SearchSkeleton } from '../components/skeletons/SearchSkeleton';
 import { AnimeCard } from '../components/AnimeCard';
 import { ErrorState } from '../components/ui/ErrorState';
-import { cardGridStyle } from '../config/layout';
+import { cardGridStyle } from '../../config/layout';
 import type { Anime, AutocompleteAnime } from '../../types';
 
 interface SearchPageProps {
@@ -24,7 +24,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
     searchAnimes,
     suggestions,
     recentSearches,
-    isLoading,
     error,
     handleTextChange,
     handleSearch,
@@ -47,7 +46,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   };
 
   const ContentArea: React.FC = () => {
-    if (status === 'searching' || isLoading) {
+    if (status === 'searching') {
       return <SearchSkeleton cardWidth={cardWidth} columns={columns} />;
     }
 

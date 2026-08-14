@@ -1,5 +1,5 @@
 import type { Anime, AnimeRelations, Episode, VideoServer } from '../../types';
-import { SOURCE_CONFIG } from '../config/source';
+import { SOURCE_CONFIG } from '../../config/source';
 
 function mapJsonEpisodes(episodes: Record<string, unknown>[]): Episode[] {
   return episodes.map((ep) => ({
