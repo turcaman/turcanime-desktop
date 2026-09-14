@@ -45,7 +45,7 @@ export function usePlayer(
     streamUrl,
     onMediaState: setMediaState,
   });
-  const { reloadNonce, handleMediaError } = usePlaybackRecovery(streamUrl);
+  const { reloadNonce, handleMediaError, recoverStream } = usePlaybackRecovery();
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
@@ -219,12 +219,25 @@ export function usePlayer(
     video.addEventListener('error', handleError);
 
     if (isHls) {
-      const hls = attachHls(video, streamUrl, (err) => {
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
-        usePlayerStore.setState({ error: err });
+      const hls = attachHls(video, streamUrl, {
+        onFatal: (err) => {
+          if (hlsRef.current) {
+            hlsRef.current.destroy();
+            hlsRef.current = null;
+          }
+          if (err.type === 'NETWORK_ERROR') {
+            recoverStream();
+            return;
+          }
+          usePlayerStore.setState({ error: err });
+        },
+        onStreamExpired: () => {
+          if (hlsRef.current) {
+            hlsRef.current.destroy();
+            hlsRef.current = null;
+          }
+          recoverStream();
+        },
       });
       hlsRef.current = hls;
     }
@@ -249,7 +262,7 @@ export function usePlayer(
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, updateMediaState, handleMediaError, reloadNonce]);
+  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, updateMediaState, handleMediaError, recoverStream, reloadNonce]);
 
   // Keep the UI position in sync while playing (timeupdate also fires, but
   // the timer keeps updates flowing while paused or during slow events).

@@ -145,11 +145,17 @@ class HlsProxyLoader implements Loader<LoaderContext> {
 export function attachHls(
   video: HTMLVideoElement,
   url: string,
-  onFatal: (error: AppError) => void,
+  callbacks: {
+    onFatal: (error: AppError) => void;
+    // A 401/403 on any HLS request means the signed CDN link expired (slow or
+    // interrupted playback outlives the token). hls.js would keep retrying the
+    // same dead URL, so cut short and let the caller mint a fresh stream.
+    onStreamExpired: () => void;
+  },
 ): Hls | null {
   if (!Hls.isSupported()) {
     logger.warn('HlsPlayback', 'HLS not supported by this Chromium build');
-    onFatal({ type: 'SERVER_ERROR', message: 'Este equipo no soporta la reproducción HLS.' });
+    callbacks.onFatal({ type: 'SERVER_ERROR', message: 'Este equipo no soporta la reproducción HLS.' });
     return null;
   }
 
@@ -160,6 +166,16 @@ export function attachHls(
   });
 
   hls.on(Events.ERROR, (_event, data) => {
+    if (
+      !data.fatal &&
+      data.type === ErrorTypes.NETWORK_ERROR &&
+      (data.response?.code === 401 || data.response?.code === 403)
+    ) {
+      logger.warn('HlsPlayback', `stream link expired (HTTP ${data.response.code}), re-minting`);
+      hls.destroy();
+      callbacks.onStreamExpired();
+      return;
+    }
     if (!data.fatal) return;
     if (data.type === ErrorTypes.MEDIA_ERROR) {
       logger.info('HlsPlayback', `recovering media error: ${data.details}`);
@@ -168,7 +184,7 @@ export function attachHls(
     }
     logger.warn('HlsPlayback', `fatal ${data.type}: ${data.details}`);
     hls.destroy();
-    onFatal({
+    callbacks.onFatal({
       type: data.type === ErrorTypes.NETWORK_ERROR ? 'NETWORK_ERROR' : 'SERVER_ERROR',
       message: data.type === ErrorTypes.NETWORK_ERROR
         ? 'No se pudo cargar el stream.'
