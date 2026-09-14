@@ -27,16 +27,16 @@ type FetchViaNetResult = {
 // place instead of being duplicated per handler.
 //
 // Requests that never complete (timeout or network error, status 0) are
-// retried up to TIMEOUTS.MAX_ATTEMPTS with full-jitter backoff, mirroring the
-// mobile fetch layer. HTTP statuses flow through untouched so the caller
-// (store or hls.js) applies its own policy. retryOnFailure=false keeps one
-// timed attempt for HLS segments, where hls.js owns the retry logic.
+// retried with full-jitter backoff (mirroring the mobile fetch layer) up to
+// maxAttempts. HTTP statuses flow through untouched so the caller (store or
+// hls.js) applies its own policy.
 async function fetchViaNet(
   url: string,
   init: { method?: string; headers?: Record<string, string>; body?: string },
   parse: 'text' | 'json' | 'buffer',
   label: string,
   retryOnFailure = true,
+  maxAttempts = TIMEOUTS.MAX_ATTEMPTS,
 ): Promise<FetchViaNetResult> {
   const attemptFetch = async (): Promise<FetchViaNetResult> => {
     try {
@@ -64,8 +64,8 @@ async function fetchViaNet(
       { ok: false, status: 0, data: null, error: 'TIMEOUT' },
     );
     if (result.ok || result.status !== 0 || !retryOnFailure) return result;
-    if (attempt >= TIMEOUTS.MAX_ATTEMPTS - 1) return result;
-    logger.info('IPC', `${label} failed (attempt ${attempt + 1}/${TIMEOUTS.MAX_ATTEMPTS}), retrying`);
+    if (attempt >= maxAttempts - 1) return result;
+    logger.info('IPC', `${label} failed (attempt ${attempt + 1}/${maxAttempts}), retrying`);
     await sleep(backoffDelay(attempt));
   }
 }
@@ -215,7 +215,11 @@ export function registerIpcHandlers(): void {
       { method: 'GET', headers },
       'buffer',
       'fetch:proxyBuffer',
-      false, // hls.js owns retry for segments; keep a single timed attempt
+      // Intermittent links drop requests that never reach the CDN (status 0);
+      // retry those once in main so a blip doesn't burn hls.js's own retry
+      // budget. HTTP responses (incl. 403) flow through untouched.
+      true,
+      2,
     );
     // Server ignored the Range header: trim to the requested window.
     if (
