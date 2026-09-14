@@ -59,20 +59,58 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   resolveStream: async (server, options) => {
     set({ isLoading: true, error: null });
 
-    const cacheKey = `${CACHE_PREFIXES.STREAM}_${server.id}`;
+    const resolveAttempt = (activeServer: VideoServer, force: boolean) =>
+      withCache(
+        `${CACHE_PREFIXES.STREAM}_${activeServer.id}`,
+        async () => {
+          const resolved = await source.resolveStreamUrl(activeServer.url);
+          return resolved;
+        },
+        { ttl: CACHE_TTL.STREAM, force },
+      );
 
-    const result = await runWithRetry(
-      (attempt) =>
-        withCache(
-          cacheKey,
-          async () => {
-            const resolved = await source.resolveStreamUrl(server.url);
-            return resolved;
-          },
-          { ttl: CACHE_TTL.STREAM, force: attempt > 0 || options?.force === true },
-        ),
+    let result = await runWithRetry(
+      (attempt) => resolveAttempt(server, attempt > 0 || options?.force === true),
       'playerStore',
     );
+
+    // The bridge_urls carried by an episode's servers are single-use links
+    // that expire on the site ("El enlace ha expirado", 403 -> AUTH_ERROR).
+    // Refreshing the session can't regenerate one; only re-fetching the
+    // episode page hands back fresh links, so recover by re-fetching the
+    // servers (force, no cache) and re-resolving the same language once.
+    if (result.error && result.error.type === 'AUTH_ERROR') {
+      const { serversFor } = get();
+      if (serversFor) {
+        const freshResult = await runWithRetry(
+          () =>
+            withCache(
+              `${CACHE_PREFIXES.SERVERS}_${serversFor.slug}_${serversFor.number}`,
+              () => source.getEpisodeServers(serversFor.slug, serversFor.number),
+              { ttl: CACHE_TTL.SERVERS, force: true },
+            ),
+          'playerStore',
+        );
+        const freshList = freshResult.data ?? [];
+        if (freshList.length === 0) {
+          result = {
+            data: null,
+            error: freshResult.error ?? { type: 'SERVER_ERROR', message: NO_SERVERS_MESSAGE },
+          };
+        } else {
+          set({ servers: freshList });
+          const target = pickPreferredServer(freshList, server.language);
+          if (target) {
+            result = await runWithRetry(
+              () => resolveAttempt(target, true),
+              'playerStore',
+            );
+          } else {
+            result = { data: null, error: { type: 'SERVER_ERROR', message: NO_SERVERS_MESSAGE } };
+          }
+        }
+      }
+    }
 
     if (result.error) {
       set({ error: result.error, isLoading: false });
