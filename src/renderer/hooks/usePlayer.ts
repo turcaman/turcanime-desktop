@@ -31,6 +31,10 @@ export function usePlayer(
   const wasPlayingBeforeOffline = useRef(false);
   // Current hls.js instance for HLS streams; destroyed before every source swap.
   const hlsRef = useRef<ReturnType<typeof attachHls> | null>(null);
+  // Episode the last restore was applied to. Re-attaching the same episode
+  // (expired-link recovery) keeps the live position instead of re-seeking to
+  // the last persisted one; entering a new episode restores from history.
+  const restoredEpKeyRef = useRef<string | null>(null);
 
   const setMediaState = useCallback((time: number, dur: number) => {
     setCurrentTime(time);
@@ -159,6 +163,10 @@ export function usePlayer(
     }
 
     const isHls = isHlsUrl(streamUrl);
+
+    // MP4's load() below resets currentTime to 0, so on same-episode
+    // re-attaches (recovery) grab the live position before the reset.
+    const prevTime = video.currentTime;
     // For HLS, leave the element alone: hls.js assigns video.src to its own
     // MediaSource blob URL internally.
     if (!isHls) {
@@ -171,23 +179,21 @@ export function usePlayer(
       (item) => item.slug === slug && item.number === episodeNumber,
     );
     const restoreProgress = historyItem && historyItem.progress > 0 ? historyItem.progress : 0;
-    // Removed in the cleanup below so a failed HLS episode cannot leave a
-    // stale listener that seeks the next stream to the previous position.
-    let restoreOnReady: (() => void) | null = null;
-    if (isHls) {
-      // currentTime is not reliable until the manifest is parsed and media is
-      // attached; apply the restored position once metadata is available.
-      if (restoreProgress > 0) {
-        restoreOnReady = () => {
-          video.currentTime = restoreProgress;
-          if (restoreOnReady) {
-            video.removeEventListener('loadedmetadata', restoreOnReady);
-          }
-        };
-        video.addEventListener('loadedmetadata', restoreOnReady);
-      }
-    } else if (restoreProgress > 0) {
-      video.currentTime = restoreProgress;
+    // Restore only on the first attachment of an episode (navigation or fresh
+    // mount); re-runs for the same episode (recovery) continue from the live
+    // position so hls.js does not re-seek to the last persisted position.
+    const epKey = `${slug}#${episodeNumber}`;
+    const isNewEpisode = restoredEpKeyRef.current !== epKey;
+    if (isNewEpisode) {
+      restoredEpKeyRef.current = epKey;
+    }
+    const startProgress = isNewEpisode
+      ? (restoreProgress > 0 ? restoreProgress : -1)
+      : prevTime;
+    // MP4: currentTime must be reapplied after load() reset it to 0; HLS gets
+    // its position through hls.js's startPosition config below.
+    if (!isHls && startProgress >= 0) {
+      video.currentTime = startProgress;
     }
 
     const handleTimeUpdate = () => updateMediaState(video.currentTime, video.duration || 0);
@@ -220,6 +226,7 @@ export function usePlayer(
 
     if (isHls) {
       const hls = attachHls(video, streamUrl, {
+        startProgress,
         onFatal: (err) => {
           if (hlsRef.current) {
             hlsRef.current.destroy();
@@ -248,9 +255,6 @@ export function usePlayer(
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
-      }
-      if (restoreOnReady) {
-        video.removeEventListener('loadedmetadata', restoreOnReady);
       }
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);

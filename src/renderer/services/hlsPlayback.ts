@@ -142,10 +142,17 @@ class HlsProxyLoader implements Loader<LoaderContext> {
 // null when unsupported) so the caller can destroy it on cleanup. Fatal
 // errors are mapped to the app error surface via onFatal; MEDIA_ERROR is
 // recovered in place.
+// startProgress goes to hls.js's own startPosition config: setting
+// video.currentTime from a loadedmetadata listener does not stick because
+// hls.js (startPosition defaults to -1) starts buffering from wherever
+// currentTime is at the moment it picks the first fragment -- which is 0.
 export function attachHls(
   video: HTMLVideoElement,
   url: string,
   callbacks: {
+    // Resumed playback position in seconds to seek to once the manifest is
+    // loaded. 0/-1 start from the beginning.
+    startProgress: number;
     onFatal: (error: AppError) => void;
     // A 401/403 on any HLS request means the signed CDN link expired (slow or
     // interrupted playback outlives the token). hls.js would keep retrying the
@@ -163,6 +170,7 @@ export function attachHls(
     loader: HlsProxyLoader,
     enableWorker: false,
     backBufferLength: 90,
+    startPosition: callbacks.startProgress,
   });
 
   hls.on(Events.ERROR, (_event, data) => {
