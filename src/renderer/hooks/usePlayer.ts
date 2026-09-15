@@ -148,6 +148,11 @@ export function usePlayer(
         videoRef.current.removeAttribute('src');
         videoRef.current.load();
       }
+      // Between sources (the store keeps streamUrl across navigation, so the
+      // effect can run once against a stale URL before startPlayback clears
+      // it). Reset so the attach that actually sticks restores from history;
+      // otherwise the stale run consumes the once-per-episode restore.
+      restoredEpKeyRef.current = null;
       return;
     }
 
