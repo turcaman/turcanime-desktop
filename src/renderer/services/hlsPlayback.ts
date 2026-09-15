@@ -172,6 +172,7 @@ export function attachHls(
     backBufferLength: 90,
     startPosition: callbacks.startProgress,
   });
+  logger.info('HlsPlayback', `[dbg-resume] attachHls startPosition=${callbacks.startProgress}`);
 
   hls.on(Events.ERROR, (_event, data) => {
     if (

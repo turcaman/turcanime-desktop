@@ -37,6 +37,11 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     if (fullscreenRef.current) {
       window.electronAPI.fullscreen.set(false);
     }
+    // Leave the player clean so re-entering the same episode starts with an
+    // empty streamUrl. Otherwise the stale URL makes the player attach the
+    // old stream once and the progress persist-effect saves currentTime of a
+    // freshly mounted (0) video, corrupting the stored resume position.
+    usePlayerStore.getState().reset();
   }, []);
 
   const toggleFullscreen = useCallback(() => {

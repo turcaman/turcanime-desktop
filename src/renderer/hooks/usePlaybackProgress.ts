@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useHistoryStore } from '../stores/historyStore';
+import { logger } from '../utils/logger';
 import type { AnimeDetail } from '../../types';
 
 const PERSIST_INTERVAL = 10000;
@@ -43,6 +44,12 @@ export function usePlaybackProgress({
 
   const saveProgress = useCallback(() => {
     const video = videoRef.current;
+    // A freshly mounted element (no source bound yet) reports currentTime 0;
+    // persisting that would clobber the episode's last stored position.
+    if (video && video.readyState === 0 && !video.currentSrc) {
+      logger.info('Progress', `[dbg-resume] save SKIPPED (fresh element) ep${episodeRef.current}`);
+      return;
+    }
     const rawTime = video ? video.currentTime : lastMediaState.current.time;
     let duration = video
       ? (typeof video.duration === 'number' &&
@@ -65,6 +72,8 @@ export function usePlaybackProgress({
     if (duration > 0 && progress / duration >= 0.9) {
       progress = duration;
     }
+
+    logger.info('Progress', `[dbg-resume] save ep${episodeRef.current} t=${rawTime} d=${duration} -> ${progress}`);
 
     addToHistory({
       title: animeInfoRef.current.title,
