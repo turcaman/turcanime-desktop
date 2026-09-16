@@ -50,12 +50,16 @@ interface SearchState {
   lastSearchTerm: string;
   status: SearchStatus;
   error: AppError | null;
+  // Monotonic nonce bumped by Ctrl+K so the SearchBar can re-focus even when
+  // the search screen is already mounted (autoFocus only fires on mount).
+  searchFocusSignal: number;
   fetchSearch: (query: string, force?: boolean) => Promise<void>;
   fetchSuggestions: (query: string) => Promise<void>;
   cancelSearch: () => void;
   reset: () => void;
   setSearchTerm: (term: string) => void;
   setStatus: (status: SearchStatus) => void;
+  requestSearchFocus: () => void;
 }
 
 export const useSearchStore = create<SearchState>((set) => ({
@@ -64,6 +68,7 @@ export const useSearchStore = create<SearchState>((set) => ({
   lastSearchTerm: '',
   status: 'idle',
   error: null,
+  searchFocusSignal: 0,
 
   fetchSearch: async (query, force) => {
     set({ error: null, lastSearchTerm: query, status: 'searching' });
@@ -123,5 +128,9 @@ export const useSearchStore = create<SearchState>((set) => ({
 
   setStatus: (status) => {
     set({ status });
+  },
+
+  requestSearchFocus: () => {
+    set((s) => ({ searchFocusSignal: s.searchFocusSignal + 1 }));
   },
 }));

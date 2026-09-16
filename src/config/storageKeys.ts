@@ -3,4 +3,5 @@ export const STORAGE_KEYS = {
   recentSearches: 'recent_searches',
   episodeOrder: 'episode_order',
   updateCheckEnabled: 'update_check_enabled',
+  volume: 'player_volume',
 } as const;

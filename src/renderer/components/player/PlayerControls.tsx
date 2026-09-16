@@ -8,6 +8,8 @@ import {
   Play,
   Pause,
   Loader2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { useAutoHide } from '../../hooks/useAutoHide';
 import { SeekBar } from './SeekBar';
@@ -21,6 +23,8 @@ interface PlayerControlsProps {
   hasPrev: boolean;
   hasNext: boolean;
   isFullscreen: boolean;
+  volume: number;
+  muted: boolean;
   animeTitle?: string;
   episodeNumber?: number;
   onPlayPause: () => void;
@@ -65,6 +69,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   hasPrev,
   hasNext,
   isFullscreen,
+  volume,
+  muted,
   animeTitle,
   episodeNumber,
   onPlayPause,
@@ -80,6 +86,27 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   const showLoader = loading || buffering;
   const { restartTimer, clearTimer } = useAutoHide(visible, playing, 3000, () => { setVisible(false); });
   const fadeRef = useRef<HTMLDivElement>(null);
+
+  // Short-lived on-screen feedback for volume/mute changes (M, arrows or the
+  // bottom button). Auto-fades so it doesn't linger over the picture.
+  const [volumePillVisible, setVolumePillVisible] = useState(false);
+  const volumePillTimer = useRef<ReturnType<typeof setTimeout>>();
+  const prevVolume = useRef(volume);
+  const prevMuted = useRef(muted);
+
+  useEffect(() => {
+    if (prevMuted.current !== muted || prevVolume.current !== volume) {
+      setVolumePillVisible(true);
+      if (volumePillTimer.current) clearTimeout(volumePillTimer.current);
+      volumePillTimer.current = setTimeout(() => setVolumePillVisible(false), 700);
+    }
+    prevVolume.current = volume;
+    prevMuted.current = muted;
+  }, [volume, muted]);
+
+  useEffect(() => () => {
+    if (volumePillTimer.current) clearTimeout(volumePillTimer.current);
+  }, []);
 
   useEffect(() => {
     if (fadeRef.current) {
@@ -182,6 +209,18 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             >
               <SkipForward className="w-4 h-4 text-white drop-shadow-sm" />
             </PlayerIconButton>
+          </div>
+        </div>
+
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm drop-shadow-lg transition-opacity duration-200"
+            style={{ opacity: volumePillVisible ? 1 : 0 }}
+          >
+            {muted ? <VolumeX className="w-4 h-4 flex-shrink-0" /> : <Volume2 className="w-4 h-4 flex-shrink-0" />}
+            <span>{muted ? 'Silenciado' : `${Math.round(volume * 100)}%`}</span>
           </div>
         </div>
 

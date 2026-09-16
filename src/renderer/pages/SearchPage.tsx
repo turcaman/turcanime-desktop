@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Search, Frown } from 'lucide-react';
 import { useSearchScreen } from '../hooks/useSearchScreen';
+import { useSearchStore } from '../stores/searchStore';
 import { useCardLayout } from '../hooks/useCardLayout';
 import { SearchBar } from '../components/search/SearchBar';
 import { RecentSearches } from '../components/search/RecentSearches';
@@ -35,6 +36,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
     clearRecentSearches,
   } = useSearchScreen();
 
+  const searchFocusSignal = useSearchStore((s) => s.searchFocusSignal);
   const containerRef = useRef<HTMLDivElement>(null);
   const { cardWidth, columns } = useCardLayout(containerRef);
 
@@ -127,6 +129,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
         onSubmit={handleSearch}
         onClear={handleClear}
         autoFocus
+        focusSignal={searchFocusSignal}
       />
       <ContentArea />
       <div className="h-8" />

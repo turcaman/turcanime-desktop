@@ -4,9 +4,12 @@ import { useHistoryStore } from '../stores/historyStore';
 import { attachHls, isHlsUrl } from '../services/hlsPlayback';
 import { usePlaybackProgress } from './usePlaybackProgress';
 import { usePlaybackRecovery } from './usePlaybackRecovery';
+import { storage } from '../utils/storage';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 import type { AnimeDetail } from '../../types';
 
 const PROGRESS_INTERVAL = 250;
+const VOLUME_STEP = 0.1;
 
 // Orchestrates a playback session for one episode: media element wiring
 // (source, HLS, events), position tracking and progress persistence
@@ -27,6 +30,11 @@ export function usePlayer(
   const [buffering, setBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+  // Volume to restore when unmuting, so a mute at 0% doesn't leave the user
+  // silent after pressing M again.
+  const preMuteVolumeRef = useRef(1);
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
   // Current hls.js instance for HLS streams; destroyed before every source swap.
@@ -50,6 +58,34 @@ export function usePlayer(
     onMediaState: setMediaState,
   });
   const { reloadNonce, handleMediaError, recoverStream, resetRecovery } = usePlaybackRecovery();
+
+  // Restore the user's persisted volume once per player mount; later changes
+  // are session-local and re-persisted on every adjustment.
+  useEffect(() => {
+    let cancelled = false;
+    storage.get<number>(STORAGE_KEYS.volume).then((saved) => {
+      if (cancelled || saved == null) return;
+      const v = Math.min(1, Math.max(0, Number(saved) || 0));
+      setVolume(v);
+      preMuteVolumeRef.current = v;
+    }).catch((): void => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    storage.set(STORAGE_KEYS.volume, volume).catch((): void => undefined);
+  }, [volume]);
+
+  // The video element is recreated on each source swap (recovery re-attaches),
+  // so re-apply the user's volume/mute whenever it or the stream changes.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.volume = volume;
+    video.muted = muted;
+  }, [volume, muted, streamUrl, videoRef]);
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
@@ -126,22 +162,55 @@ export function usePlayer(
     }
   }, [videoRef]);
 
+  const toggleMute = useCallback(() => {
+    const next = !muted;
+    setMuted(next);
+    if (next) {
+      // Remember where the user had it before muting, so toggling back restores
+      // an audible level even if they muted at 0%.
+      preMuteVolumeRef.current = volume > 0 ? volume : 0.5;
+    } else if (preMuteVolumeRef.current > 0 && volume === 0) {
+      setVolume(preMuteVolumeRef.current);
+    }
+  }, [muted, volume]);
+
+  const volumeUp = useCallback(() => {
+    const next = Math.min(1, Math.round((volume + VOLUME_STEP) * 10) / 10);
+    setVolume(next);
+    if (next > 0 && muted) setMuted(false);
+  }, [volume, muted]);
+
+  const volumeDown = useCallback(() => {
+    setVolume(Math.max(0, Math.round((volume - VOLUME_STEP) * 10) / 10));
+  }, [volume]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === ' ') {
+      // Space/K toggle playback, J/L seek like ArrowLeft/Right (YouTube-style
+      // aliases); M mutes and Up/Down adjust volume.
+      if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
         e.preventDefault();
         togglePlay();
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'j' || e.key === 'J') {
         e.preventDefault();
         seekBack10();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
         e.preventDefault();
         seekForward10();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        volumeUp();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        volumeDown();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, seekBack10, seekForward10]);
+  }, [togglePlay, seekBack10, seekForward10, toggleMute, volumeUp, volumeDown]);
 
   // Wires the media source, restores progress and attaches the video element
   // events. Runs whenever the stream URL or episode changes.
@@ -312,6 +381,11 @@ export function usePlayer(
     seek,
     seekBack10,
     seekForward10,
+    volume,
+    muted,
+    toggleMute,
+    volumeUp,
+    volumeDown,
     navigatePrev,
     navigateNext,
   };

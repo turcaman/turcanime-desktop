@@ -57,6 +57,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     error,
     hasPrev,
     hasNext,
+    volume,
+    muted,
     animeTitle,
     episodeNumber: currentEpNumber,
     togglePlay,
@@ -143,6 +145,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
             hasPrev={hasPrev}
             hasNext={hasNext}
             isFullscreen={fullscreen}
+            volume={volume}
+            muted={muted}
             animeTitle={animeTitle}
             episodeNumber={currentEpNumber}
             onPlayPause={togglePlay}

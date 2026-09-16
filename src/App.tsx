@@ -5,6 +5,7 @@ import { DetailPage } from './renderer/pages/DetailPage';
 import { PlayerPage } from './renderer/pages/PlayerPage';
 import { SettingsPage } from './renderer/pages/SettingsPage';
 import { useNavigationStack } from './renderer/hooks/useNavigationStack';
+import { useGlobalShortcuts } from './renderer/hooks/useGlobalShortcuts';
 import { useAppInitStore } from './renderer/stores/appInitStore';
 import { useUpdateStore } from './renderer/stores/updateStore';
 import { useNetworkStatus } from './renderer/hooks/useNetworkStatus';
@@ -28,6 +29,8 @@ const App: React.FC = () => {
     replaceCurrentDetail,
     goBack,
   } = useNavigationStack();
+
+  useGlobalShortcuts({ navigate, goBack });
 
   useReconnect(isConnected);
 

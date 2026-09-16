@@ -8,6 +8,7 @@ interface SearchBarProps {
   onClear: () => void;
   placeholder?: string;
   autoFocus?: boolean;
+  focusSignal?: number;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -17,6 +18,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onClear,
   placeholder = 'Buscar anime...',
   autoFocus = false,
+  focusSignal = 0,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,6 +27,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       inputRef.current.focus();
     }
   }, [autoFocus]);
+
+  useEffect(() => {
+    // Re-focus when the app requests it via Ctrl+K while this screen is
+    // already mounted (the autoFocus effect only runs on mount).
+    if (focusSignal > 0 && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [focusSignal]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
