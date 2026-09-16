@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useAutoHide } from '../../hooks/useAutoHide';
 import { SeekBar } from './SeekBar';
+import { storage } from '../../utils/storage';
+import { STORAGE_KEYS } from '../../../config/storageKeys';
 
 interface PlayerControlsProps {
   playing: boolean;
@@ -41,10 +43,11 @@ interface PlayerIconButtonProps {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   size?: 'sm' | 'lg';
+  title?: string;
   children: React.ReactNode;
 }
 
-function PlayerIconButton({ onClick, disabled, size = 'sm', children }: PlayerIconButtonProps) {
+function PlayerIconButton({ onClick, disabled, size = 'sm', title, children }: PlayerIconButtonProps) {
   const sizeClass =
     size === 'lg'
       ? 'w-14 h-14 bg-white/15 hover:bg-white/25 disabled:opacity-70'
@@ -53,6 +56,8 @@ function PlayerIconButton({ onClick, disabled, size = 'sm', children }: PlayerIc
     <button
       onClick={onClick}
       disabled={disabled}
+      title={title}
+      aria-label={title ?? undefined}
       className={`flex items-center justify-center rounded-full transition-colors cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${sizeClass}`}
     >
       {children}
@@ -106,7 +111,29 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   useEffect(() => () => {
     if (volumePillTimer.current) clearTimeout(volumePillTimer.current);
+    if (shortcutsHintTimer.current) clearTimeout(shortcutsHintTimer.current);
   }, []);
+
+  // Teach the shortcuts once: at the first playback we surface a transient
+  // pill listing the key ones and remember it so it never shows again.
+  const [showShortcutsHint, setShowShortcutsHint] = useState(false);
+  const shortcutsHintTimer = useRef<ReturnType<typeof setTimeout>>();
+  const shortcutsHintShownRef = useRef(false);
+
+  useEffect(() => {
+    if (!playing || shortcutsHintShownRef.current) return;
+    shortcutsHintShownRef.current = true;
+    storage
+      .get<boolean>(STORAGE_KEYS.shortcutsHintSeen)
+      .then((seen) => {
+        if (seen) return;
+        storage.set(STORAGE_KEYS.shortcutsHintSeen, true).catch((): void => undefined);
+        setShowShortcutsHint(true);
+        if (shortcutsHintTimer.current) clearTimeout(shortcutsHintTimer.current);
+        shortcutsHintTimer.current = setTimeout(() => setShowShortcutsHint(false), 4000);
+      })
+      .catch((): void => undefined);
+  }, [playing]);
 
   useEffect(() => {
     if (fadeRef.current) {
@@ -152,6 +179,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
         <div className="absolute top-0 left-0 right-0 flex items-start px-4 pt-4 z-50 pointer-events-none">
           <button
             onClick={(e) => { e.stopPropagation(); onBack(); }}
+            title="Volver (Retroceso)"
+            aria-label="Volver (Retroceso)"
             className="pointer-events-auto p-1.5 rounded-full hover:bg-white/10 transition-colors cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <ChevronLeft className="w-6 h-6 text-white drop-shadow-lg" />
@@ -171,6 +200,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onPrev(); }}
               disabled={!hasPrev || loading}
+              title="Episodio anterior (P)"
             >
               <SkipBack className="w-4 h-4 text-white drop-shadow-sm" />
             </PlayerIconButton>
@@ -178,6 +208,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onSeekBack(); }}
               disabled={loading}
+              title="Retroceder 10 s (← / J)"
             >
               <RotateCcw className="w-4 h-4 text-white drop-shadow-sm" />
             </PlayerIconButton>
@@ -186,6 +217,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
               onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
               disabled={showLoader}
               size="lg"
+              title={playing ? 'Pausar (Espacio / K)' : 'Reproducir (Espacio / K)'}
             >
               {showLoader ? (
                 <Loader2 className="w-5 h-5 text-white drop-shadow-sm animate-spin" />
@@ -199,6 +231,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onSeekForward(); }}
               disabled={loading}
+              title="Adelantar 10 s (→ / L)"
             >
               <RotateCw className="w-4 h-4 text-white drop-shadow-sm" />
             </PlayerIconButton>
@@ -206,9 +239,28 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
             <PlayerIconButton
               onClick={(e) => { e.stopPropagation(); onNext(); }}
               disabled={!hasNext || loading}
+              title="Episodio siguiente (N)"
             >
               <SkipForward className="w-4 h-4 text-white drop-shadow-sm" />
             </PlayerIconButton>
+          </div>
+        </div>
+
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-sm text-white text-xs drop-shadow-lg whitespace-nowrap transition-opacity duration-200"
+            style={{ opacity: showShortcutsHint ? 1 : 0 }}
+          >
+            <span className="text-neutral-300">Atajos:</span>
+            <span>Espacio/K pausa</span>
+            <span className="text-neutral-600">·</span>
+            <span>←/→ o J/L ±10 s</span>
+            <span className="text-neutral-600">·</span>
+            <span>M mute</span>
+            <span className="text-neutral-600">·</span>
+            <span>N/P episodio</span>
           </div>
         </div>
 

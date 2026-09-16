@@ -187,7 +187,7 @@ export function usePlayer(
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Space/K toggle playback, J/L seek like ArrowLeft/Right (YouTube-style
-      // aliases); M mutes and Up/Down adjust volume.
+      // aliases); M mutes, Up/Down adjust volume and P/N change episode.
       if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
         e.preventDefault();
         togglePlay();
@@ -206,11 +206,17 @@ export function usePlayer(
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         volumeDown();
+      } else if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        navigatePrev();
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        navigateNext();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, seekBack10, seekForward10, toggleMute, volumeUp, volumeDown]);
+  }, [togglePlay, seekBack10, seekForward10, toggleMute, volumeUp, volumeDown, navigatePrev, navigateNext]);
 
   // Wires the media source, restores progress and attaches the video element
   // events. Runs whenever the stream URL or episode changes.
