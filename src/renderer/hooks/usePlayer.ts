@@ -41,7 +41,7 @@ export function usePlayer(
     setDuration(dur);
   }, []);
 
-  const { saveProgress, updateMediaState } = usePlaybackProgress({
+  const { saveProgress, updateMediaState, lastMediaState } = usePlaybackProgress({
     slug,
     anime,
     episodeNumber,
@@ -49,7 +49,7 @@ export function usePlayer(
     streamUrl,
     onMediaState: setMediaState,
   });
-  const { reloadNonce, handleMediaError, recoverStream } = usePlaybackRecovery();
+  const { reloadNonce, handleMediaError, recoverStream, resetRecovery } = usePlaybackRecovery();
 
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
@@ -77,9 +77,16 @@ export function usePlayer(
       setPlaying(false);
     };
     const goOnline = () => {
-      if (wasPlayingBeforeOffline.current && videoRef.current) {
-        videoRef.current.play().then(() => setPlaying(true)).catch((): void => undefined);
+      if (!wasPlayingBeforeOffline.current || !videoRef.current) return;
+      // While offline the HLS session dies after its retries; my handlers tear
+      // it down and hls.js's detach wipes the element's position. Resume from
+      // the last known position by re-minting, not by play() on an empty src.
+      if (isHlsUrl(streamUrl) && !hlsRef.current) {
+        resetRecovery();
+        recoverStream();
+        return;
       }
+      videoRef.current.play().then(() => setPlaying(true)).catch((): void => undefined);
     };
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);
@@ -87,7 +94,7 @@ export function usePlayer(
       window.removeEventListener('offline', goOffline);
       window.removeEventListener('online', goOnline);
     };
-  }, [playing, videoRef]);
+  }, [playing, videoRef, streamUrl, recoverStream, resetRecovery]);
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
@@ -194,9 +201,11 @@ export function usePlayer(
     }
     const startProgress = isNewEpisode
       ? (restoreProgress > 0 ? restoreProgress : -1)
-      : prevTime;
-    // MP4: currentTime must be reapplied after load() reset it to 0; HLS gets
-    // its position through hls.js's startPosition config below.
+      : (lastMediaState.current.time > 0 ? lastMediaState.current.time : prevTime);
+    // Same-episode re-attaches (recovery) capture the live position from
+    // lastMediaState (updated by timeupdate) because hls.js's detach calls
+    // media.load(), which resets video.currentTime to 0. MP4: currentTime must
+    // be reapplied after load() reset it; HLS gets it via startPosition below.
     if (!isHls && startProgress >= 0) {
       video.currentTime = startProgress;
     }
@@ -271,7 +280,7 @@ export function usePlayer(
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, updateMediaState, handleMediaError, recoverStream, reloadNonce]);
+  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, updateMediaState, lastMediaState, handleMediaError, recoverStream, reloadNonce]);
 
   // Keep the UI position in sync while playing (timeupdate also fires, but
   // the timer keeps updates flowing while paused or during slow events).

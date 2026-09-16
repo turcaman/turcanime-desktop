@@ -90,5 +90,5 @@ export function usePlaybackProgress({
     };
   }, [streamUrl, saveProgress]);
 
-  return { saveProgress, updateMediaState };
+  return { saveProgress, updateMediaState, lastMediaState };
 }

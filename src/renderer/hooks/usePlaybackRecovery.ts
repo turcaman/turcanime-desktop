@@ -23,6 +23,11 @@ export function usePlaybackRecovery() {
   // (expired 403 links, fatal timeouts). The budget counts consecutive
   // attempts against the *same* failing URL so a re-minted stream starts fresh
   // while a CDN stuck on 403 cannot loop forever.
+  const resetRecovery = useCallback(() => {
+    recoveryAttempts.current = 0;
+    lastFailedUrl.current = '';
+  }, []);
+
   const recoverStream = useCallback(async (): Promise<void> => {
     const state = usePlayerStore.getState();
     const currentUrl = state.streamUrl;
@@ -78,5 +83,5 @@ export function usePlaybackRecovery() {
     recoverStream();
   }, [recoverStream]);
 
-  return { reloadNonce, handleMediaError, recoverStream };
+  return { reloadNonce, handleMediaError, recoverStream, resetRecovery };
 }
