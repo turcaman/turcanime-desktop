@@ -7,7 +7,7 @@ interface GlobalShortcutsOptions {
   goBack: () => void;
 }
 
-// Ctrl/Command + number maps to the same main screens as the sidebar.
+// Ctrl + number maps to the same main screens as the sidebar.
 const MAIN_SCREENS: Record<number, Screen> = {
   1: 'home',
   2: 'search',
@@ -20,22 +20,20 @@ const MAIN_SCREENS: Record<number, Screen> = {
 export function useGlobalShortcuts({ navigate, goBack }: GlobalShortcutsOptions): void {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const mod = e.ctrlKey || e.metaKey;
-
-      if (mod && (e.key === 'k' || e.key === 'K')) {
+      if (e.ctrlKey && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         useSearchStore.getState().requestSearchFocus();
         navigate('search');
         return;
       }
 
-      if (mod && e.key >= '1' && e.key <= '3') {
+      if (e.ctrlKey && e.key >= '1' && e.key <= '3') {
         e.preventDefault();
         navigate(MAIN_SCREENS[Number(e.key)]);
         return;
       }
 
-      if (e.key === 'Backspace' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key === 'Backspace' && !e.ctrlKey && !e.altKey) {
         const target = e.target as HTMLElement | null;
         const isTyping =
           target !== null &&
