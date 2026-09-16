@@ -4,7 +4,6 @@ import { useHistoryStore } from '../stores/historyStore';
 import { attachHls, isHlsUrl } from '../services/hlsPlayback';
 import { usePlaybackProgress } from './usePlaybackProgress';
 import { usePlaybackRecovery } from './usePlaybackRecovery';
-import { logger } from '../utils/logger';
 import type { AnimeDetail } from '../../types';
 
 const PROGRESS_INTERVAL = 250;
@@ -196,8 +195,6 @@ export function usePlayer(
     const startProgress = isNewEpisode
       ? (restoreProgress > 0 ? restoreProgress : -1)
       : prevTime;
-    // TEMP-DEBUG: resume instrumentation
-    logger.info('Player', `[dbg-resume] attach ep=${episodeNumber} key=${epKey} newEp=${isNewEpisode} hist=${restoreProgress} start=${startProgress} hls=${isHls}`);
     // MP4: currentTime must be reapplied after load() reset it to 0; HLS gets
     // its position through hls.js's startPosition config below.
     if (!isHls && startProgress >= 0) {
