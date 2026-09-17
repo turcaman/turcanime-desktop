@@ -258,6 +258,9 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('app:openExternal', async (_event, url: string) => {
+    // Only https links are opened from the renderer; any other scheme
+    // (file://, smb://, ...) must never reach shell.openExternal.
+    if (typeof url !== 'string' || !url.startsWith('https://')) return;
     await shell.openExternal(url);
   });
 
