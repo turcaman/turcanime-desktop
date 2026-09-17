@@ -275,9 +275,14 @@ export function registerIpcHandlers(): void {
       }
       lastUpdateCheckAt = now;
       const current = app.getVersion();
+      // Bounded so a stalled GitHub request can't leave the renderer's
+      // invoke hanging forever (the check is best-effort).
       const response = await net.fetch(
         'https://api.github.com/repos/turcaman/turcanime-desktop/releases/latest',
-        { headers: { Accept: 'application/vnd.github+json' } },
+        {
+          headers: { Accept: 'application/vnd.github+json' },
+          signal: AbortSignal.timeout(10_000),
+        },
       );
       if (!response.ok) {
         return { latest: null, current, error: `Error al consultar GitHub (${response.status})` };
