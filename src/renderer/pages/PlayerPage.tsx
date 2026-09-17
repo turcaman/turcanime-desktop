@@ -67,6 +67,10 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
     seekForward10,
     navigatePrev,
     navigateNext,
+    nextEpisodeCountdown,
+    nextEpisodeNumber,
+    confirmNextEpisode,
+    cancelNextEpisode,
   } = usePlayer(slug, episodeNumber, anime, videoRef, onNavigateToEpisode);
 
   // Starts playback for the current episode through the store (which decides
@@ -149,6 +153,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
             muted={muted}
             animeTitle={animeTitle}
             episodeNumber={currentEpNumber}
+            nextEpisodeCountdown={nextEpisodeCountdown}
+            nextEpisodeNumber={nextEpisodeNumber}
             onPlayPause={togglePlay}
             onSeek={seek}
             onSeekBack={seekBack10}
@@ -157,6 +163,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({
             onNext={navigateNext}
             onBack={onBack}
             onToggleFullscreen={toggleFullscreen}
+            onCancelNextEpisode={cancelNextEpisode}
+            onConfirmNextEpisode={confirmNextEpisode}
           />
       </div>
     </div>

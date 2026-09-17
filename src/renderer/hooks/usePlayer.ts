@@ -10,6 +10,7 @@ import type { AnimeDetail } from '../../types';
 
 const PROGRESS_INTERVAL = 250;
 const VOLUME_STEP = 0.1;
+const NEXT_EPISODE_COUNTDOWN_SECONDS = 10;
 
 // Orchestrates a playback session for one episode: media element wiring
 // (source, HLS, events), position tracking and progress persistence
@@ -91,6 +92,49 @@ export function usePlayer(
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < episodes.length - 1;
+  const nextEpisode = hasNext ? episodes[currentIdx + 1] : null;
+
+  const [nextEpisodeCountdown, setNextEpisodeCountdown] = useState<number | null>(null);
+  const nextEpisodeTimer = useRef<ReturnType<typeof setInterval>>();
+  const nextEpisodeCountdownRef = useRef<number | null>(null);
+
+  const clearNextEpisodeTimer = useCallback(() => {
+    if (nextEpisodeTimer.current) {
+      clearInterval(nextEpisodeTimer.current);
+      nextEpisodeTimer.current = undefined;
+    }
+    nextEpisodeCountdownRef.current = null;
+    setNextEpisodeCountdown(null);
+  }, []);
+
+  const confirmNextEpisode = useCallback(() => {
+    clearNextEpisodeTimer();
+    if (hasNext) {
+      saveProgress();
+      onNavigateEpisode?.(episodeNumber + 1);
+    }
+  }, [clearNextEpisodeTimer, hasNext, episodeNumber, onNavigateEpisode, saveProgress]);
+
+  const cancelNextEpisode = useCallback(() => {
+    clearNextEpisodeTimer();
+  }, [clearNextEpisodeTimer]);
+
+  const startNextEpisodeCountdown = useCallback(() => {
+    if (!hasNext) return;
+    nextEpisodeCountdownRef.current = NEXT_EPISODE_COUNTDOWN_SECONDS;
+    setNextEpisodeCountdown(NEXT_EPISODE_COUNTDOWN_SECONDS);
+    nextEpisodeTimer.current = setInterval(() => {
+      const prev = nextEpisodeCountdownRef.current;
+      if (prev === null || prev <= 1) {
+        clearNextEpisodeTimer();
+        saveProgress();
+        onNavigateEpisode?.(episodeNumber + 1);
+        return;
+      }
+      nextEpisodeCountdownRef.current = prev - 1;
+      setNextEpisodeCountdown(prev - 1);
+    }, 1000);
+  }, [hasNext, clearNextEpisodeTimer, saveProgress, onNavigateEpisode, episodeNumber]);
 
   const navigatePrev = useCallback(() => {
     if (hasPrev) {
@@ -134,6 +178,7 @@ export function usePlayer(
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
+    clearNextEpisodeTimer();
     if (videoRef.current.paused) {
       videoRef.current.play();
       setPlaying(true);
@@ -141,14 +186,15 @@ export function usePlayer(
       videoRef.current.pause();
       setPlaying(false);
     }
-  }, [videoRef]);
+  }, [videoRef, clearNextEpisodeTimer]);
 
   const seek = useCallback((time: number) => {
     if (videoRef.current) {
+      clearNextEpisodeTimer();
       videoRef.current.currentTime = time;
       setCurrentTime(time);
     }
-  }, [videoRef]);
+  }, [videoRef, clearNextEpisodeTimer]);
 
   const seekBack10 = useCallback(() => {
     if (videoRef.current) {
@@ -293,8 +339,7 @@ export function usePlayer(
     const handleEnded = () => {
       setPlaying(false);
       if (hasNext) {
-        saveProgress();
-        onNavigateEpisode?.(episodeNumber + 1);
+        startNextEpisodeCountdown();
       }
     };
 
@@ -355,7 +400,7 @@ export function usePlayer(
       video.removeEventListener('playing', handlePlaying);
       video.removeEventListener('error', handleError);
     };
-  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, onNavigateEpisode, saveProgress, updateMediaState, lastMediaState, handleMediaError, recoverStream, reloadNonce]);
+  }, [streamUrl, videoRef, slug, episodeNumber, hasNext, startNextEpisodeCountdown, saveProgress, updateMediaState, lastMediaState, handleMediaError, recoverStream, reloadNonce]);
 
   // Keep the UI position in sync while playing (timeupdate also fires, but
   // the timer keeps updates flowing while paused or during slow events).
@@ -371,6 +416,11 @@ export function usePlayer(
       if (progressTimer.current) clearInterval(progressTimer.current);
     };
   }, [episodeNumber, videoRef, updateMediaState]);
+
+  // Cleanup next episode countdown on unmount or episode change.
+  useEffect(() => {
+    return clearNextEpisodeTimer;
+  }, [episodeNumber, clearNextEpisodeTimer]);
 
   return {
     playing,
@@ -394,5 +444,9 @@ export function usePlayer(
     volumeDown,
     navigatePrev,
     navigateNext,
+    nextEpisodeCountdown,
+    nextEpisodeNumber: nextEpisode?.number ?? null,
+    confirmNextEpisode,
+    cancelNextEpisode,
   };
 }
