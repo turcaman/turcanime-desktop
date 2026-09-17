@@ -125,7 +125,7 @@ export function usePlayer(
     setNextEpisodeCountdown(NEXT_EPISODE_COUNTDOWN_SECONDS);
     nextEpisodeTimer.current = setInterval(() => {
       const prev = nextEpisodeCountdownRef.current;
-      if (prev === null || prev <= 1) {
+      if (prev === null || prev <= 0) {
         clearNextEpisodeTimer();
         saveProgress();
         onNavigateEpisode?.(episodeNumber + 1);
