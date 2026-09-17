@@ -10,6 +10,11 @@ import type { Anime, AppError, AutocompleteAnime } from '../../types';
 export type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 
 let suggestionsController: AbortController | null = null;
+let suggestionsRunId = 0;
+
+// The underlying IPC request cannot be cancelled, so the controller only
+// marks runs stale: a superseded response must not overwrite the suggestions
+// of the query the user is currently typing.
 
 // Results and suggestions share one cache entry per query (same raw endpoint);
 // normalize the key so casing/whitespace variants hit the same entry.
@@ -90,10 +95,9 @@ export const useSearchStore = create<SearchState>((set) => ({
   },
 
   fetchSuggestions: async (query) => {
-    if (suggestionsController) {
-      suggestionsController.abort();
-    }
+    suggestionsController?.abort();
     suggestionsController = new AbortController();
+    const runId = ++suggestionsRunId;
 
     const result = await withCache(
       `${CACHE_PREFIXES.SEARCH}_${normalizeSearchKey(query)}`,
@@ -101,6 +105,7 @@ export const useSearchStore = create<SearchState>((set) => ({
       { ttl: CACHE_TTL.SEARCH, signal: suggestionsController.signal },
     );
 
+    if (runId !== suggestionsRunId || suggestionsController.signal.aborted) return;
     if (result.error) return;
 
     set({ suggestions: (result.data ?? []).map(toSuggestion) });
