@@ -3,12 +3,35 @@ import { logger } from './logger';
 
 const REACHABILITY_URL = 'https://clients3.google.com/generate_204';
 const REACHABILITY_TIMEOUT = 5000;
-const POLL_INTERVAL = 10_000;
+const POLL_INTERVAL = 30_000;
+const POLL_JITTER = 5_000;
 
 let lastIsReachable = true;
 let mainWindow: BrowserWindow | undefined;
-let pollTimer: ReturnType<typeof setInterval> | null = null;
+let pollTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingPromise: Promise<boolean> | null = null;
+
+function jitteredInterval(): number {
+  return POLL_INTERVAL + Math.floor(Math.random() * POLL_JITTER * 2) - POLL_JITTER;
+}
+
+function schedulePoll(): void {
+  if (pollTimer) clearTimeout(pollTimer);
+  pollTimer = setTimeout(() => {
+    pollTimer = null;
+    const onlineFlag = net.online;
+    if (!onlineFlag) {
+      if (lastIsReachable !== false) {
+        lastIsReachable = false;
+        logger.info('Network', 'OS reports offline');
+        notify(false);
+      }
+      schedulePoll();
+      return;
+    }
+    void refreshAndNotify().finally(schedulePoll);
+  }, jitteredInterval());
+}
 
 // Optional chaining does not protect against destroyed windows, which throw
 // "Object has been destroyed" when reaching into a closed BrowserWindow.
@@ -57,23 +80,12 @@ export const networkMonitor = {
     if (pollTimer) return;
     lastIsReachable = true;
     void refreshAndNotify();
-    pollTimer = setInterval(() => {
-      const onlineFlag = net.online;
-      if (!onlineFlag) {
-        if (lastIsReachable !== false) {
-          lastIsReachable = false;
-          logger.info('Network', 'OS reports offline');
-          notify(false);
-        }
-        return;
-      }
-      void refreshAndNotify();
-    }, POLL_INTERVAL);
+    schedulePoll();
   },
 
   stop(): void {
     if (pollTimer) {
-      clearInterval(pollTimer);
+      clearTimeout(pollTimer);
       pollTimer = null;
     }
   },
