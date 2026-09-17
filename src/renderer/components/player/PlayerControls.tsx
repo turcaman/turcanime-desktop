@@ -168,6 +168,16 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
 
   const showCountdown = nextEpisodeCountdown !== null;
 
+  // When the countdown overlay disappears (episode auto-changed or cancelled),
+  // restart the auto-hide timer so controls fade without requiring mouse input.
+  const prevShowCountdown = useRef(showCountdown);
+  useEffect(() => {
+    if (prevShowCountdown.current && !showCountdown && playing) {
+      restartTimer();
+    }
+    prevShowCountdown.current = showCountdown;
+  }, [showCountdown, playing, restartTimer]);
+
   return (
     <div
       className="absolute inset-0 z-40"
