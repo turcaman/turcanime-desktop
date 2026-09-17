@@ -160,9 +160,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   reset: () => {
     const lang = get().lastLanguage;
+    const sf = get().serversFor;
     set({
       servers: [],
-      serversFor: null,
+      serversFor: sf,
       streamUrl: '',
       lastLanguage: lang,
       isLoading: false,
