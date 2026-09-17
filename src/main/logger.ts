@@ -1,3 +1,5 @@
+import { app } from 'electron';
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -5,7 +7,9 @@ export enum LogLevel {
   ERROR = 3,
 }
 
-const currentLevel = LogLevel.DEBUG;
+// Verbose request/URL logging is only useful while developing; packaged
+// builds keep INFO and above to avoid console noise.
+const currentLevel = app.isPackaged ? LogLevel.INFO : LogLevel.DEBUG;
 
 function format(level: LogLevel, tag: string, message: string): string {
   return `[${LogLevel[level]}] [${tag}] ${message}`;
