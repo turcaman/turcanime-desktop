@@ -29,6 +29,8 @@ interface PlayerControlsProps {
   muted: boolean;
   animeTitle?: string;
   episodeNumber?: number;
+  nextEpisodeCountdown: number | null;
+  nextEpisodeNumber: number | null;
   onPlayPause: () => void;
   onSeek: (time: number) => void;
   onSeekBack: () => void;
@@ -37,6 +39,8 @@ interface PlayerControlsProps {
   onNext: () => void;
   onBack: () => void;
   onToggleFullscreen: () => void;
+  onCancelNextEpisode: () => void;
+  onConfirmNextEpisode: () => void;
 }
 
 interface PlayerIconButtonProps {
@@ -78,6 +82,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   muted,
   animeTitle,
   episodeNumber,
+  nextEpisodeCountdown,
+  nextEpisodeNumber,
   onPlayPause,
   onSeek,
   onSeekBack,
@@ -86,6 +92,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onNext,
   onBack,
   onToggleFullscreen,
+  onCancelNextEpisode,
+  onConfirmNextEpisode,
 }) => {
   const [visible, setVisible] = useState(true);
   const showLoader = loading || buffering;
@@ -158,6 +166,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
     clearTimer();
   }, [clearTimer]);
 
+  const showCountdown = nextEpisodeCountdown !== null;
+
   return (
     <div
       className="absolute inset-0 z-40"
@@ -165,6 +175,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
       onDoubleClick={onToggleFullscreen}
       onMouseMove={handleMouseMove}
     >
+      {!showCountdown && (
       <div
         ref={fadeRef}
         className="absolute inset-0"
@@ -264,18 +275,6 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           </div>
         </div>
 
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div
-            role="status"
-            aria-live="polite"
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm drop-shadow-lg transition-opacity duration-200"
-            style={{ opacity: volumePillVisible ? 1 : 0 }}
-          >
-            {muted ? <VolumeX className="w-4 h-4 flex-shrink-0" /> : <Volume2 className="w-4 h-4 flex-shrink-0" />}
-            <span>{muted ? 'Silenciado' : `${Math.round(volume * 100)}%`}</span>
-          </div>
-        </div>
-
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
           <SeekBar
             currentTime={currentTime}
@@ -287,6 +286,57 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
           />
         </div>
       </div>
+      )}
+
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm drop-shadow-lg transition-opacity duration-200"
+          style={{ opacity: volumePillVisible ? 1 : 0 }}
+        >
+          {muted ? <VolumeX className="w-4 h-4 flex-shrink-0" /> : <Volume2 className="w-4 h-4 flex-shrink-0" />}
+          <span>{muted ? 'Silenciado' : `${Math.round(volume * 100)}%`}</span>
+        </div>
+      </div>
+
+      {showCountdown && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto animate-fade-in">
+          <div className="w-full max-w-xs bg-neutral-900 rounded-xl border border-neutral-800/70 shadow-lg shadow-black/40 overflow-hidden animate-fade-in">
+            <div className="px-5 pt-5 pb-4 flex flex-col items-center gap-4">
+              <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-[0.14em]">
+                Siguiente episodio
+              </p>
+              {nextEpisodeNumber != null && (
+                <p className="text-neutral-200 text-base font-semibold">
+                  Episodio {nextEpisodeNumber}
+                </p>
+              )}
+              <div className="w-full h-1 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-500 rounded-full"
+                  style={{ width: `${((nextEpisodeCountdown ?? 0) / 10) * 100}%`, transition: 'width 1s linear' }}
+                />
+              </div>
+            </div>
+            <div className="flex border-t border-neutral-800/60">
+              <button
+                onClick={(e) => { e.stopPropagation(); onCancelNextEpisode(); }}
+                className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
+              >
+                Cancelar
+              </button>
+              <div className="w-px bg-neutral-800/60" />
+              <button
+                onClick={(e) => { e.stopPropagation(); onConfirmNextEpisode(); }}
+                className="flex-1 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium"
+              >
+                Saltar ahora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
