@@ -261,8 +261,16 @@ export function registerIpcHandlers(): void {
     await shell.openExternal(url);
   });
 
+  const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000;
+  let lastUpdateCheckAt = 0;
+
   ipcMain.handle('updates:check', async () => {
     try {
+      const now = Date.now();
+      if (now - lastUpdateCheckAt < UPDATE_CHECK_INTERVAL) {
+        return { latest: null, current: app.getVersion() };
+      }
+      lastUpdateCheckAt = now;
       const current = app.getVersion();
       const response = await net.fetch(
         'https://api.github.com/repos/turcaman/turcanime-desktop/releases/latest',
