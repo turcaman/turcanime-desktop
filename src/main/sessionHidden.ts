@@ -274,43 +274,24 @@ export class HiddenSessionWindow {
     const headers = (options?.headers as Record<string, string>) ?? {};
     const body = options?.body as string | undefined;
 
-    const safeUrl = url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    const safeHeaders = JSON.stringify(headers);
-
-    let script: string;
-    if (method === 'GET') {
-      script = [
-        "fetch('" + safeUrl + "', {",
-        "  method: 'GET',",
-        "  headers: " + safeHeaders + ",",
-        '})',
-        ".then(function(r) {",
-        "  return r.text().then(function(text) {",
-        "    return JSON.stringify({ ok: r.ok, status: r.status, data: text });",
-        "  });",
-        "})",
-        ".catch(function(err) {",
-        "  return JSON.stringify({ ok: false, status: 0, data: null, error: (err && typeof err.message === 'string') ? err.message : String(err) });",
-        '})',
-      ].join('\n');
-    } else {
-      const safeBody = body ? body.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : '';
-      script = [
-        "fetch('" + safeUrl + "', {",
-        "  method: '" + method + "',",
-        "  headers: " + safeHeaders + ",",
-        "  body: '" + safeBody + "',",
-        '})',
-        ".then(function(r) {",
-        "  return r.text().then(function(text) {",
-        "    return JSON.stringify({ ok: r.ok, status: r.status, data: text });",
-        "  });",
-        "})",
-        ".catch(function(err) {",
-        "  return JSON.stringify({ ok: false, status: 0, data: null, error: (err && typeof err.message === 'string') ? err.message : String(err) });",
-        '})',
-      ].join('\n');
-    }
+    // Embed the interpolated strings via JSON.stringify: hand-rolled escaping
+    // (backslash/quote) breaks on newlines and other control characters that
+    // can appear in URLs or bodies, corrupting the injected script.
+    const script = [
+      'fetch(' + JSON.stringify(url) + ', {',
+      '  method: ' + JSON.stringify(method) + ',',
+      '  headers: ' + JSON.stringify(headers) + ',',
+      ...(body ? ['  body: ' + JSON.stringify(body) + ','] : []),
+      '})',
+      '.then(function(r) {',
+      '  return r.text().then(function(text) {',
+      '    return JSON.stringify({ ok: r.ok, status: r.status, data: text });',
+      '  });',
+      '})',
+      '.catch(function(err) {',
+      '  return JSON.stringify({ ok: false, status: 0, data: null, error: (err && typeof err.message === \'string\') ? err.message : String(err) });',
+      '})',
+    ].join('\n');
 
     try {
       logger.debug('SessionHidden', `fetchInPage: ${url.slice(0, 80)}`);
