@@ -158,22 +158,27 @@ export async function extractBest(
   }
 
   const allStreams: HlsStream[] = [];
-  for (const src of decrypted.sources) {
-    const su = src.url ?? src.file;
-    if (su == null || su.length === 0) continue;
+  const sources = decrypted.sources
+    .map((s) => s.url ?? s.file)
+    .filter((su): su is string => su != null && su.length > 0);
 
-    const hlsRes = await proxyFetch(su, {
-      headers: { 'User-Agent': ua, Referer: `https://${host}/`, Accept: '*/*' },
-    });
-    if (!hlsRes.ok) {
-      throw new Error(`Master playlist HTTP ${hlsRes.status}: ${su}`);
-    }
+  const results = await Promise.allSettled(
+    sources.map((su) =>
+      proxyFetch(su, {
+        headers: { 'User-Agent': ua, Referer: `https://${host}/`, Accept: '*/*' },
+      }).then((res) => ({ su, res })),
+    ),
+  );
+
+  for (const r of results) {
+    if (r.status !== 'fulfilled') continue;
+    const { su, res: hlsRes } = r.value;
+    if (!hlsRes.ok) continue;
 
     const body = hlsRes.data as string;
     if (body.trimStart().startsWith('#EXTM3U')) {
       allStreams.push(...parseMaster(body, su));
     } else if (/\.(mp4|webm|mkv|m4v)(\?|#|$)/i.test(su)) {
-      // Direct media file (no HLS playlist): use it as-is.
       allStreams.push({ quality: 'auto', url: su });
     }
   }
