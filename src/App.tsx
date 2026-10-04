@@ -11,6 +11,7 @@ import { useUpdateStore } from './renderer/stores/updateStore';
 import { useNetworkStatus } from './renderer/hooks/useNetworkStatus';
 import { useReconnect } from './renderer/hooks/useReconnect';
 import { NoConnectionOverlay } from './renderer/components/NoConnectionOverlay';
+import { UpdateModal } from './renderer/components/UpdateModal';
 import { Sidebar } from './renderer/components/Sidebar';
 import { sessionManager } from './renderer/services/session';
 
@@ -68,6 +69,7 @@ const App: React.FC = () => {
   return (
     <div className="h-screen w-screen bg-[#0f0f11] flex">
       <NoConnectionOverlay visible={isConnected === false} />
+      <UpdateModal />
 
       {isConnected === false ? null : (
         <>
