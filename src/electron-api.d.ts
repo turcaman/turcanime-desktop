@@ -51,7 +51,19 @@ interface ElectronAPI {
     openExternal: (url: string) => Promise<void>;
   };
   updates: {
-    check: () => Promise<{ latest: string | null; current: string; error?: string }>;
+    check: (force?: boolean) => Promise<{
+      latest: string | null;
+      current: string;
+      asset: { name: string; url: string; size: number | null } | null;
+      mode: 'appimage' | 'installer' | 'browser';
+      error?: string;
+    }>;
+    download: () => Promise<{ ok: boolean; error?: string }>;
+    cancel: () => Promise<boolean>;
+    install: () => Promise<{ ok: boolean; error?: string }>;
+    onProgress: (
+      cb: (progress: { receivedBytes: number; totalBytes: number | null }) => void,
+    ) => () => void;
   };
   network: {
     check: () => Promise<boolean>;

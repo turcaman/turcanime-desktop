@@ -32,7 +32,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
   },
   updates: {
-    check: () => ipcRenderer.invoke('updates:check'),
+    check: (force?: boolean) => ipcRenderer.invoke('updates:check', force === true),
+    download: () => ipcRenderer.invoke('updates:download'),
+    cancel: () => ipcRenderer.invoke('updates:cancel'),
+    install: () => ipcRenderer.invoke('updates:install'),
+    onProgress: (cb: (progress: { receivedBytes: number; totalBytes: number | null }) => void) => {
+      const handler = (_event: unknown, progress: { receivedBytes: number; totalBytes: number | null }) =>
+        cb(progress);
+      ipcRenderer.on('updates:progress', handler);
+      return () => ipcRenderer.removeListener('updates:progress', handler);
+    },
   },
   network: {
     check: () => ipcRenderer.invoke('network:check'),
