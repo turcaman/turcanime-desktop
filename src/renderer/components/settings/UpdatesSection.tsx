@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Bell, Download, ExternalLink, CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import { Bell, Download } from 'lucide-react';
 import { useUpdateStore } from '../../stores/updateStore';
 
 export const UpdatesSection: React.FC = () => {
@@ -10,12 +10,7 @@ export const UpdatesSection: React.FC = () => {
   const lastCheckError = useUpdateStore((s) => s.lastCheckError);
   const currentVersion = useUpdateStore((s) => s.currentVersion);
   const checkForUpdates = useUpdateStore((s) => s.checkForUpdates);
-
-  const handleDownload = useCallback(async () => {
-    await window.electronAPI.app.openExternal(
-      'https://turcanime.pages.dev',
-    );
-  }, []);
+  const startUpdate = useUpdateStore((s) => s.startUpdate);
 
   return (
     <div>
@@ -43,7 +38,7 @@ export const UpdatesSection: React.FC = () => {
           </button>
         </label>
         <button
-          onClick={() => { void checkForUpdates(); }}
+          onClick={() => { void checkForUpdates(true); }}
           disabled={checkingForUpdates}
           className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/70 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
         >
@@ -65,8 +60,7 @@ export const UpdatesSection: React.FC = () => {
                 <span className="text-[11px] text-purple-400">v{updateAvailable} disponible</span>
               )}
               {!checkingForUpdates && !lastCheckError && !updateAvailable && currentVersion && (
-                <span className="text-[11px] text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
+                <span className="text-[11px] text-emerald-400">
                   Estás al día
                 </span>
               )}
@@ -74,11 +68,10 @@ export const UpdatesSection: React.FC = () => {
           </div>
           {!checkingForUpdates && !lastCheckError && updateAvailable && (
             <span
-              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+              onClick={(e) => { e.stopPropagation(); startUpdate(); }}
               className="flex items-center gap-1.5 text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors ml-auto flex-shrink-0 cursor-pointer"
             >
-              Descargar
-              <ExternalLink className="w-3 h-3" />
+              Actualizar
             </span>
           )}
         </button>
