@@ -40,6 +40,7 @@ src/
     logger.ts          Logger del proceso principal
     sessionHidden.ts   Ventana oculta para Cloudflare + cookies
     sessionPreload.ts  Preload de la ventana oculta
+    updater.ts         Check de releases, descarga y auto-actualizacion
   renderer/
     pages/             Pantallas (Home, Detail, Player, Search, Settings)
     components/        Componentes UI (AnimeCard, PlayerControls, etc.)

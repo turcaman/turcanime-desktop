@@ -36,6 +36,7 @@ Run both before committing.
 | `src/main/sessionHidden.ts` | Hidden window for Cloudflare + cookies |
 | `src/main/sessionPreload.ts` | Hidden window preload |
 | `src/main/ipcHandlers.ts` | IPC handlers |
+| `src/main/updater.ts` | Release check, download, AppImage/installer update |
 | `src/preload.ts` | contextBridge |
 | `src/types.ts` | Shared error types |
 | `src/App.tsx` | Root navigation |
