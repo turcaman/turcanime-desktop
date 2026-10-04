@@ -1,5 +1,6 @@
 import { ipcMain, net, shell, app, type BrowserWindow } from 'electron';
 import { hiddenSession } from './sessionHidden';
+import { cancelDownload, checkForUpdate, downloadRelease, installRelease } from './updater';
 import { store } from './store';
 import { networkMonitor } from './networkMonitor';
 import { logger } from './logger';
@@ -264,34 +265,40 @@ export function registerIpcHandlers(): void {
     await shell.openExternal(url);
   });
 
-  const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000;
-  let lastUpdateCheckAt = 0;
+  ipcMain.handle('updates:check', async (_event, force?: boolean) => {
+    const result = await checkForUpdate(force === true);
+    logger.debug('IPC', `updates:check -> ${result.latest ?? 'none'} (${result.mode})`);
+    return result;
+  });
 
-  ipcMain.handle('updates:check', async () => {
+  ipcMain.handle('updates:download', async () => {
+    logger.debug('IPC', 'updates:download');
     try {
-      const now = Date.now();
-      if (now - lastUpdateCheckAt < UPDATE_CHECK_INTERVAL) {
-        return { latest: null, current: app.getVersion() };
-      }
-      lastUpdateCheckAt = now;
-      const current = app.getVersion();
-      // Bounded so a stalled GitHub request can't leave the renderer's
-      // invoke hanging forever (the check is best-effort).
-      const response = await net.fetch(
-        'https://api.github.com/repos/turcaman/turcanime-desktop/releases/latest',
-        {
-          headers: { Accept: 'application/vnd.github+json' },
-          signal: AbortSignal.timeout(10_000),
-        },
-      );
-      if (!response.ok) {
-        return { latest: null, current, error: `Error al consultar GitHub (${response.status})` };
-      }
-      const data = await response.json();
-      const latest = (data.tag_name as string)?.replace(/^v/, '') || null;
-      return { latest, current };
+      await downloadRelease((progress) => {
+        mainWindow?.webContents.send('updates:progress', progress);
+      });
+      return { ok: true };
     } catch (err) {
-      return { latest: null, current: app.getVersion(), error: String(err) };
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error('IPC', `updates:download failed: ${message}`);
+      return { ok: false, error: message };
+    }
+  });
+
+  ipcMain.handle('updates:cancel', () => {
+    logger.debug('IPC', 'updates:cancel');
+    cancelDownload();
+    return true;
+  });
+
+  ipcMain.handle('updates:install', async () => {
+    logger.debug('IPC', 'updates:install');
+    try {
+      return await installRelease();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error('IPC', `updates:install failed: ${message}`);
+      return { ok: false, error: message };
     }
   });
 
