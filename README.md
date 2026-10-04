@@ -20,7 +20,7 @@ npm run make           # genera instaladores para la plataforma actual
 |---------|-------------|
 | `npm start` | Servidor de desarrollo con HMR |
 | `npm run package` | Empaqueta la app para la plataforma actual |
-| `npm run make` | Genera instaladores (.exe, .zip, .deb, .rpm) |
+| `npm run make` | Genera instaladores (.exe, .AppImage) |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | Verificacion de tipos |
 

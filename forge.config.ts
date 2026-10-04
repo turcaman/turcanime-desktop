@@ -1,8 +1,7 @@
 import path from 'node:path';
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerDeb } from '@electron-forge/maker-deb';
-import { MakerRpm } from '@electron-forge/maker-rpm';
+import { MakerAppImage } from '@reforged/maker-appimage';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
@@ -22,29 +21,11 @@ const config: ForgeConfig = {
       setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
       iconUrl: 'https://raw.githubusercontent.com/turcaman/turcanime-desktop/main/assets/icon.ico',
     }),
-    new MakerRpm({
-      options: Object.assign({
-        icon: {
-          '256x256': path.resolve(__dirname, 'assets', 'icon.png'),
-          '512x512': path.resolve(__dirname, 'assets', 'icon.png'),
-        },
+    new MakerAppImage({
+      options: {
+        icon: path.resolve(__dirname, 'assets', 'icon.png'),
         categories: ['AudioVideo'],
-        group: 'Applications/Multimedia',
-      }, {
-        desktopTemplate: path.resolve(__dirname, 'assets', 'rpm-desktop.ejs'),
-      }),
-    }),
-    new MakerDeb({
-      options: Object.assign({
-        icon: {
-          '256x256': path.resolve(__dirname, 'assets', 'icon.png'),
-          '512x512': path.resolve(__dirname, 'assets', 'icon.png'),
-        },
-        categories: ['AudioVideo'],
-        section: 'video',
-      }, {
-        desktopTemplate: path.resolve(__dirname, 'assets', 'desktop.ejs'),
-      }),
+      },
     }),
   ],
   plugins: [
