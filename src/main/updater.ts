@@ -230,7 +230,11 @@ export async function installRelease(): Promise<{ ok: boolean; error?: string }>
   }
 
   logger.info('Updater', 'AppImage replaced, relaunching');
-  spawn(current, [], { detached: true, stdio: 'ignore' }).unref();
+  const relaunch = spawn(current, [], { detached: true, stdio: 'ignore' });
+  // Without a listener a failed exec (corrupted download, noexec mount) would
+  // surface as an unhandled 'error' event and take the app down.
+  relaunch.on('error', (err) => logger.error('Updater', 'Relaunch failed', err));
+  relaunch.unref();
   setTimeout(() => app.exit(0), 300);
   return { ok: true };
 }
