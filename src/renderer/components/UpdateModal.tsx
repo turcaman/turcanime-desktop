@@ -1,23 +1,42 @@
 import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { AlertTriangle, Download, Loader2, Rocket } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useUpdateStore } from '../stores/updateStore';
+import type { UpdatePhase } from '../stores/updateStore';
 
 function formatSize(bytes: number): string {
-  if (bytes <= 0) return '0 MB';
+  if (bytes <= 0) return '0 B';
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const TITLES: Record<string, string> = {
+type ActivePhase = Exclude<UpdatePhase, 'idle'>;
+
+const EYEBROW: Record<ActivePhase, string> = {
   confirm: 'Actualización disponible',
-  downloading: 'Descargando',
-  installing: 'Instalando',
+  downloading: 'Descargando actualización',
+  installing: 'Instalando actualización',
   error: 'No se pudo actualizar',
+};
+
+interface HeroStyle {
+  Icon: LucideIcon;
+  circle: string;
+  icon: string;
+  spin?: boolean;
+}
+
+const HERO: Record<ActivePhase, HeroStyle> = {
+  confirm: { Icon: Rocket, circle: 'bg-purple-500/10', icon: 'text-purple-400' },
+  downloading: { Icon: Download, circle: 'bg-purple-500/10', icon: 'text-purple-400' },
+  installing: { Icon: Loader2, circle: 'bg-purple-500/10', icon: 'text-purple-400', spin: true },
+  error: { Icon: AlertTriangle, circle: 'bg-neutral-800/80', icon: 'text-neutral-400' },
 };
 
 export const UpdateModal: React.FC = () => {
   const phase = useUpdateStore((s) => s.phase);
   const updateAvailable = useUpdateStore((s) => s.updateAvailable);
+  const currentVersion = useUpdateStore((s) => s.currentVersion);
   const assetSize = useUpdateStore((s) => s.assetSize);
   const installMode = useUpdateStore((s) => s.installMode);
   const progress = useUpdateStore((s) => s.progress);
@@ -56,79 +75,88 @@ export const UpdateModal: React.FC = () => {
 
   if (phase === 'confirm') {
     body = (
-      <>
-        <p className="text-sm text-neutral-300">
-          Versión {updateAvailable} disponible
-          {assetSize != null && ` · ${formatSize(assetSize)}`}
+      <div className="space-y-1">
+        <p className="text-neutral-200 text-base font-semibold">
+          {currentVersion != null && updateAvailable != null
+            ? `${currentVersion} → ${updateAvailable}`
+            : `Versión ${updateAvailable} disponible`}
         </p>
-        <p className="text-xs text-neutral-400 mt-1.5">
+        <p className="text-xs text-neutral-400 leading-relaxed">
           {installMode === 'appimage'
-            ? 'Se descarga y se aplica sola. La app se reinicia al terminar.'
-            : 'Se descarga y se abre el instalador para que completes la actualización.'}
+            ? `Se descarga${assetSize != null ? ` (${formatSize(assetSize)})` : ''} y se aplica sola. La app se reinicia al terminar.`
+            : `Se descarga${assetSize != null ? ` (${formatSize(assetSize)})` : ''} y se abre el instalador para que completes la actualización.`}
         </p>
-      </>
+      </div>
     );
     actions = (
-      <div className="flex">
+      <>
         <button
           onClick={closeUpdate}
-          className="flex-1 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800/60 transition-colors"
+          className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
         >
-          Cancelar
+          Ahora no
         </button>
         <div className="w-px bg-neutral-800/60" />
         <button
           ref={primaryRef}
           onClick={() => { void confirmUpdate(); }}
-          className="flex-1 py-2.5 text-sm text-purple-400 font-medium hover:bg-neutral-800/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60"
+          className="flex-1 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
         >
           Actualizar
         </button>
-      </div>
+      </>
     );
   } else if (phase === 'downloading') {
+    const pctLabel = pct != null ? `${Math.round(pct * 100)}%` : null;
     body = (
-      <>
+      <div className="space-y-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-neutral-200 text-base font-semibold tabular-nums">
+            {pctLabel ?? '…'}
+          </p>
+          <p className="text-xs text-neutral-400 tabular-nums truncate">
+            {total != null
+              ? `${formatSize(progress.receivedBytes)} de ${formatSize(total)}`
+              : `${formatSize(progress.receivedBytes)} descargados`}
+          </p>
+        </div>
         <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-purple-500 transition-[width] duration-200"
+            className="relative h-full bg-purple-500 rounded-full transition-[width] duration-200 overflow-hidden"
             style={{ width: `${Math.round((pct ?? 0.02) * 100)}%` }}
-          />
+          >
+            <div className="absolute inset-y-0 w-2/5 bg-white/25 animate-progress-streak" />
+          </div>
         </div>
-        <p className="text-xs text-neutral-400 mt-2.5">
-          {pct != null
-            ? `${Math.round(pct * 100)}% · ${formatSize(progress.receivedBytes)} de ${formatSize(total ?? 0)}`
-            : `${formatSize(progress.receivedBytes)} descargados`}
-        </p>
-      </>
+      </div>
     );
     actions = (
       <button
         onClick={cancelDownload}
-        className="w-full py-2.5 text-sm text-neutral-300 hover:bg-neutral-800/60 transition-colors"
+        className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
       >
         Cancelar
       </button>
     );
   } else if (phase === 'installing') {
     body = (
-      <p className="text-sm text-neutral-300">
+      <p className="text-xs text-neutral-400 leading-relaxed">
         {installMode === 'appimage'
-          ? 'Aplicando la actualización y reiniciando…'
-          : 'Abriendo el instalador…'}
+          ? 'Aplicando la actualización y reiniciando. No cierres la app.'
+          : 'Abriendo el instalador para que completes la actualización.'}
       </p>
     );
   } else {
     body = (
-      <p className="text-sm text-neutral-300 break-words">
+      <p className="text-xs text-neutral-400 leading-relaxed">
         {errorMessage ?? 'Ocurrió un error inesperado.'}
       </p>
     );
     actions = (
-      <div className="flex">
+      <>
         <button
           onClick={closeUpdate}
-          className="flex-1 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800/60 transition-colors"
+          className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
         >
           Cerrar
         </button>
@@ -136,46 +164,37 @@ export const UpdateModal: React.FC = () => {
         <button
           ref={primaryRef}
           onClick={() => { void confirmUpdate(); }}
-          className="flex-1 py-2.5 text-sm text-purple-400 font-medium hover:bg-neutral-800/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60"
+          className="flex-1 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
         >
           Reintentar
         </button>
-      </div>
+      </>
     );
   }
 
 
+  const { Icon, circle, icon, spin } = HERO[phase];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className={`absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in ${dismissible ? '' : 'pointer-events-none'}`}
+        className={`absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in ${dismissible ? '' : 'pointer-events-none'}`}
         onClick={closeUpdate}
       />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={TITLES[phase]}
-        className="relative w-full max-w-sm bg-neutral-900 rounded-xl border border-neutral-800/70 shadow-lg shadow-black/40 overflow-hidden animate-fade-in"
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800/60">
-          <h3 className="text-sm font-semibold text-neutral-200">
-            {TITLES[phase]}
-          </h3>
-          {dismissible && (
-            <button
-              onClick={closeUpdate}
-              aria-label="Cerrar"
-              className="p-1.5 rounded-md hover:bg-neutral-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/70"
-            >
-              <X className="w-4 h-4 text-neutral-400" />
-            </button>
-          )}
+      <div className="relative w-full max-w-xs bg-neutral-900 rounded-xl border border-neutral-800/70 shadow-lg shadow-black/40 overflow-hidden animate-fade-in">
+        <div className="px-5 pt-5 pb-4 flex flex-col items-center gap-4 text-center">
+          <div className={`w-14 h-14 rounded-full ${circle} flex items-center justify-center`}>
+            <Icon className={`w-7 h-7 ${icon}${spin ? ' animate-spin' : ''}`} />
+          </div>
+          <div className="space-y-1 w-full">
+            <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-[0.14em]">
+              {EYEBROW[phase]}
+            </p>
+            {body}
+          </div>
         </div>
-
-        <div className="p-4">{body}</div>
-
         {actions != null && (
-          <div className="border-t border-neutral-800/60 -mx-4 -mb-4">
+          <div className="flex border-t border-neutral-800/60">
             {actions}
           </div>
         )}
