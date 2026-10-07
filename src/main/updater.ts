@@ -1,16 +1,17 @@
 import { app, net, shell } from 'electron';
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
-import { chmod, copyFile, mkdir, rename, unlink } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, readdir, rename, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { logger } from './logger';
 
 const RELEASES_URL = 'https://api.github.com/repos/turcaman/turcanime-desktop/releases/latest';
 const CHECK_TIMEOUT_MS = 10_000;
-const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
+const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 const DOWNLOAD_TIMEOUT_MS = 10 * 60 * 1000;
 const STALL_TIMEOUT_MS = 45 * 1000;
 const PROGRESS_INTERVAL_MS = 200;
+const MIN_ASSET_SIZE = 5 * 1024 * 1024;
 
 export type InstallMode = 'appimage' | 'installer' | 'browser';
 
@@ -39,9 +40,11 @@ interface GithubAsset {
   size?: number;
 }
 
-let lastCheckAt = 0;
+let lastSuccessAt = 0;
+let checkPromise: Promise<CheckResult> | null = null;
 let lastAsset: UpdateAsset | null = null;
 let activeDownload: AbortController | null = null;
+let downloadAbortReason: 'user' | 'stall' | 'timeout' | null = null;
 let downloadedPath: string | null = null;
 
 // AppImage self-update is only possible when running from an AppImage; a dev
@@ -58,16 +61,15 @@ function pickAsset(assets: GithubAsset[]): UpdateAsset | null {
     : assets.find((a) => /\.AppImage$/i.test(a.name ?? ''));
   const url = match?.browser_download_url;
   if (!match?.name || !url?.startsWith('https://')) return null;
-  return {
-    name: match.name,
-    url,
-    size: typeof match.size === 'number' ? match.size : null,
-  };
+  const size = typeof match.size === 'number' ? match.size : null;
+  // Skip tiny artifacts (blockmaps, checksums) like the Android min-size guard.
+  if (size != null && size < MIN_ASSET_SIZE) return null;
+  return { name: match.name, url, size };
 }
 
 async function fetchLatestRelease(): Promise<{ tag: string; asset: UpdateAsset | null }> {
-  const response = await net.fetch(RELEASES_URL, {
-    headers: { Accept: 'application/vnd.github+json' },
+  const response = await net.fetch(`${RELEASES_URL}?_=${Date.now()}`, {
+    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Turcanime-Desktop' },
     signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
   });
   if (!response.ok) {
@@ -76,20 +78,19 @@ async function fetchLatestRelease(): Promise<{ tag: string; asset: UpdateAsset |
   const data = (await response.json()) as { tag_name?: string; assets?: GithubAsset[] };
   const tag = (data.tag_name ?? '').replace(/^v/, '').trim();
   if (!tag) throw new Error('La release no tiene tag');
+  // Prereleases never trigger an update prompt (mirrors Android).
+  if (tag.includes('-')) return { tag, asset: null };
   const asset = pickAsset(data.assets ?? []);
   if (asset) lastAsset = asset;
   return { tag, asset };
 }
 
-export async function checkForUpdate(force: boolean): Promise<CheckResult> {
+async function runCheck(): Promise<CheckResult> {
   const current = app.getVersion();
-  const now = Date.now();
-  if (!force && now - lastCheckAt < CHECK_INTERVAL_MS) {
-    return { latest: null, current, asset: null, mode: installMode() };
-  }
-  lastCheckAt = now;
   try {
+    await cleanupOldUpdate();
     const { tag, asset } = await fetchLatestRelease();
+    lastSuccessAt = Date.now();
     return { latest: tag, current, asset, mode: installMode() };
   } catch (err) {
     return {
@@ -102,7 +103,22 @@ export async function checkForUpdate(force: boolean): Promise<CheckResult> {
   }
 }
 
+export async function checkForUpdate(force: boolean): Promise<CheckResult> {
+  if (checkPromise) return checkPromise;
+  const current = app.getVersion();
+  if (!force && Date.now() - lastSuccessAt < CHECK_INTERVAL_MS) {
+    return { latest: null, current, asset: null, mode: installMode() };
+  }
+  checkPromise = runCheck();
+  try {
+    return await checkPromise;
+  } finally {
+    checkPromise = null;
+  }
+}
+
 export function cancelDownload(): void {
+  downloadAbortReason = 'user';
   activeDownload?.abort();
   activeDownload = null;
 }
@@ -110,6 +126,23 @@ export function cancelDownload(): void {
 // Removing a half-written or staged file must never mask the real error.
 async function removeQuietly(target: string): Promise<void> {
   await unlink(target).catch((): void => undefined);
+}
+
+function updateTempDir(): string {
+  return path.join(app.getPath('temp'), 'turcanime-update');
+}
+
+// Mirrors Android's cleanupOldApk: drop stale payloads so an old version
+// is never mistaken for the fresh download. Keeps the staged file (if any)
+// so a background re-check never invalidates a ready-to-install download.
+export async function cleanupOldUpdate(): Promise<void> {
+  const dir = updateTempDir();
+  const entries = await readdir(dir).catch((): string[] => []);
+  await Promise.all(
+    entries
+      .filter((entry) => !downloadedPath || path.join(dir, entry) !== downloadedPath)
+      .map((entry) => removeQuietly(path.join(dir, entry))),
+  );
 }
 
 
@@ -121,14 +154,18 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
   const asset = lastAsset ?? (await fetchLatestRelease()).asset;
   if (!asset) throw new Error('No hay archivo de actualización para esta plataforma.');
 
-  const dir = path.join(app.getPath('temp'), 'turcanime-update');
+  const dir = updateTempDir();
   await mkdir(dir, { recursive: true });
   const dest = path.join(dir, path.basename(new URL(asset.url).pathname));
   downloadedPath = null;
 
   const controller = new AbortController();
   activeDownload = controller;
-  const timeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
+  downloadAbortReason = null;
+  const timeout = setTimeout(() => {
+    downloadAbortReason ??= 'timeout';
+    controller.abort();
+  }, DOWNLOAD_TIMEOUT_MS);
 
   try {
     const response = await net.fetch(asset.url, { signal: controller.signal });
@@ -157,7 +194,8 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
         if (done) break;
         controller.signal.throwIfAborted();
         if (Date.now() - lastChunkAt > STALL_TIMEOUT_MS) {
-          throw new Error('La descarga se detuvo. Revisá tu conexión.');
+          downloadAbortReason = 'stall';
+          throw new Error('stalled');
         }
         lastChunkAt = Date.now();
         receivedBytes += value.byteLength;
@@ -189,11 +227,17 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
     logger.info('Updater', `Downloaded ${asset.name} (${receivedBytes} bytes)`);
   } catch (err) {
     await removeQuietly(dest);
-    if (controller.signal.aborted) throw new Error('Descarga cancelada.');
+    // Typed codes (mirrors Android): the renderer maps them to UX copy.
+    if (downloadAbortReason === 'user' || controller.signal.aborted) throw new Error('cancelled');
+    if (downloadAbortReason === 'stall' || (err instanceof Error && err.message === 'stalled')) {
+      throw new Error('stalled');
+    }
+    if (downloadAbortReason === 'timeout') throw new Error('timeout');
     throw err;
   } finally {
     clearTimeout(timeout);
     activeDownload = null;
+    downloadAbortReason = null;
   }
 }
 
