@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useHomeStore } from '../stores/homeStore';
+import { useUpdateStore } from '../stores/updateStore';
 import { renewSession } from '../utils/sessionRecovery';
 
 // When connection restores, wait 2s then refresh session + cache (mirrors
@@ -17,7 +18,10 @@ export function useReconnect(isConnected: boolean): void {
           const ok = await renewSession();
           useHomeStore.getState().fetchHome(ok).catch((): void => undefined);
         };
-        doRefresh();
+        void doRefresh();
+        if (useUpdateStore.getState().updateCheckEnabled !== false) {
+          void useUpdateStore.getState().checkForUpdates();
+        }
       }, 2000);
       return () => clearTimeout(timer);
     }

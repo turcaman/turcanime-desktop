@@ -15,6 +15,18 @@ import { UpdateModal } from './renderer/components/UpdateModal';
 import { Sidebar } from './renderer/components/Sidebar';
 import { sessionManager } from './renderer/services/session';
 
+const UPDATE_CHECK_ATTEMPTS = 3;
+const UPDATE_CHECK_RETRY_DELAY = 2000;
+
+function runUpdateCheckWithRetry(attempt = 1): void {
+  void useUpdateStore.getState().checkForUpdates().then((ok) => {
+    const { updateCheckEnabled } = useUpdateStore.getState();
+    if (!ok && updateCheckEnabled !== false && attempt < UPDATE_CHECK_ATTEMPTS) {
+      setTimeout(() => runUpdateCheckWithRetry(attempt + 1), UPDATE_CHECK_RETRY_DELAY * attempt);
+    }
+  });
+}
+
 const App: React.FC = () => {
   const initialize = useAppInitStore((s) => s.initialize);
   const isInitialized = useAppInitStore((s) => s.isInitialized);
@@ -42,9 +54,9 @@ const App: React.FC = () => {
       await initialize();
       if (!cancelled) setReady(true);
 
-      const { updateCheckEnabled, checkForUpdates } = useUpdateStore.getState();
+      const { updateCheckEnabled } = useUpdateStore.getState();
       if (updateCheckEnabled) {
-        checkForUpdates().catch((): void => undefined);
+        runUpdateCheckWithRetry();
       }
     };
     init();
