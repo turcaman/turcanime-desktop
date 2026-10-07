@@ -34,6 +34,15 @@ let stopProgress: (() => void) | null = null;
 // the abort stops touching the phase instead of resurrecting the modal with a
 // "Descarga cancelada" error.
 let flowToken = 0;
+let checkPromise: Promise<boolean> | null = null;
+
+function mapDownloadError(error: string): string | null {
+  // Typed codes from main (mirrors Android): cancelled is silent.
+  if (error === 'cancelled') return null;
+  if (error === 'stalled') return 'La descarga se detuvo por conexión lenta. Reintentá cuando tengas mejor señal.';
+  if (error === 'timeout') return 'La descarga tardó demasiado. Reintentá con mejor conexión.';
+  return error;
+}
 
 interface UpdateState {
   updateCheckEnabled: boolean;
@@ -49,10 +58,11 @@ interface UpdateState {
   assetSize: number | null;
   initialize: (data: { updateCheckEnabled: boolean; currentVersion: string }) => void;
   setUpdateCheckEnabled: (enabled: boolean) => Promise<void>;
-  checkForUpdates: (force?: boolean) => Promise<void>;
+  checkForUpdates: (force?: boolean) => Promise<boolean>;
   startUpdate: () => void;
   closeUpdate: () => void;
   confirmUpdate: () => Promise<void>;
+  beginDownload: () => Promise<void>;
   cancelDownload: () => void;
 }
 
@@ -85,28 +95,38 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   },
 
   checkForUpdates: async (force = false) => {
-    set({ checkingForUpdates: true, lastCheckError: null });
-    try {
-      const result = await window.electronAPI.updates.check(force);
-      if (result.error) {
-        set({ checkingForUpdates: false, lastCheckError: result.error });
-        return;
+    if (checkPromise) return checkPromise;
+    checkPromise = (async () => {
+      set({ checkingForUpdates: true, lastCheckError: null });
+      try {
+        const result = await window.electronAPI.updates.check(force);
+        if (result.error) {
+          set({ checkingForUpdates: false, lastCheckError: result.error });
+          return false;
+        }
+        const available = result.latest && isNewer(result.latest, result.current)
+          ? result.latest
+          : null;
+        set({
+          updateAvailable: available,
+          currentVersion: result.current,
+          checkingForUpdates: false,
+          lastCheckError: null,
+          installMode: result.mode,
+          assetName: result.asset?.name ?? null,
+          assetSize: result.asset?.size ?? null,
+        });
+        return true;
+      } catch (err) {
+        set({ checkingForUpdates: false, lastCheckError: String(err) });
+        logger.error('updateStore', 'Failed to check for updates', err);
+        return false;
       }
-      const available = result.latest && isNewer(result.latest, result.current)
-        ? result.latest
-        : null;
-      set({
-        updateAvailable: available,
-        currentVersion: result.current,
-        checkingForUpdates: false,
-        lastCheckError: null,
-        installMode: result.mode,
-        assetName: result.asset?.name ?? null,
-        assetSize: result.asset?.size ?? null,
-      });
-    } catch (err) {
-      set({ checkingForUpdates: false, lastCheckError: String(err) });
-      logger.error('updateStore', 'Failed to check for updates', err);
+    })();
+    try {
+      return await checkPromise;
+    } finally {
+      checkPromise = null;
     }
   },
 
@@ -134,7 +154,12 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   },
 
   confirmUpdate: async () => {
-    // Re-entrant call (double click on "Actualizar")
+    if (get().phase === 'downloading') return;
+    await get().beginDownload();
+  },
+
+  beginDownload: async () => {
+    // Re-entrant call (double click on "Actualizar" o Reintentar en error)
     if (get().phase === 'downloading') return;
     const token = ++flowToken;
 
@@ -152,7 +177,12 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
       const download = await window.electronAPI.updates.download();
       if (token !== flowToken) return;
       if (!download.ok) {
-        set({ phase: 'error', errorMessage: download.error ?? 'No se pudo descargar la actualización.' });
+        const mapped = mapDownloadError(download.error ?? '');
+        if (mapped == null) {
+          set({ phase: 'idle', errorMessage: null });
+          return;
+        }
+        set({ phase: 'error', errorMessage: mapped });
         return;
       }
 
@@ -163,7 +193,14 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
         set({ phase: 'error', errorMessage: install.error ?? 'No se pudo instalar la actualización.' });
       }
     } catch (err) {
-      set({ phase: 'error', errorMessage: String(err) });
+      if (token !== flowToken) return;
+      const message = err instanceof Error ? err.message : String(err);
+      const mapped = mapDownloadError(message);
+      if (mapped == null) {
+        set({ phase: 'idle', errorMessage: null });
+        return;
+      }
+      set({ phase: 'error', errorMessage: mapped });
       logger.error('updateStore', 'Update flow failed', err);
     } finally {
       stopProgress?.();
