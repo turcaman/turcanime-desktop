@@ -5,17 +5,18 @@ import { useUpdateStore } from '../stores/updateStore';
 import type { UpdatePhase } from '../stores/updateStore';
 
 function formatSize(bytes: number): string {
-  if (bytes <= 0) return '0 B';
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes <= 0) return '0 MB';
+  const mb = bytes / (1024 * 1024);
+  if (mb < 1) return `${Math.round(bytes / 1024)} KB`;
+  return `${mb.toFixed(1)} MB`;
 }
 
 type ActivePhase = Exclude<UpdatePhase, 'idle'>;
 
 const EYEBROW: Record<ActivePhase, string> = {
-  confirm: 'Actualización disponible',
-  downloading: 'Descargando actualización',
-  installing: 'Instalando actualización',
+  confirm: 'Actualizar',
+  downloading: 'Descargando',
+  installing: 'Preparando instalación',
   error: 'No se pudo actualizar',
 };
 
@@ -43,6 +44,7 @@ export const UpdateModal: React.FC = () => {
   const errorMessage = useUpdateStore((s) => s.errorMessage);
   const closeUpdate = useUpdateStore((s) => s.closeUpdate);
   const confirmUpdate = useUpdateStore((s) => s.confirmUpdate);
+  const beginDownload = useUpdateStore((s) => s.beginDownload);
   const cancelDownload = useUpdateStore((s) => s.cancelDownload);
   const primaryRef = useRef<HTMLButtonElement>(null);
 
@@ -94,7 +96,7 @@ export const UpdateModal: React.FC = () => {
           onClick={closeUpdate}
           className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
         >
-          Ahora no
+          Cancelar
         </button>
         <div className="w-px bg-neutral-800/60" />
         <button
@@ -107,27 +109,21 @@ export const UpdateModal: React.FC = () => {
       </>
     );
   } else if (phase === 'downloading') {
-    const pctLabel = pct != null ? `${Math.round(pct * 100)}%` : null;
     body = (
       <div className="space-y-1">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-neutral-200 text-base font-semibold tabular-nums">
-            {pctLabel ?? '…'}
-          </p>
-          <p className="text-xs text-neutral-400 tabular-nums truncate">
-            {total != null
-              ? `${formatSize(progress.receivedBytes)} de ${formatSize(total)}`
-              : `${formatSize(progress.receivedBytes)} descargados`}
-          </p>
-        </div>
-        <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
+        <div className="h-1 bg-neutral-800 rounded-full overflow-hidden mt-1">
           <div
             className="relative h-full bg-purple-500 rounded-full transition-[width] duration-200 overflow-hidden"
-            style={{ width: `${Math.round((pct ?? 0.02) * 100)}%` }}
+            style={{ width: `${Math.round((pct ?? 0.03) * 100)}%` }}
           >
             <div className="absolute inset-y-0 w-2/5 bg-white/25 animate-progress-streak" />
           </div>
         </div>
+        <p className="text-xs text-neutral-400 tabular-nums">
+          {pct != null
+            ? `${Math.round(pct * 100)}% · ${formatSize(progress.receivedBytes)}`
+            : `${formatSize(progress.receivedBytes)} descargados`}
+        </p>
       </div>
     );
     actions = (
@@ -143,7 +139,7 @@ export const UpdateModal: React.FC = () => {
       <p className="text-xs text-neutral-400 leading-relaxed">
         {installMode === 'appimage'
           ? 'Aplicando la actualización y reiniciando. No cierres la app.'
-          : 'Abriendo el instalador para que completes la actualización.'}
+          : 'Abriendo el instalador del sistema…'}
       </p>
     );
   } else {
@@ -163,7 +159,7 @@ export const UpdateModal: React.FC = () => {
         <div className="w-px bg-neutral-800/60" />
         <button
           ref={primaryRef}
-          onClick={() => { void confirmUpdate(); }}
+          onClick={() => { void beginDownload(); }}
           className="flex-1 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
         >
           Reintentar
