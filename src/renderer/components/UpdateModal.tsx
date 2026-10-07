@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { AlertTriangle, Download, Loader2, Rocket } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useUpdateStore } from '../stores/updateStore';
 import type { UpdatePhase } from '../stores/updateStore';
 
@@ -13,25 +12,11 @@ function formatSize(bytes: number): string {
 
 type ActivePhase = Exclude<UpdatePhase, 'idle'>;
 
-const EYEBROW: Record<ActivePhase, string> = {
+const TITLE: Record<ActivePhase, string> = {
   confirm: 'Actualizar',
   downloading: 'Descargando',
   installing: 'Preparando instalación',
   error: 'No se pudo actualizar',
-};
-
-interface HeroStyle {
-  Icon: LucideIcon;
-  circle: string;
-  icon: string;
-  spin?: boolean;
-}
-
-const HERO: Record<ActivePhase, HeroStyle> = {
-  confirm: { Icon: Rocket, circle: 'bg-purple-500/10', icon: 'text-purple-400' },
-  downloading: { Icon: Download, circle: 'bg-purple-500/10', icon: 'text-purple-400' },
-  installing: { Icon: Loader2, circle: 'bg-purple-500/10', icon: 'text-purple-400', spin: true },
-  error: { Icon: AlertTriangle, circle: 'bg-neutral-800/80', icon: 'text-neutral-400' },
 };
 
 export const UpdateModal: React.FC = () => {
@@ -94,15 +79,15 @@ export const UpdateModal: React.FC = () => {
       <>
         <button
           onClick={closeUpdate}
-          className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
+          className="flex-1 px-4 py-4 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
         >
           Cancelar
         </button>
-        <div className="w-px bg-neutral-800/60" />
+        <div className="w-px bg-neutral-800" />
         <button
           ref={primaryRef}
           onClick={() => { void confirmUpdate(); }}
-          className="flex-1 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
+          className="flex-1 px-4 py-4 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
         >
           Actualizar
         </button>
@@ -110,16 +95,14 @@ export const UpdateModal: React.FC = () => {
     );
   } else if (phase === 'downloading') {
     body = (
-      <div className="space-y-1">
+      <div>
         <div className="h-1 bg-neutral-800 rounded-full overflow-hidden mt-1">
           <div
-            className="relative h-full bg-purple-500 rounded-full transition-[width] duration-200 overflow-hidden"
+            className="h-full bg-purple-500 rounded-full transition-[width] duration-200"
             style={{ width: `${Math.round((pct ?? 0.03) * 100)}%` }}
-          >
-            <div className="absolute inset-y-0 w-2/5 bg-white/25 animate-progress-streak" />
-          </div>
+          />
         </div>
-        <p className="text-xs text-neutral-400 tabular-nums">
+        <p className="text-neutral-500 text-xs mt-2 tabular-nums">
           {pct != null
             ? `${Math.round(pct * 100)}% · ${formatSize(progress.receivedBytes)}`
             : `${formatSize(progress.receivedBytes)} descargados`}
@@ -129,14 +112,14 @@ export const UpdateModal: React.FC = () => {
     actions = (
       <button
         onClick={cancelDownload}
-        className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
+        className="flex-1 px-4 py-4 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
       >
         Cancelar
       </button>
     );
   } else if (phase === 'installing') {
     body = (
-      <p className="text-xs text-neutral-400 leading-relaxed">
+      <p className="text-neutral-400 text-sm leading-5">
         {installMode === 'appimage'
           ? 'Aplicando la actualización y reiniciando. No cierres la app.'
           : 'Abriendo el instalador del sistema…'}
@@ -144,7 +127,7 @@ export const UpdateModal: React.FC = () => {
     );
   } else {
     body = (
-      <p className="text-xs text-neutral-400 leading-relaxed">
+      <p className="text-neutral-400 text-sm leading-5">
         {errorMessage ?? 'Ocurrió un error inesperado.'}
       </p>
     );
@@ -152,24 +135,21 @@ export const UpdateModal: React.FC = () => {
       <>
         <button
           onClick={closeUpdate}
-          className="flex-1 px-4 py-3 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
+          className="flex-1 px-4 py-4 text-sm text-neutral-300 hover:text-neutral-100 hover:bg-neutral-800/60 transition-colors"
         >
           Cerrar
         </button>
-        <div className="w-px bg-neutral-800/60" />
+        <div className="w-px bg-neutral-800" />
         <button
           ref={primaryRef}
           onClick={() => { void beginDownload(); }}
-          className="flex-1 px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
+          className="flex-1 px-4 py-4 text-sm text-purple-400 hover:text-purple-300 hover:bg-neutral-800/60 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500/60"
         >
           Reintentar
         </button>
       </>
     );
   }
-
-
-  const { Icon, circle, icon, spin } = HERO[phase];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -178,21 +158,29 @@ export const UpdateModal: React.FC = () => {
         onClick={closeUpdate}
       />
       <div className="relative w-full max-w-xs bg-neutral-900 rounded-xl border border-neutral-800/70 shadow-lg shadow-black/40 overflow-hidden animate-fade-in">
-        <div className="px-5 pt-5 pb-4 flex flex-col items-center gap-4 text-center">
-          <div className={`w-14 h-14 rounded-full ${circle} flex items-center justify-center`}>
-            <Icon className={`w-7 h-7 ${icon}${spin ? ' animate-spin' : ''}`} />
-          </div>
-          <div className="space-y-1 w-full">
-            <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-[0.14em]">
-              {EYEBROW[phase]}
+        <div className="px-5 pt-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="text-white text-xl font-bold">
+              {TITLE[phase]}
             </p>
-            {body}
+            {dismissible && (
+              <button
+                onClick={closeUpdate}
+                aria-label="Cerrar"
+                className="text-neutral-400 hover:text-neutral-200 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
+          {body}
         </div>
-        {actions != null && (
-          <div className="flex border-t border-neutral-800/60">
+        {actions != null ? (
+          <div className="flex border-t border-neutral-800 mt-5">
             {actions}
           </div>
+        ) : (
+          <div className="h-5" />
         )}
       </div>
     </div>
