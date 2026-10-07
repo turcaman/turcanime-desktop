@@ -1,5 +1,5 @@
-import React from 'react';
-import { Bell, Download } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { ArrowRight, Bell, Download } from 'lucide-react';
 import { useUpdateStore } from '../../stores/updateStore';
 
 export const UpdatesSection: React.FC = () => {
@@ -11,6 +11,16 @@ export const UpdatesSection: React.FC = () => {
   const currentVersion = useUpdateStore((s) => s.currentVersion);
   const checkForUpdates = useUpdateStore((s) => s.checkForUpdates);
   const startUpdate = useUpdateStore((s) => s.startUpdate);
+
+  // Toda la fila abre el update si hay versión disponible (con fallback a la
+  // página de releases en modo browser dentro del store); si no, chequea.
+  const handlePress = useCallback(() => {
+    if (updateAvailable) {
+      startUpdate();
+      return;
+    }
+    void checkForUpdates(true);
+  }, [updateAvailable, startUpdate, checkForUpdates]);
 
   return (
     <div>
@@ -38,7 +48,7 @@ export const UpdatesSection: React.FC = () => {
           </button>
         </label>
         <button
-          onClick={() => { void checkForUpdates(true); }}
+          onClick={handlePress}
           disabled={checkingForUpdates}
           className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-neutral-800/70 bg-neutral-900/50 hover:bg-neutral-800/60 transition-colors disabled:opacity-50"
         >
@@ -67,11 +77,9 @@ export const UpdatesSection: React.FC = () => {
             </div>
           </div>
           {!checkingForUpdates && !lastCheckError && updateAvailable && (
-            <span
-              onClick={(e) => { e.stopPropagation(); startUpdate(); }}
-              className="flex items-center gap-1.5 text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors ml-auto flex-shrink-0 cursor-pointer"
-            >
+            <span className="flex items-center gap-1 ml-auto flex-shrink-0 text-[11px] text-purple-400 font-medium">
               Actualizar
+              <ArrowRight className="w-3 h-3" />
             </span>
           )}
         </button>
