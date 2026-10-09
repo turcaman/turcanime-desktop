@@ -7,13 +7,15 @@ const POLL_INTERVAL = 30_000;
 const POLL_JITTER = 5_000;
 // The network can still be reconnecting when the resume event fires;
 // a second probe catches the restored link without waiting a full poll.
-const RESUME_RECHECK_DELAY_MS = 2_000;
+const RESUME_RECHECK_DELAY_MS = 1_000;
+const MAX_RESUME_PROBES = 4;
 
 let lastIsReachable = true;
 let mainWindow: BrowserWindow | undefined;
 let pollTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingPromise: Promise<boolean> | null = null;
 let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+let resumeProbes = 0;
 
 function jitteredInterval(): number {
   return POLL_INTERVAL + Math.floor(Math.random() * POLL_JITTER * 2) - POLL_JITTER;
@@ -43,17 +45,29 @@ function notifyResume(): void {
   }
 }
 
+// Probe immediately, then once per second while the link is still
+// settling. The resume event reaches the renderer only after a probe
+// succeeds, so recovery never fires against a network that is still down.
+function probeAfterResume(): void {
+  void refreshAndNotify().then((reachable) => {
+    if (reachable) {
+      resumeProbes = 0;
+      notifyResume();
+      return;
+    }
+    resumeProbes += 1;
+    if (resumeProbes < MAX_RESUME_PROBES) {
+      resumeTimer = setTimeout(probeAfterResume, RESUME_RECHECK_DELAY_MS);
+    }
+  });
+}
+
 function handleSystemResume(): void {
   logger.info('Network', 'System resumed, probing connectivity');
-  notifyResume();
-  void refreshAndNotify();
-
+  resumeProbes = 0;
   if (resumeTimer) clearTimeout(resumeTimer);
-  resumeTimer = setTimeout(() => {
-    resumeTimer = null;
-    notifyResume();
-    void refreshAndNotify();
-  }, RESUME_RECHECK_DELAY_MS);
+  resumeTimer = null;
+  probeAfterResume();
 }
 
 async function checkReachable(): Promise<boolean> {
@@ -109,6 +123,7 @@ export const networkMonitor = {
       clearTimeout(resumeTimer);
       resumeTimer = null;
     }
+    resumeProbes = 0;
   },
 
   async check(): Promise<boolean> {

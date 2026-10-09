@@ -4,8 +4,8 @@ import { logger } from './logger';
 import { useUIStore } from '../stores/uiStore';
 import { SESSION_SENSITIVE_CACHE_PREFIXES } from '../../config/cache';
 
-// Single entry point for "renew the session" used by the settings button, the
-// reconnect hook and the home store's auth backoff. Mirrors the mobile app's
+// Single entry point for "renew the session" used by the settings button and
+// the home store's auth backoff. Mirrors the mobile app's
 // triggerSessionRefresh: concurrent callers share the in-flight renewal (no
 // double renewal, no spam on the settings button) and the UI flag stays set
 // for the whole duration, so the button shows its loading state even when the
@@ -23,6 +23,18 @@ export function renewSession(): Promise<boolean> {
     useUIStore.getState().setSessionRefreshing(false);
   });
   return inflightSessionRenewal;
+}
+
+// Resume recovery: an existing cookie jar usually survives sleep, so
+// skip the Cloudflare wash and let the home fetch prove the session.
+// A 401 from that fetch flows through runWithRetry's auth refresh.
+export async function resumeSession(): Promise<boolean> {
+  const session = await sessionManager.getSession();
+  if (session.cookies.length > 0) {
+    await clearSessionSensitiveCache();
+    return true;
+  }
+  return renewSession();
 }
 
 // Shared "recover from a stale session" step: renew the session and drop only
