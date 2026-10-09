@@ -24,7 +24,8 @@ function getVisibleEpisodes(
   activeRangeIdx: number,
   ascending: boolean,
 ): Episode[] {
-  const range = ranges[activeRangeIdx];
+  // persisted idx can outlive a shrunken list; fall back to first range
+  const range = ranges[activeRangeIdx] ?? ranges[0];
   if (range == null) return [];
   const slice = episodes.slice(range.start, range.end);
   return ascending ? slice : [...slice].reverse();

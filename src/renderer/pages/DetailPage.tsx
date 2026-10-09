@@ -1,4 +1,5 @@
 import React from 'react';
+import { Frown } from 'lucide-react';
 import { useAnimeDetail } from '../hooks/useAnimeDetail';
 import { usePlayerStore } from '../stores/playerStore';
 import { DetailHeader } from '../components/detail/DetailHeader';
@@ -92,6 +93,15 @@ export const DetailPage: React.FC<DetailPageProps> = ({
           activeRangeIdx={activeRangeIdx}
           onSelect={setActiveRangeIdx}
         />
+        {episodes.length === 0 && (
+          <div className="flex flex-col items-center pt-20 select-none">
+            <Frown className="w-12 h-12 text-neutral-600 mb-4" />
+            <p className="max-w-[300px] text-center text-sm text-neutral-500">
+              Este anime aún no tiene episodios disponibles. Vuelve más tarde
+              para comprobarlo.
+            </p>
+          </div>
+        )}
         {episodes.map((ep) => (
           <EpisodeItem
             key={ep.id}
