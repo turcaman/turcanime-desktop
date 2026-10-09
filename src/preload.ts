@@ -50,5 +50,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('network:status-changed', handler);
       return () => ipcRenderer.removeListener('network:status-changed', handler);
     },
+    onResume: (cb: () => void) => {
+      const handler = () => cb();
+      ipcRenderer.on('network:resume', handler);
+      return () => ipcRenderer.removeListener('network:resume', handler);
+    },
   },
 });

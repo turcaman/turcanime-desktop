@@ -1,15 +1,19 @@
-import { net, type BrowserWindow } from 'electron';
+import { net, powerMonitor, type BrowserWindow } from 'electron';
 import { logger } from './logger';
 
 const REACHABILITY_URL = 'https://clients3.google.com/generate_204';
 const REACHABILITY_TIMEOUT = 5000;
 const POLL_INTERVAL = 30_000;
 const POLL_JITTER = 5_000;
+// The network can still be reconnecting when the resume event fires;
+// a second probe catches the restored link without waiting a full poll.
+const RESUME_RECHECK_DELAY_MS = 2_000;
 
 let lastIsReachable = true;
 let mainWindow: BrowserWindow | undefined;
 let pollTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingPromise: Promise<boolean> | null = null;
+let resumeTimer: ReturnType<typeof setTimeout> | null = null;
 
 function jitteredInterval(): number {
   return POLL_INTERVAL + Math.floor(Math.random() * POLL_JITTER * 2) - POLL_JITTER;
@@ -19,16 +23,8 @@ function schedulePoll(): void {
   if (pollTimer) clearTimeout(pollTimer);
   pollTimer = setTimeout(() => {
     pollTimer = null;
-    const onlineFlag = net.online;
-    if (!onlineFlag) {
-      if (lastIsReachable !== false) {
-        lastIsReachable = false;
-        logger.info('Network', 'OS reports offline');
-        notify(false);
-      }
-      schedulePoll();
-      return;
-    }
+    // net.online is a hint, not the source of truth. After a suspend it
+    // can stay false after the link is back, so every poll must probe.
     void refreshAndNotify().finally(schedulePoll);
   }, jitteredInterval());
 }
@@ -39,6 +35,25 @@ function notify(online: boolean): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('network:status-changed', online);
   }
+}
+
+function notifyResume(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('network:resume');
+  }
+}
+
+function handleSystemResume(): void {
+  logger.info('Network', 'System resumed, probing connectivity');
+  notifyResume();
+  void refreshAndNotify();
+
+  if (resumeTimer) clearTimeout(resumeTimer);
+  resumeTimer = setTimeout(() => {
+    resumeTimer = null;
+    notifyResume();
+    void refreshAndNotify();
+  }, RESUME_RECHECK_DELAY_MS);
 }
 
 async function checkReachable(): Promise<boolean> {
@@ -79,14 +94,20 @@ export const networkMonitor = {
   start(): void {
     if (pollTimer) return;
     lastIsReachable = true;
+    powerMonitor.on('resume', handleSystemResume);
     void refreshAndNotify();
     schedulePoll();
   },
 
   stop(): void {
+    powerMonitor.removeListener('resume', handleSystemResume);
     if (pollTimer) {
       clearTimeout(pollTimer);
       pollTimer = null;
+    }
+    if (resumeTimer) {
+      clearTimeout(resumeTimer);
+      resumeTimer = null;
     }
   },
 

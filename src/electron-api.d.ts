@@ -68,6 +68,7 @@ interface ElectronAPI {
   network: {
     check: () => Promise<boolean>;
     onChanged: (cb: (isOnline: boolean) => void) => () => void;
+    onResume: (cb: () => void) => () => void;
   };
 }
 
