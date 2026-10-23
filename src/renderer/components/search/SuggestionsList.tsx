@@ -1,16 +1,6 @@
 import React from 'react';
 import { Film } from 'lucide-react';
-import { SOURCE_CONFIG } from '../../../config/source';
 import type { AutocompleteAnime } from '../../../types';
-
-const TMDB_POSTER_W92 = 'https://image.tmdb.org/t/p/w92';
-
-function resolvePoster(poster: string): string {
-  if (!poster) return '';
-  if (poster.startsWith('http://') || poster.startsWith('https://')) return poster;
-  if (poster.startsWith('/')) return `${TMDB_POSTER_W92}${poster}`;
-  return `${SOURCE_CONFIG.baseUrl}/${poster}`;
-}
 
 interface SuggestionsListProps {
   suggestions: AutocompleteAnime[];
@@ -34,7 +24,7 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
           <div className="w-9 h-12 rounded-md bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-800/60">
             {item.poster ? (
               <img
-                src={resolvePoster(item.poster)}
+                src={item.poster}
                 alt={item.name}
                 className="w-full h-full object-cover"
                 loading="lazy"

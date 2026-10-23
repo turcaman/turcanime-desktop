@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { storage } from '../utils/storage';
-import { prependDedup, removeBy } from '../utils/history';
+import { prependDedup } from '../utils/history';
 import { logger } from '../utils/logger';
 import { STORAGE_KEYS } from '../../config/storageKeys';
 
@@ -36,7 +36,7 @@ export const useSearchHistoryStore = create<SearchHistoryState>((set, get) => ({
 
   removeRecentSearch: async (term) => {
     const prev = get().recentSearches;
-    const updated = removeBy(prev, (item) => item === term);
+    const updated = prev.filter((item) => item !== term);
     set({ recentSearches: updated });
     try {
       await storage.set(STORAGE_KEY, updated);

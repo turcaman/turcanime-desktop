@@ -5,14 +5,6 @@ import type { ISession } from '../../types';
 let refreshInFlight: Promise<ISession> | null = null;
 
 export const sessionManager = {
-  async initialize(): Promise<void> {
-    try {
-      await window.electronAPI.session.get();
-    } catch {
-      // session state is read lazily via getSession()
-    }
-  },
-
   async getSession(): Promise<ISession> {
     const session = await window.electronAPI.session.get();
     return (

@@ -13,7 +13,6 @@ import { useReconnect } from './renderer/hooks/useReconnect';
 import { NoConnectionOverlay } from './renderer/components/NoConnectionOverlay';
 import { UpdateModal } from './renderer/components/UpdateModal';
 import { Sidebar } from './renderer/components/Sidebar';
-import { sessionManager } from './renderer/services/session';
 
 const UPDATE_CHECK_ATTEMPTS = 3;
 const UPDATE_CHECK_RETRY_DELAY = 2000;
@@ -50,7 +49,6 @@ const App: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
-      await sessionManager.initialize();
       await initialize();
       if (!cancelled) setReady(true);
 
