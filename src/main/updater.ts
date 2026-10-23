@@ -44,7 +44,6 @@ let lastSuccessAt = 0;
 let checkPromise: Promise<CheckResult> | null = null;
 let lastAsset: UpdateAsset | null = null;
 let activeDownload: AbortController | null = null;
-let downloadAbortReason: 'user' | 'stall' | 'timeout' | null = null;
 let downloadedPath: string | null = null;
 
 // AppImage self-update is only possible when running from an AppImage; a dev
@@ -118,8 +117,7 @@ export async function checkForUpdate(force: boolean): Promise<CheckResult> {
 }
 
 export function cancelDownload(): void {
-  downloadAbortReason = 'user';
-  activeDownload?.abort();
+  activeDownload?.abort('user');
   activeDownload = null;
 }
 
@@ -161,11 +159,18 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
 
   const controller = new AbortController();
   activeDownload = controller;
-  downloadAbortReason = null;
   const timeout = setTimeout(() => {
-    downloadAbortReason ??= 'timeout';
-    controller.abort();
+    controller.abort('timeout');
   }, DOWNLOAD_TIMEOUT_MS);
+
+  let lastChunkAt = Date.now();
+  // read() only settles when a chunk arrives, so a stall has to be detected by
+  // a timer; checking elapsed time after each read never fires while stalled.
+  const stallWatch = setInterval(() => {
+    if (Date.now() - lastChunkAt > STALL_TIMEOUT_MS) {
+      controller.abort('stall');
+    }
+  }, 5_000);
 
   let stream: ReturnType<typeof createWriteStream> | null = null;
 
@@ -196,7 +201,6 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
 
     let receivedBytes = 0;
     let lastEmitAt = 0;
-    let lastChunkAt = Date.now();
 
     try {
       for (;;) {
@@ -204,10 +208,6 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
         const { done, value } = await reader.read();
         if (done) break;
         controller.signal.throwIfAborted();
-        if (Date.now() - lastChunkAt > STALL_TIMEOUT_MS) {
-          downloadAbortReason = 'stall';
-          throw new Error('stalled');
-        }
         lastChunkAt = Date.now();
         receivedBytes += value.byteLength;
         if (!fileStream.write(value)) {
@@ -239,6 +239,7 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
     }
 
     if (streamError) throw streamError;
+    controller.signal.throwIfAborted();
 
     await new Promise<void>((resolve, reject) => {
       fileStream.once('error', reject);
@@ -263,16 +264,17 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
     }
     await removeQuietly(dest);
     // Typed codes (mirrors Android): the renderer maps them to UX copy.
-    if (downloadAbortReason === 'user' || controller.signal.aborted) throw new Error('cancelled');
-    if (downloadAbortReason === 'stall' || (err instanceof Error && err.message === 'stalled')) {
-      throw new Error('stalled');
-    }
-    if (downloadAbortReason === 'timeout') throw new Error('timeout');
+    // Check the abort reason before `signal.aborted`: abort() also sets that
+    // flag, so testing it first classified timeouts and stalls as user cancels.
+    const reason = controller.signal.reason as unknown;
+    if (reason === 'user') throw new Error('cancelled');
+    if (reason === 'stall') throw new Error('stalled');
+    if (reason === 'timeout') throw new Error('timeout');
     throw err;
   } finally {
+    clearInterval(stallWatch);
     clearTimeout(timeout);
     activeDownload = null;
-    downloadAbortReason = null;
   }
 }
 
