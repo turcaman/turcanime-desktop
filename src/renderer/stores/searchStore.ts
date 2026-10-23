@@ -18,9 +18,10 @@ let searchRunId = 0;
 // of the query the user is currently typing.
 
 // Results and suggestions share one cache entry per query (same raw endpoint);
-// normalize the key so casing/whitespace variants hit the same entry.
+// normalize casing/whitespace without dropping letters (non-Latin queries used
+// to collapse to the same all-underscore key).
 function normalizeSearchKey(query: string): string {
-  return query.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  return query.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 function toAnime(item: RawSearchItem): Anime {
