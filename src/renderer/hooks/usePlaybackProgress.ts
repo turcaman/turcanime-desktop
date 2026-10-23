@@ -81,12 +81,14 @@ export function usePlaybackProgress({
   }, [slug, addToHistory, videoRef]);
 
   // Persist progress periodically (state + disk) so it survives app close.
+  // No save on cleanup: it would run after the episode changed and write the
+  // old video position under the new episode. Navigation saves explicitly and
+  // usePlayer saves on unmount, before hls.js resets currentTime.
   useEffect(() => {
     if (!streamUrl) return;
     persistTimer.current = setInterval(saveProgress, PERSIST_INTERVAL);
     return () => {
       if (persistTimer.current) clearInterval(persistTimer.current);
-      saveProgress();
     };
   }, [streamUrl, saveProgress]);
 

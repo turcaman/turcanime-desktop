@@ -58,6 +58,9 @@ export function usePlayer(
     streamUrl,
     onMediaState: setMediaState,
   });
+  // Save on unmount before the HLS attach effect tears the media down; hls.js
+  // detaches by reloading the element, which resets currentTime to 0.
+  useEffect(() => () => saveProgress(), [saveProgress]);
   const { reloadNonce, handleMediaError, recoverStream, resetRecovery } = usePlaybackRecovery();
 
   // Restore the user's persisted volume once per player mount; later changes
