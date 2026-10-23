@@ -8,6 +8,9 @@ import type { Episode } from '../../types';
 
 export function useAnimeDetail(slug: string) {
   const activeAnime = useDetailsStore((s) => s.activeAnime);
+  // The store keeps the previous slug until the reset effect runs; never render
+  // that stale anime under the new slug.
+  const anime = activeAnime?.slug === slug ? activeAnime : null;
   const isDetailsLoading = useDetailsStore((s) => s.isLoading);
   const error = useDetailsStore((s) => s.error);
   const fetchDetails = useDetailsStore((s) => s.fetchDetails);
@@ -33,7 +36,7 @@ export function useAnimeDetail(slug: string) {
     fetchDetails(slug);
   }, [slug, fetchDetails]);
 
-  const episodes = activeAnime?.episodes ?? [];
+  const episodes = anime?.episodes ?? [];
   const { ranges, visibleEpisodes } = useMemo(
     () => computeEpisodePagination(episodes, episodeOrder, activeRangeIdx),
     [episodes, episodeOrder, activeRangeIdx],
@@ -56,8 +59,8 @@ export function useAnimeDetail(slug: string) {
   }, [ascending, setEpisodeOrder]);
 
   return {
-    anime: activeAnime,
-    isLoading: isDetailsLoading || (!activeAnime && !error),
+    anime,
+    isLoading: isDetailsLoading || (!anime && !error),
     error,
     episodes: visibleEpisodes,
     ranges,
