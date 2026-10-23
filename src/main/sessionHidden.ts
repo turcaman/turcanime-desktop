@@ -101,14 +101,19 @@ export class HiddenSessionWindow {
       },
     });
 
-    this.window.webContents.on('console-message', (event) => {
-      const { level, message } = event as unknown as { level: number; message: string };
-      const levelMap = ['verbose', 'info', 'warning', 'error'];
+    this.window.webContents.on('console-message', (details) => {
+      const { level, message } = details;
 
       if (message.startsWith('[Bootstrap] ')) {
         logger.debug('SessionHidden', `[bootstrap] ${message.slice(12)}`);
-      } else if (level >= 2) {
-        logger.warn('HiddenWindow', `[${levelMap[level] || 'log'}] ${message}`);
+      } else if (level === 'warning' || level === 'error') {
+        // Electron 43 exposes level as a string; comparing it to a number
+        // silently dropped every warning and error from the hidden page.
+        if (level === 'error') {
+          logger.error('HiddenWindow', message);
+        } else {
+          logger.warn('HiddenWindow', message);
+        }
       }
     });
 
