@@ -36,6 +36,8 @@ export function usePlayer(
   // Volume to restore when unmuting, so a mute at 0% doesn't leave the user
   // silent after pressing M again.
   const preMuteVolumeRef = useRef(1);
+  // Persisting the initial 1 before the stored value loads would overwrite it.
+  const volumeLoadedRef = useRef(false);
   const progressTimer = useRef<ReturnType<typeof setInterval>>();
   const wasPlayingBeforeOffline = useRef(false);
   // Current hls.js instance for HLS streams; destroyed before every source swap.
@@ -68,17 +70,22 @@ export function usePlayer(
   useEffect(() => {
     let cancelled = false;
     storage.get<number>(STORAGE_KEYS.volume).then((saved) => {
-      if (cancelled || saved == null) return;
+      if (cancelled) return;
+      volumeLoadedRef.current = true;
+      if (saved == null) return;
       const v = Math.min(1, Math.max(0, Number(saved) || 0));
       setVolume(v);
       preMuteVolumeRef.current = v;
-    }).catch((): void => undefined);
+    }).catch((): void => {
+      if (!cancelled) volumeLoadedRef.current = true;
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
   useEffect(() => {
+    if (!volumeLoadedRef.current) return;
     storage.set(STORAGE_KEYS.volume, volume).catch((): void => undefined);
   }, [volume]);
 
