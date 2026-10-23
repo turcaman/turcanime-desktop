@@ -145,6 +145,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     get().reset();
     get().fetchServers(slug, number).then(() => {
       const s = get();
+      // fetchServers already reported the real network/auth error.
+      if (s.error) return;
       if (s.servers.length === 0) {
         set({ error: { type: 'SERVER_ERROR', message: NO_SERVERS_MESSAGE } });
         return;
