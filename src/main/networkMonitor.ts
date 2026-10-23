@@ -1,5 +1,6 @@
 import { net, powerMonitor, type BrowserWindow } from 'electron';
 import { logger } from './logger';
+import { SOURCE_CONFIG } from '../config/source';
 
 const REACHABILITY_URL = 'https://clients3.google.com/generate_204';
 const REACHABILITY_TIMEOUT = 5000;
@@ -70,16 +71,28 @@ function handleSystemResume(): void {
   probeAfterResume();
 }
 
-async function checkReachable(): Promise<boolean> {
+async function probe(url: string, anyStatus = false): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REACHABILITY_TIMEOUT);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REACHABILITY_TIMEOUT);
-    const res = await net.fetch(REACHABILITY_URL, { method: 'HEAD', signal: controller.signal });
-    clearTimeout(timeout);
-    return res.status === 204 || res.ok;
+    const res = await net.fetch(url, { method: 'HEAD', signal: controller.signal });
+    // For the source host, any HTTP response already proves the network works
+    // (Cloudflare may answer 403 to a bare HEAD).
+    return anyStatus ? res.status > 0 : res.status === 204 || res.ok;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
+}
+
+async function checkReachable(): Promise<boolean> {
+  // One blocked third-party host must not hide the whole app as offline.
+  const [google, source] = await Promise.all([
+    probe(REACHABILITY_URL),
+    probe(`${SOURCE_CONFIG.baseUrl}/`, true),
+  ]);
+  return google || source;
 }
 
 async function refreshAndNotify(): Promise<boolean> {
