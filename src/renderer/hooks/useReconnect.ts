@@ -35,7 +35,7 @@ function scheduleRecovery(): () => void {
 // When connection restores, refresh session + cache (mirrors mobile
 // behavior). A resume event also runs recovery when Chromium never
 // reported the offline transition during sleep.
-export function useReconnect(isConnected: boolean): void {
+export function useReconnect(isConnected: boolean | null): void {
   const prevConnected = useRef<boolean | null>(null);
 
   useEffect(() => {

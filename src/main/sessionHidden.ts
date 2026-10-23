@@ -245,7 +245,7 @@ export class HiddenSessionWindow {
       return new Promise<SessionData>((resolve) => {
         const original = this.pendingResolve;
         this.pendingResolve = (session) => {
-          original(session);
+          original?.(session);
           resolve(session);
         };
       });
