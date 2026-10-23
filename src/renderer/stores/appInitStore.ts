@@ -18,17 +18,30 @@ function migrateHistoryItem(item: HistoryItem & { url?: string }): HistoryItem {
   return { ...item, slug: item.slug ?? item.url ?? '' };
 }
 
+// A read failure is not "no data": retry briefly so a transient IPC error
+// cannot make the app overwrite real history with empty defaults.
+async function readStored<T>(key: string): Promise<T | null> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await storage.get<T>(key, true);
+    } catch (err) {
+      if (attempt >= 2) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+}
+
 export const useAppInitStore = create<AppInitState>((set) => ({
   isInitialized: false,
 
   initialize: async () => {
-    const storedHistory = (await storage.get<HistoryItem[]>(STORAGE_KEYS.lastViewed)) ?? [];
+    const storedHistory = (await readStored<HistoryItem[]>(STORAGE_KEYS.lastViewed)) ?? [];
     const history = storedHistory.map(migrateHistoryItem);
-    const searches = (await storage.get<string[]>(STORAGE_KEYS.recentSearches)) ?? [];
+    const searches = (await readStored<string[]>(STORAGE_KEYS.recentSearches)) ?? [];
     const episodeOrder =
-      (await storage.get<'asc' | 'desc'>(STORAGE_KEYS.episodeOrder)) ?? 'asc';
+      (await readStored<'asc' | 'desc'>(STORAGE_KEYS.episodeOrder)) ?? 'asc';
     const updateCheckEnabled =
-      (await storage.get<boolean>(STORAGE_KEYS.updateCheckEnabled)) ?? true;
+      (await readStored<boolean>(STORAGE_KEYS.updateCheckEnabled)) ?? true;
     const currentVersion = await window.electronAPI.app.getVersion();
 
     useHistoryStore.getState().initialize(history);

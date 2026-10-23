@@ -8,12 +8,15 @@ const api = (): ElectronAPI => {
 };
 
 export const storage = {
-  async get<T>(key: string): Promise<T | null> {
+  // strict = true makes read failures visible to callers that must not treat
+  // them as "no data" (history initialization would otherwise overwrite it).
+  async get<T>(key: string, strict = false): Promise<T | null> {
     try {
       const value = await api().store.get(key);
       return value as T | null;
     } catch (err) {
       logger.error('Storage', `Failed to get ${key}`, err);
+      if (strict) throw err;
       return null;
     }
   },
@@ -23,6 +26,7 @@ export const storage = {
       await api().store.set(key, value);
     } catch (err) {
       logger.error('Storage', `Failed to set ${key}`, err);
+      throw err;
     }
   },
 
@@ -31,6 +35,7 @@ export const storage = {
       await api().store.delete(key);
     } catch (err) {
       logger.error('Storage', `Failed to remove ${key}`, err);
+      throw err;
     }
   },
 };

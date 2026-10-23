@@ -62,7 +62,10 @@ async function clearSessionSensitiveCache(): Promise<void> {
     const allKeys = await window.electronAPI.store.getAllKeys();
     for (const key of allKeys) {
       if (SESSION_SENSITIVE_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix))) {
-        await storage.remove(key);
+        // Keep clearing the rest even if one entry cannot be removed.
+        await storage.remove(key).catch((err) => {
+          logger.warn('SessionRecovery', `Failed to remove ${key}`, err);
+        });
       }
     }
   } catch (err) {

@@ -40,7 +40,12 @@ export async function withCache<T>(
     const serialized = JSON.stringify(data);
     if (serialized.length <= LIMITS.CACHE_MAX_ENTRY_SIZE) {
       const entry: CacheEntry<T> = { payload: data, expiration: Date.now() + ttl };
-      await storage.set(cacheKey, entry);
+      // A failed cache write must not fail a successful fetch.
+      try {
+        await storage.set(cacheKey, entry);
+      } catch (err) {
+        logger.warn('Cache', `Failed to persist ${cacheKey}`, err);
+      }
     } else {
       logger.warn('Cache', `Entry ${cacheKey} exceeds size limit, skipping cache`);
     }
