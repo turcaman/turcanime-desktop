@@ -167,13 +167,23 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
     controller.abort();
   }, DOWNLOAD_TIMEOUT_MS);
 
+  let stream: ReturnType<typeof createWriteStream> | null = null;
+
   try {
     const response = await net.fetch(asset.url, { signal: controller.signal });
     if (!response.ok || !response.body) {
       throw new Error(`No se pudo descargar la actualización (${response.status})`);
     }
     const totalBytes = Number(response.headers.get('content-length')) || null;
-    const stream = createWriteStream(dest);
+    const fileStream = createWriteStream(dest);
+    stream = fileStream;
+    // Without a listener here, an ENOSPC/EACCES from the write stream is an
+    // unhandled 'error' event and takes the main process down. The listener
+    // also lets the read loop see the failure instead of hanging on drain.
+    let streamError: Error | null = null;
+    fileStream.on('error', (err) => {
+      streamError = err;
+    });
     // The reader API is used instead of async iteration: the body comes from
     // Chromium's network stack, which doesn't guarantee Symbol.asyncIterator.
     const reader = response.body.getReader();
@@ -190,6 +200,7 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
 
     try {
       for (;;) {
+        if (streamError) throw streamError;
         const { done, value } = await reader.read();
         if (done) break;
         controller.signal.throwIfAborted();
@@ -199,8 +210,23 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
         }
         lastChunkAt = Date.now();
         receivedBytes += value.byteLength;
-        if (!stream.write(value)) {
-          await new Promise<void>((resolve) => stream.once('drain', () => resolve()));
+        if (!fileStream.write(value)) {
+          await new Promise<void>((resolve, reject) => {
+            const onDrain = (): void => {
+              cleanup();
+              resolve();
+            };
+            const onError = (err: Error): void => {
+              cleanup();
+              reject(err);
+            };
+            const cleanup = (): void => {
+              fileStream.off('drain', onDrain);
+              fileStream.off('error', onError);
+            };
+            fileStream.once('drain', onDrain);
+            fileStream.once('error', onError);
+          });
         }
         if (Date.now() - lastEmitAt >= PROGRESS_INTERVAL_MS) {
           lastEmitAt = Date.now();
@@ -212,10 +238,12 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
       reader.releaseLock();
     }
 
+    if (streamError) throw streamError;
+
     await new Promise<void>((resolve, reject) => {
-      stream.on('error', reject);
-      stream.on('finish', () => resolve());
-      stream.end();
+      fileStream.once('error', reject);
+      fileStream.once('finish', () => resolve());
+      fileStream.end();
     });
 
     if (totalBytes != null && receivedBytes !== totalBytes) {
@@ -226,6 +254,13 @@ export async function downloadRelease(onProgress: (progress: UpdateProgress) => 
     downloadedPath = dest;
     logger.info('Updater', `Downloaded ${asset.name} (${receivedBytes} bytes)`);
   } catch (err) {
+    const failedStream = stream;
+    if (failedStream && !failedStream.closed) {
+      await new Promise<void>((resolve) => {
+        failedStream.once('close', () => resolve());
+        failedStream.destroy();
+      });
+    }
     await removeQuietly(dest);
     // Typed codes (mirrors Android): the renderer maps them to UX copy.
     if (downloadAbortReason === 'user' || controller.signal.aborted) throw new Error('cancelled');
