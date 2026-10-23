@@ -11,6 +11,7 @@ export type SearchStatus = 'idle' | 'typing' | 'searching' | 'searched';
 
 let suggestionsController: AbortController | null = null;
 let suggestionsRunId = 0;
+let searchRunId = 0;
 
 // The underlying IPC request cannot be cancelled, so the controller only
 // marks runs stale: a superseded response must not overwrite the suggestions
@@ -76,9 +77,18 @@ export const useSearchStore = create<SearchState>((set) => ({
   searchFocusSignal: 0,
 
   fetchSearch: async (query, force) => {
+    const runId = ++searchRunId;
     set({ error: null, lastSearchTerm: query, status: 'searching' });
 
-    const timeout = setTimeout(() => searchFetcher.abort(), TIMEOUTS.SEARCH);
+    const timeout = setTimeout(() => {
+      // A newer search owns the status; only this run may report its timeout.
+      if (runId !== searchRunId) return;
+      set({
+        status: 'searched',
+        error: { type: 'TIMEOUT', message: 'La búsqueda tardó demasiado.' },
+      });
+      searchFetcher.abort();
+    }, TIMEOUTS.SEARCH);
     const { result, isCurrent } = await searchFetcher.run(query, force);
     clearTimeout(timeout);
 
@@ -112,10 +122,12 @@ export const useSearchStore = create<SearchState>((set) => ({
   },
 
   cancelSearch: () => {
+    searchRunId++;
     searchFetcher.abort();
   },
 
   reset: () => {
+    searchRunId++;
     searchFetcher.abort();
     suggestionsController?.abort();
     set({

@@ -88,6 +88,11 @@ export function useSearchScreen() {
   useEffect(() => {
     return () => {
       cancelSearch();
+      // The aborted run cannot clear its loading status; do it here so coming
+      // back to the search screen does not show a skeleton forever.
+      if (useSearchStore.getState().status === 'searching') {
+        useSearchStore.getState().setStatus('idle');
+      }
     };
   }, [cancelSearch]);
 
