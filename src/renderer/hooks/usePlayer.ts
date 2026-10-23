@@ -91,7 +91,8 @@ export function usePlayer(
   const episodes = [...(anime?.episodes ?? [])].sort((a, b) => a.number - b.number);
   const currentIdx = episodes.findIndex((e) => e.number === episodeNumber);
   const hasPrev = currentIdx > 0;
-  const hasNext = currentIdx < episodes.length - 1;
+  const hasNext = currentIdx >= 0 && currentIdx < episodes.length - 1;
+  const prevEpisode = hasPrev ? episodes[currentIdx - 1] : null;
   const nextEpisode = hasNext ? episodes[currentIdx + 1] : null;
 
   const [nextEpisodeCountdown, setNextEpisodeCountdown] = useState<number | null>(null);
@@ -109,18 +110,18 @@ export function usePlayer(
 
   const confirmNextEpisode = useCallback(() => {
     clearNextEpisodeTimer();
-    if (hasNext) {
+    if (nextEpisode) {
       saveProgress();
-      onNavigateEpisode?.(episodeNumber + 1);
+      onNavigateEpisode?.(nextEpisode.number);
     }
-  }, [clearNextEpisodeTimer, hasNext, episodeNumber, onNavigateEpisode, saveProgress]);
+  }, [clearNextEpisodeTimer, nextEpisode, onNavigateEpisode, saveProgress]);
 
   const cancelNextEpisode = useCallback(() => {
     clearNextEpisodeTimer();
   }, [clearNextEpisodeTimer]);
 
   const startNextEpisodeCountdown = useCallback(() => {
-    if (!hasNext) return;
+    if (!nextEpisode) return;
     nextEpisodeCountdownRef.current = NEXT_EPISODE_COUNTDOWN_SECONDS;
     setNextEpisodeCountdown(NEXT_EPISODE_COUNTDOWN_SECONDS);
     nextEpisodeTimer.current = setInterval(() => {
@@ -128,27 +129,27 @@ export function usePlayer(
       if (prev === null || prev <= 0) {
         clearNextEpisodeTimer();
         saveProgress();
-        onNavigateEpisode?.(episodeNumber + 1);
+        onNavigateEpisode?.(nextEpisode.number);
         return;
       }
       nextEpisodeCountdownRef.current = prev - 1;
       setNextEpisodeCountdown(prev - 1);
     }, 1000);
-  }, [hasNext, clearNextEpisodeTimer, saveProgress, onNavigateEpisode, episodeNumber]);
+  }, [nextEpisode, clearNextEpisodeTimer, saveProgress, onNavigateEpisode]);
 
   const navigatePrev = useCallback(() => {
-    if (hasPrev) {
+    if (prevEpisode) {
       saveProgress();
-      onNavigateEpisode?.(episodeNumber - 1);
+      onNavigateEpisode?.(prevEpisode.number);
     }
-  }, [hasPrev, episodeNumber, onNavigateEpisode, saveProgress]);
+  }, [prevEpisode, onNavigateEpisode, saveProgress]);
 
   const navigateNext = useCallback(() => {
-    if (hasNext) {
+    if (nextEpisode) {
       saveProgress();
-      onNavigateEpisode?.(episodeNumber + 1);
+      onNavigateEpisode?.(nextEpisode.number);
     }
-  }, [hasNext, episodeNumber, onNavigateEpisode, saveProgress]);
+  }, [nextEpisode, onNavigateEpisode, saveProgress]);
 
   useEffect(() => {
     const goOffline = () => {
