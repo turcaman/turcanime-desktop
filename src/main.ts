@@ -4,6 +4,7 @@ import started from 'electron-squirrel-startup';
 import { hiddenSession } from './main/sessionHidden';
 import { registerIpcHandlers, setMainWindow, getMainWindow } from './main/ipcHandlers';
 import { loadWindowState, saveWindowState } from './main/windowState';
+import { pruneStoredData } from './main/store';
 import { networkMonitor } from './main/networkMonitor';
 import { logger } from './main/logger';
 
@@ -98,6 +99,7 @@ app.on('ready', () => {
   if (!gotTheLock) return;
   logger.info('App', 'App ready, creating window');
   Menu.setApplicationMenu(null);
+  pruneStoredData();
 
   hiddenSession.create();
   createWindow();
