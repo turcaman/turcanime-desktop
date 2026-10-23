@@ -91,5 +91,8 @@ typings/
 # Electron-Forge
 out/
 
+# Compiled tests
+.test-build/
+
 # pre-indexed knowledge graph
 .codegraph

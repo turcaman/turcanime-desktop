@@ -23,6 +23,7 @@ npm run make           # genera instaladores para la plataforma actual
 | `npm run make` | Genera instaladores (.exe, .AppImage) |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | Verificacion de tipos |
+| `npm test` | Tests de parsers y cookies (Node test runner) |
 
 ## Estructura
 
@@ -55,5 +56,5 @@ src/
 
 - Tema oscuro (#0f0f11) con acento purpura (#A855F7). Sin modo claro.
 - Interfaz en espanol. Sin internacionalizacion.
-- Sin framework de tests -- no hay script npm test.
+- Tests con el runner integrado de Node (`node:test`); fixtures en `tests/`.
 - Comentarios minimos: solo para workarounds no obvios y condiciones de carrera.

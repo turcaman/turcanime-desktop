@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-build",
+    "rootDir": ".",
+    "module": "commonjs",
+    "sourceMap": false
+  },
+  "include": [
+    "src/config/source.ts",
+    "src/config/cache.ts",
+    "src/types.ts",
+    "src/main/cookies.ts",
+    "src/renderer/hooks/episodeHelpers.ts",
+    "src/renderer/services/parsers.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "out", ".vite", ".test-build"]
+}

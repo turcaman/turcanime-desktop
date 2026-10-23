@@ -12,7 +12,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "validate": "npm run lint && tsc --noEmit"
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/cookies.test.js .test-build/tests/parsers.test.js",
+    "validate": "npm run lint && tsc --noEmit && npm test"
   },
   "keywords": [],
   "author": {

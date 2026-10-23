@@ -10,8 +10,9 @@ Instructions for AI coding agents. Complement to README.md.
 |---------|---------|
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | TypeScript check |
+| `npm test` | Built-in Node test runner (parser/cookie checks) |
 
-Run both before committing.
+Run all three before committing.
 
 ## Project
 
@@ -48,7 +49,7 @@ Config at `.eslintrc.json`. Extends: `eslint:recommended`, `@typescript-eslint/*
 ## CI/CD Gotchas
 
 - Assets located by extension (`*.exe`, `*.zip`, etc.) -- not by hardcoded path.
-- `validate` runs lint + typecheck. No test step.
+- `validate` runs lint + typecheck + tests.
 - `asar: true` -- no raw file access at runtime. Use `extraResource` for assets/.
 - Fuses: `RunAsNode`/`NodeOptions`/`NodeCliInspect` disabled. `OnlyLoadAppFromAsar`.
 
@@ -65,5 +66,5 @@ Config at `.eslintrc.json`. Extends: `eslint:recommended`, `@typescript-eslint/*
 - Do not touch `src/main/sessionHidden.ts` or `src/main/sessionPreload.ts` -- they handle Cloudflare bypass.
 - Do not change the crypto stack (`@noble/ciphers` AES-GCM).
 - Do not add iOS or web-specific code -- desktop only (Windows/Linux).
-- Do not add a test framework -- none configured and CI does not run tests.
+- Do not add a test framework; use Node's built-in `node:test` runner and keep fixtures under `tests/`.
 - Do not use full store subscriptions -- always individual selectors.
