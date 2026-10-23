@@ -41,6 +41,7 @@ interface GithubAsset {
 }
 
 let lastSuccessAt = 0;
+let lastResult: CheckResult | null = null;
 let checkPromise: Promise<CheckResult> | null = null;
 let lastAsset: UpdateAsset | null = null;
 let activeDownload: AbortController | null = null;
@@ -90,7 +91,8 @@ async function runCheck(): Promise<CheckResult> {
     await cleanupOldUpdate();
     const { tag, asset } = await fetchLatestRelease();
     lastSuccessAt = Date.now();
-    return { latest: tag, current, asset, mode: installMode() };
+    lastResult = { latest: tag, current, asset, mode: installMode() };
+    return lastResult;
   } catch (err) {
     return {
       latest: null,
@@ -106,7 +108,9 @@ export async function checkForUpdate(force: boolean): Promise<CheckResult> {
   if (checkPromise) return checkPromise;
   const current = app.getVersion();
   if (!force && Date.now() - lastSuccessAt < CHECK_INTERVAL_MS) {
-    return { latest: null, current, asset: null, mode: installMode() };
+    // Reuse the successful result: returning null here made the renderer clear
+    // a known pending update and say "Estás al día".
+    return lastResult ?? { latest: null, current, asset: null, mode: installMode() };
   }
   checkPromise = runCheck();
   try {
