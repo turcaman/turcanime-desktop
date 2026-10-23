@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { hiddenSession } from './main/sessionHidden';
-import { registerIpcHandlers, setMainWindow } from './main/ipcHandlers';
+import { registerIpcHandlers, setMainWindow, getMainWindow } from './main/ipcHandlers';
 import { loadWindowState, saveWindowState } from './main/windowState';
 import { networkMonitor } from './main/networkMonitor';
 import { logger } from './main/logger';
@@ -17,8 +17,22 @@ if (started) {
   app.quit();
 }
 
+// A second instance would share (and clobber) the same electron-store file.
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = getMainWindow();
+    if (!win || win.isDestroyed()) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  });
+}
+
 logger.info('App', 'Starting application');
-registerIpcHandlers();
+if (gotTheLock) registerIpcHandlers();
 
 const createWindow = () => {
   const saved = loadWindowState();
@@ -81,6 +95,7 @@ const createWindow = () => {
 };
 
 app.on('ready', () => {
+  if (!gotTheLock) return;
   logger.info('App', 'App ready, creating window');
   Menu.setApplicationMenu(null);
 

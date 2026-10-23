@@ -14,6 +14,10 @@ export function setMainWindow(win: BrowserWindow): void {
   mainWindow = win;
 }
 
+export function getMainWindow(): BrowserWindow | undefined {
+  return mainWindow;
+}
+
 type FetchViaNetResult = {
   ok: boolean;
   status: number;
