@@ -170,7 +170,9 @@ export class HiddenSessionWindow {
     logger.info('SessionHidden', 'Destroying hidden BrowserWindow');
     this.resolvePending({ cookies: '', userAgent: '' });
     if (this.window) {
-      this.window.close();
+      // close() can be cancelled by the third-party page's beforeunload; a
+      // lingering hidden window keeps the app alive after the main window shuts.
+      this.window.destroy();
       this.window = null;
     }
   }
