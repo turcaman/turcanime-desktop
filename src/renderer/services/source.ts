@@ -33,6 +33,12 @@ async function fetchWithSession(
     throw new SourceError(`HTTP ${res.status}`, 'AUTH_ERROR');
   }
 
+  // Any other non-2xx body is an error page (maintenance, 404, 5xx). Returning
+  // it would parse into empty data and cache that for hours.
+  if (!res.ok) {
+    throw new SourceError(`HTTP ${res.status}`, 'SERVER_ERROR');
+  }
+
   if (!res.data) {
     throw new SourceError(`HTTP ${res.status}`, 'SERVER_ERROR');
   }
